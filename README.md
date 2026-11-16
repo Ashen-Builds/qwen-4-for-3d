@@ -32,6 +32,7 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 | [Pinned models](configs/model-snapshots.json) | Acquired revisions and upstream-lineage limitation |
 | [Model downloader](scripts/download_comparison_models.py) | Official Hub SDK and digest checks; never loads models |
 | [Training evidence](docs/ccore-training-evidence.md) | Published CCORE process/data versus missing details |
+| [Curated Drive archive](docs/archive-plan.md) | Selected core sources, exact inventory and transfer status |
 | [GLB/Neyra review](docs/glb-direction-and-neyra.md) | Tool fit and limitations |
 | [Practice data](docs/practice-data.md) | Dataset copies, terms and inspection scope |
 | [HANDOFF](HANDOFF.md) | Rolling verified state and next steps |

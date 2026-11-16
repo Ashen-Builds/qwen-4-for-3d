@@ -56,7 +56,7 @@ Declare acceptance thresholds after hardware/backend profiling and before compar
 
 ## Critique and orchestration
 
-Owner suggested Devin AI and Gemini Carbon 4 / Gemini Hydrogen 4 as additional agents/critics. Their exact model IDs, available tools/accounts, data-transfer permissions and per-call budgets are unverified. They are candidates, not active workers or confirmed providers. No messages or calls were sent.
+Owner clarified that optional critics must use the subscription CLIs: **Gemini Hydrogen 4 only** and **Devin SWE2 only**. Do not substitute Carbon or a paid Devin model. Exact CLI model IDs, available tools/accounts and any data-transfer requirements still need qualification before use. They are candidates, not active workers or confirmed providers. No messages or calls were sent.
 
 Run deterministic file/scene checks first. Then provide anonymous equal-condition views, playback and rubric to an authorized critic; hide model labels, preserve per-dimension scores/disagreements, and have the current agent inspect each generated evaluation output. Randomize presentation independently of serial run order. Screenshots cannot verify export animation. Calibrate critics against owner/current-agent judgments rather than treating preferences as ground truth.
 

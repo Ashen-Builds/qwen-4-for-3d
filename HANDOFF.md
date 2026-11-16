@@ -38,3 +38,10 @@ Updated 2026-11-16. Remote: `Ashen-Builds/qwen-4-for-3d`, branch `Astra`.
 
 - Static tokenizer inspection: BPE vocabulary and chat-template text match, while added-token records and normalized tokenizer JSON differ. Runtime/tokenizer behavior still needs qualification; do not declare identical tokenization from template equality alone. Original compute precision differs and must be normalized for comparison.
 - Header inspection located all 15 upstream-only tensors under `mtp.*`; comparison config disables MTP/speculative decoding. No model tensors were modified.
+
+## Streaming and archive selection — 2026-11-16
+
+- Owner is streaming; STREAMING guard verified active. Do not launch local inference/training or bulk uplink transfers during the stream. No model generation/test has begun.
+- Owner clarified optional subscription CLI critics: Gemini Hydrogen 4 only, Devin SWE2 only. No critic CLI called.
+- Owner selected core relevant datasets plus both original checkpoints for a Drive archive. Metadata-only subagent compiled sources; `configs/core-archive.json` inventories 5 sources / 88 files / 27,918,579,221 bytes. No archive payload downloaded/uploaded in this task.
+- Drive destination account is pending owner choice between the two connected accounts. No Drive folder/file was created. The connected uploader accepts local paths; direct remote Hub-to-Drive transfer is not yet available/qualified. Prepare the catalog now; actual transfer needs an authenticated remote worker or an off-stream upload of existing model copies. `docs/archive-plan.md` records the scope/status.
