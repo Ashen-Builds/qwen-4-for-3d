@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "models": [
+    {
+      "role": "ccore_glb",
+      "repo": "ccore/Qwen3.5-4B-GLB-3D-Coder",
+      "revision": "8f32a199f8b22fe3157b9c5c8b42b052a0750dd3",
+      "format": "original-safetensors",
+      "license": "Apache-2.0"
+    },
+    {
+      "role": "upstream_qwen",
+      "repo": "Qwen/Qwen3.5-4B",
+      "revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+      "format": "original-safetensors",
+      "license": "Apache-2.0",
+      "note": "CCORE identifies this upstream repository; its exact historical training-input commit is not disclosed in the inspected GLB release. This is the pinned currently published upstream checkpoint, not Qwen3.5-4B-Base."
+    }
+  ]
+}
