@@ -4,7 +4,7 @@ Updated 2026-11-16. Remote: `Ashen-Builds/qwen-4-for-3d`, branch `Astra`.
 
 ## Authorization and verified state
 
-- Owner asked for explanation, source review and local dataset copies. Do not download model weights yet. Training/inference and engine work have not started.
+- Initial authority covered explanation/source review/dataset copies only; on 2026-11-16 the owner subsequently authorized downloading CCORE GLB and its official upstream Qwen model, plus updating the open-source plan. Tests follow a later start instruction. Training/inference and engine work have not started.
 - Read all 132 archived replies. Reviewed CCORE and 3DCodeVerse primary cards and official Hub/PEFT documentation.
 - `docs/practice-data.md` records fit, pinned revisions, terms and copy scope. `scripts/copy_practice_datasets.py` reproduces dataset-only copies and verifies upstream digests.
 - Dataset files live outside this checkout under sibling `work/datasets`, in repo-ID/revision folders. Keep raw corpora and machine caches out of GitHub; acquisition manifest and instructions travel in Git instead.
@@ -24,3 +24,17 @@ Updated 2026-11-16. Remote: `Ashen-Builds/qwen-4-for-3d`, branch `Astra`.
 - Found a closer candidate: `ccore/Qwen3.5-4B-GLB-3D-Coder` and matching `ccore/ThreeJS-3D-GLB-Assets`, separate from the scene checkpoint/data already reviewed. Recommendation is to evaluate this GLB specialization, then add a new LoRA for measured gaps. Exact compatibility and quality remain untested.
 - `docs/glb-direction-and-neyra.md` records pinned resources, actual model-file metadata, Neyra source findings and proposed tests. Neyra source cloned for static review only; not installed/executed. No new dataset or weights downloaded.
 - Neyra lint/verdict/merge-integrity ideas fit, but defaults (512 training / 32 evaluation output tokens, greedy decoding) do not fit CCORE's ~20K-token sampled output recipe. Need custom exported-asset scoring and backend checks.
+
+
+## Model acquisition and comparison plan — 2026-11-16
+
+- Owner authorized both model downloads. `configs/model-snapshots.json` pins CCORE GLB to `8f32a199f8b22fe3157b9c5c8b42b052a0750dd3` and `Qwen/Qwen3.5-4B` to `851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a`. This is the identified upstream repository, not proof of the undisclosed historical input commit.
+- Downloader copies original Safetensors plus config/tokenizer/license companions; no GGUF/projector/gallery duplicates. `scripts/download_comparison_models.py` verifies upstream digests and index shard presence without loading or executing models.
+- Both original checkpoints complete: CCORE 15 files / 17,510,218,308 bytes; official Qwen 13 files / 9,342,905,899 bytes. All upstream digests verified. All 7 shard headers, tensor shapes/offsets and index maps are valid (723 CCORE / 738 Qwen tensors). Sanitized receipt: `configs/download-receipt.json`. No model loaded or executed.
+- Models are outside this checkout under sibling `work/models`, source-ID/revision directories. Raw weights/caches must not enter GitHub.
+- Owner selected a super-detailed animated voxel Babylon marketplace, people walking/trading, flowing water and moving clouds. Canonical prompt in `eval/prompts/babylon-marketplace-v1.txt`; previous treasure-chest suggestion is superseded.
+- Updated root README, `docs/PIPELINE.md`, `docs/ccore-training-evidence.md` and proposed comparison config. First pass uses same prompts/settings and no repairs; output C is absent until our LoRA exists. Babylon prompt/output/corrections stay held out from training.
+- No inference, asset generation, training goal, automation, external critic invocation or model server started. Devin/Gemini model IDs, access and budgets remain unverified candidates.
+
+- Static tokenizer inspection: BPE vocabulary and chat-template text match, while added-token records and normalized tokenizer JSON differ. Runtime/tokenizer behavior still needs qualification; do not declare identical tokenization from template equality alone. Original compute precision differs and must be normalized for comparison.
+- Header inspection located all 15 upstream-only tensors under `mtp.*`; comparison config disables MTP/speculative decoding. No model tensors were modified.

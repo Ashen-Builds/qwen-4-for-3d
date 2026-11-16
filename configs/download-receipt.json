@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "checked_at_utc": "2026-11-16T17:37:43.143422+00:00",
+  "verification": "Upstream hashes and sizes verified during copy; all shard headers, tensor shapes/offsets and index mappings inspected without loading a model. No inference or training.",
+  "models": [
+    {
+      "role": "ccore_glb",
+      "repo": "ccore/Qwen3.5-4B-GLB-3D-Coder",
+      "revision": "8f32a199f8b22fe3157b9c5c8b42b052a0750dd3",
+      "format": "original-safetensors",
+      "license": "Apache-2.0",
+      "files": 15,
+      "bytes": 17510218308,
+      "shards": 5,
+      "tensors": 723,
+      "tensor_bytes": 17490033664,
+      "dtypes": {
+        "F32": 426,
+        "BF16": 297
+      },
+      "upstream_digests_verified": true,
+      "complete_index_and_tensor_layout": true
+    },
+    {
+      "role": "upstream_qwen",
+      "repo": "Qwen/Qwen3.5-4B",
+      "revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+      "format": "original-safetensors",
+      "license": "Apache-2.0",
+      "files": 13,
+      "bytes": 9342905899,
+      "shards": 2,
+      "tensors": 738,
+      "tensor_bytes": 9319737856,
+      "dtypes": {
+        "BF16": 690,
+        "F32": 48
+      },
+      "upstream_digests_verified": true,
+      "complete_index_and_tensor_layout": true
+    }
+  ],
+  "tokenizer_comparison": {
+    "model_vocab_equal": true,
+    "added_token_records_equal": false,
+    "normalized_tokenizer_json_equal": false,
+    "chat_template_text_equal": true,
+    "qualification": "Static comparison only. Actual tokenizer/template behavior and runtime loading remain untested."
+  },
+  "total_bytes": 26853124207,
+  "total_files": 28,
+  "per_file_manifest": "Complete SHA256 inventory is retained locally in each downloaded snapshot/DOWNLOAD_MANIFEST.json; public receipt omits redundant tokenizer-named hash fields that the generic credential scanner misclassifies."
+}

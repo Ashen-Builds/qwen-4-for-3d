@@ -3,3 +3,6 @@ __pycache__/
 data/local/
 traces/raw/
 adapters/
+models/
+.cache/
+runs/

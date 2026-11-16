@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "status": "proposed-not-executed",
+  "task_id": "babylon-marketplace-v1",
+  "user_prompt_file": "eval/prompts/babylon-marketplace-v1.txt",
+  "system_prompt": {
+    "source": "ccore/Qwen3.5-4B-GLB-3D-Coder",
+    "revision": "8f32a199f8b22fe3157b9c5c8b42b052a0750dd3",
+    "file": "README.md",
+    "section": "System prompt",
+    "policy": "Extract the author's documented system prompt from the pinned downloaded card, save its hash in the run receipt, and supply exactly the same text to every comparison arm. Do not append arm-specific instructions."
+  },
+  "arms_in_requested_run_order": [
+    "ccore_glb",
+    "upstream_qwen",
+    "ours_future"
+  ],
+  "ours_future_status": "not-trained-not-available",
+  "generation": {
+    "temperature": 0.8,
+    "top_k": 40,
+    "top_p": 0.95,
+    "min_p": 0.0,
+    "repetition_penalty": 1.0,
+    "thinking": true,
+    "seed": 42,
+    "proposed_max_new_tokens": 65536,
+    "proposed_context_tokens": 131072,
+    "proposed_wall_time_minutes_per_arm": 60,
+    "qualification": "Preflight runtime support and actual memory before execution. These finite limits are proposed resource bounds, not the author's unlimited-output recommendation. Truncation/timeouts count as failures under the declared budget; never silently raise limits for only one arm."
+  },
+  "runtime": {
+    "backend": "unselected",
+    "common_compute_dtype": "unselected",
+    "policy": "Use a common compatible backend, effective compute dtype, device policy, dependency bundle and limits. Preserve required tokenizer/template behavior and disclose unavoidable differences. Run serially through the shared GPU slot protocol. Official Qwen includes 15 extra mtp.* tensors absent from CCORE; disable MTP/speculative decoding for the controlled baseline and record how the backend handles these weights.",
+    "multi_token_prediction": false
+  },
+  "first_pass": {
+    "attempts_per_arm": 1,
+    "manual_repairs": false
+  },
+  "later_repeated_test": {
+    "status": "planned",
+    "policy": "Predeclare seeds and equal attempt/repair budgets; report all runs rather than the best screenshot."
+  },
+  "holdout_policy": "Never train on this prompt, near-duplicates, these outputs or targeted teacher corrections. Use separate task families for failure-driven training data."
+}

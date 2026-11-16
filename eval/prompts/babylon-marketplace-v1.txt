@@ -1,0 +1,1 @@
+Create a highly detailed voxel 3D village marketplace inspired by ancient Babylon in Iraq. Include mud-brick buildings, busy trading stalls, people walking around and trading, flowing water, and moving clouds. Make the village feel alive, with many small details and animated components. Include a working GLB export that preserves the scene and its animations.
