@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "status": "proposed-not-scheduled-not-running",
+  "name": "Astra-3D Sprint 01",
+  "base": "ccore/Qwen3.5-4B-GLB-3D-Coder",
+  "base_revision": "8f32a199f8b22fe3157b9c5c8b42b052a0750dd3",
+  "start": "2026-11-16T23:00:00-05:00",
+  "hard_stop": "2026-11-18T23:00:00-05:00",
+  "timezone": "America/New_York",
+  "clock": "48 hours wall time including pauses, validation and export, not 48 hours gradient compute",
+  "authorization": "Preparation only; require owner start instruction. No scheduler/goal/automation created.",
+  "milestones": [
+    {
+      "elapsed_hours": 0,
+      "time": "2026-11-16T23:00:00-05:00",
+      "deliverable": "Frozen CCORE control versus latest completed Astra adapter; same Babylon prompt plus fixed probe suite; label missing/failed/no-change outputs honestly"
+    },
+    {
+      "elapsed_hours": 8,
+      "time": "2026-11-17T07:00:00-05:00",
+      "deliverable": "Frozen CCORE control versus latest completed Astra adapter; same Babylon prompt plus fixed probe suite; label missing/failed/no-change outputs honestly"
+    },
+    {
+      "elapsed_hours": 16,
+      "time": "2026-11-17T15:00:00-05:00",
+      "deliverable": "Frozen CCORE control versus latest completed Astra adapter; same Babylon prompt plus fixed probe suite; label missing/failed/no-change outputs honestly"
+    },
+    {
+      "elapsed_hours": 24,
+      "time": "2026-11-17T23:00:00-05:00",
+      "deliverable": "Frozen CCORE control versus latest completed Astra adapter; same Babylon prompt plus fixed probe suite; label missing/failed/no-change outputs honestly"
+    },
+    {
+      "elapsed_hours": 32,
+      "time": "2026-11-18T07:00:00-05:00",
+      "deliverable": "Frozen CCORE control versus latest completed Astra adapter; same Babylon prompt plus fixed probe suite; label missing/failed/no-change outputs honestly"
+    },
+    {
+      "elapsed_hours": 40,
+      "time": "2026-11-18T15:00:00-05:00",
+      "deliverable": "Frozen CCORE control versus latest completed Astra adapter; same Babylon prompt plus fixed probe suite; label missing/failed/no-change outputs honestly"
+    },
+    {
+      "elapsed_hours": 48,
+      "time": "2026-11-18T23:00:00-05:00",
+      "deliverable": "Frozen CCORE control versus latest completed Astra adapter; same Babylon prompt plus fixed probe suite; label missing/failed/no-change outputs honestly"
+    }
+  ],
+  "morning_review": {
+    "elapsed_hours": 10,
+    "time": "2026-11-17T09:00:00-05:00",
+    "deliverable": "7am pair and metrics ready for 9am inspection; suspend owned heavy compute by 9am unless owner clears daytime use"
+  },
+  "gpu_policy": "Honor shared GPU slots and streaming guard; pause at safe boundaries. Keep wall-clock stop. Never remove guard or take over another job.",
+  "showcase_prompt": "eval/prompts/babylon-marketplace-v3.txt",
+  "showcase_seed": 42,
+  "evaluation": "Regenerate untouched CCORE on chosen common evaluation runtime/precision once before adapter comparisons. Historical repaired Q8 native GLB is a gallery reference, not a raw matched control for a different backend.",
+  "training_data_gate": "Pinned rights/provenance, code-family splits, complete assistant targets, no benchmark leakage, independently executed/rendered/export-validated new examples",
+  "remaining_unbuilt": [
+    "Verified new training examples targeting measured weaknesses",
+    "Exact Qwen3.5 LoRA backward/save/reload/representative-length qualification",
+    "Frozen train/dev/final family splits and loss-mask/token-length audit",
+    "Safe checkpoint evaluation/export runner and stopping controller"
+  ],
+  "readiness": "not-training-ready"
+}

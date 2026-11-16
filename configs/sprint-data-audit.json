@@ -1,0 +1,89 @@
+{
+  "scope": "Static row/schema/duplicate inspection only; not execution or visual certification",
+  "sources": [
+    {
+      "repo": "FreedomIntelligence/BlendNet",
+      "revision": "11a779c7723af9bacbed371fccdc643ea20be446",
+      "rows": 12059,
+      "fields": [
+        "category",
+        "color_brightness",
+        "entropy",
+        "id",
+        "instruction",
+        "instruction_type",
+        "name",
+        "param_ratio",
+        "script",
+        "unit_n",
+        "verify"
+      ],
+      "exact_duplicate_rows": 0,
+      "role": "optional Blender code; not direct Three.js demonstrations"
+    },
+    {
+      "repo": "ccore/ThreeJS-3D-GLB-Assets",
+      "revision": "276821245d5714b95571465569ed5b844ac6adc7",
+      "unique_ids": {
+        "train": 3501,
+        "validation": 417
+      },
+      "rows": 3918,
+      "role_sequences": {
+        "system,user,assistant": 3918
+      },
+      "assistant_characters": {
+        "min": 9415,
+        "median": 27148.5,
+        "max": 47948
+      },
+      "reasoning_characters": {
+        "median": 32639.5,
+        "max": 211151
+      },
+      "closed_html_rows": 3918,
+      "exact_id_overlap": 0,
+      "normalized_response_overlap": 0,
+      "qualification": "Whitespace-normalized response overlap only; variable-renaming/family overlap remains untested. Card claims rendered/validated; this audit has not independently rendered all examples."
+    },
+    {
+      "repo": "codepawl/pixel-atlas-glb",
+      "revision": "98046fef34d7443439ff292e246701b5593eadfa",
+      "rows": 6194,
+      "fields": [
+        "mesh",
+        "thumbnail",
+        "file_name",
+        "id",
+        "title",
+        "kind",
+        "license",
+        "authors",
+        "triangles",
+        "subject",
+        "caption",
+        "row_id",
+        "split",
+        "pixels",
+        "colours",
+        "subject_variants",
+        "files",
+        "web_bytes",
+        "engine_bytes",
+        "collision_bytes"
+      ],
+      "role": "finished assets/reference only; not prompt-to-program training pairs"
+    },
+    {
+      "repo": "lamm-mit/Bioinspired3D",
+      "revision": "8901dd3fa5f7218bc453d17f65a6faf7bd15ae12",
+      "rows": 4557,
+      "fields": [
+        "prompt",
+        "answer",
+        "category"
+      ],
+      "role": "optional Blender code; not direct Three.js demonstrations"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "scope": "Deterministic roughly 1-in-61 sample; full rendered conversation including separate reasoning field when used by pinned chat template; tokenizer only, no weights or GPU",
+  "sample_count": 65,
+  "min": 7065,
+  "median": 18424,
+  "max": 46376,
+  "over_8192": 64,
+  "over_16384": 48,
+  "over_32768": 4,
+  "qualification": "Training masks, full-data length distribution and complete-target execution still require qualification."
+}

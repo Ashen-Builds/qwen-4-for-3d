@@ -1,0 +1,40 @@
+{
+  "date": "2026-11-16",
+  "sources": [
+    {
+      "repo": "ccore/ThreeJS-3D-GLB-Assets",
+      "revision": "276821245d5714b95571465569ed5b844ac6adc7",
+      "license": "MIT declaration",
+      "role": "core-replay",
+      "verified_files": 54,
+      "verified_bytes": 1030742497
+    },
+    {
+      "repo": "FreedomIntelligence/BlendNet",
+      "revision": "11a779c7723af9bacbed371fccdc643ea20be446",
+      "license": "Apache-2.0 declaration",
+      "role": "optional-blender",
+      "verified_files": 3,
+      "verified_bytes": 22283412
+    },
+    {
+      "repo": "lamm-mit/Bioinspired3D",
+      "revision": "8901dd3fa5f7218bc453d17f65a6faf7bd15ae12",
+      "license": "MIT declaration",
+      "role": "optional-blender",
+      "verified_files": 3,
+      "verified_bytes": 12429105
+    },
+    {
+      "repo": "codepawl/pixel-atlas-glb",
+      "revision": "98046fef34d7443439ff292e246701b5593eadfa",
+      "license": "CC0 declaration; upstream attribution retained",
+      "role": "asset-reference-only",
+      "verified_files": 5,
+      "verified_bytes": 482979530
+    }
+  ],
+  "status": "Downloaded and hash-verified; static inspection only, not yet a validated training mixture",
+  "archive_status": "Direct connector now passes upload/readback. 100 MiB downstream file limit requires chunks. Blender supplement archive and some numbered parts uploaded; full archive incomplete. Private transfer receipt records IDs and remote size readback.",
+  "policy": "No browser or Drive desktop uploads; owner requires direct Codex Google Drive plugin."
+}
