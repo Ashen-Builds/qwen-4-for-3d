@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-16",
+  "authority": "Owner requested deletion after completed comparison",
+  "removed": [
+    {
+      "task_relative_path": "work/models/Qwen--Qwen3.5-4B",
+      "bytes": 9342911870
+    },
+    {
+      "task_relative_path": "work/models-derived/qwen-q8",
+      "bytes": 4489716609
+    },
+    {
+      "task_relative_path": "work/models-native/qwen-Q8_0.gguf",
+      "bytes": 4610577728
+    }
+  ],
+  "logical_bytes_removed": 18443206207,
+  "official_processes": "No active llama CLI/server or task inference process at deletion",
+  "retained": [
+    "CCORE original and quantized checkpoints",
+    "all baseline GLBs, visual/source evidence, settings and original acquisition receipts"
+  ],
+  "archive": "Original official model payload was never copied to Drive; archive manifest is historical acquisition inventory, not proof of a retained local or Drive copy."
+}

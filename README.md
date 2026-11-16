@@ -6,8 +6,8 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 
 ## Current status
 
-- Branch: `Astra`. Source review and pinned practice dataset copies completed.
-- Both original checkpoints downloaded and hash-verified: **CCORE 17.51 GB + official Qwen 9.34 GB**, 28 files total. All shard/index structures checked without loading models. [Verification receipt](configs/download-receipt.json). Weights stay outside Git.
+- Branch: `Astra`. [Frozen visual comparison and GLBs](eval/baselines/babylon-20261116/README.md) include a reserved future result for our adapter.
+- Both original checkpoints were downloaded and hash-verified. Official Qwen original/Q8 copies were subsequently deleted at the owner’s request (18.44 GB logical bytes); CCORE stays available. [Acquisition receipt](configs/download-receipt.json), [removal receipt](configs/official-model-removal.json).
 - Comparison completed on M3 Ultra: both raw outputs failed. Separately labeled repaired GLBs load side by side; CCORE is visually richer but misses walking/full-town requirements. [Results and limitations](docs/comparison-results.md). No training started.
 - First comparison: a detailed animated voxel Babylon-inspired marketplace, using identical prompts and conditions for CCORE, upstream Qwen and later our own adapter.
 - A bounded overnight training goal follows inspected baselines and an explicit start instruction. No training goal or automation is active.
@@ -26,6 +26,7 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 
 | File | Purpose |
 | --- | --- |
+| [48-hour pilot proposal](docs/48-hour-pilot.md) | Scoped training/evaluation plan, no job started |
 | [Pipeline plan](docs/PIPELINE.md) | Fair A/B/C testing, rubric, critic roles and future overnight gates |
 | [Babylon marketplace prompt](eval/prompts/babylon-marketplace-v3.txt) | Shared request, held out from training |
 | [Recorded comparison settings](configs/comparison-v1.json) | Primary native-pair settings and diagnostic status |

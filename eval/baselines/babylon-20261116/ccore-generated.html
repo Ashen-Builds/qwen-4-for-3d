@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script>
+    (() => { const raf=window.requestAnimationFrame.bind(window); let last=-Infinity;
+      window.requestAnimationFrame=cb=>raf(function tick(t){
+        if(t-last>=1000/60-0.5){last=t;cb(t)}else raf(tick);
+      });
+    })();
+    </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animated Babylonian Market</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #dce9e4;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      max-width: min(390px, calc(100vw - 40px));
+      padding: 15px 17px;
+      color: #f8ead0;
+      background: rgba(35, 48, 48, 0.88);
+      border: 1px solid rgba(255, 231, 181, 0.24);
+      border-radius: 12px;
+      box-shadow: 0 12px 36px rgba(24, 39, 36, 0.22);
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 4px;
+      color: #e4b968;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.19em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(19px, 3vw, 27px);
+      line-height: 1.08;
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: rgba(248, 234, 208, 0.72);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    #export {
+      position: fixed;
+      right: 20px;
+      top: 20px;
+      z-index: 20;
+      min-width: 154px;
+      padding: 13px 19px;
+      color: #17343a;
+      background: linear-gradient(180deg, #f5d48b, #dca84e);
+      border: 0;
+      border-radius: 11px;
+      box-shadow: 0 9px 25px rgba(65, 48, 20, 0.28);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: 0.025em;
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+
+    #export:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+    }
+
+    #export:active {
+      transform: translateY(0);
+    }
+
+    #export:disabled {
+      cursor: wait;
+      filter: grayscale(0.45);
+      opacity: 0.7;
+    }
+
+    #status {
+      position: fixed;
+      right: 20px;
+      top: 72px;
+      z-index: 20;
+      padding: 8px 12px;
+      color: #f8ead0;
+      background: rgba(35, 48, 48, 0.84);
+      border-radius: 8px;
+      font-size: 11px;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: opacity 180ms ease, transform 180ms ease;
+      pointer-events: none;
+    }
+
+    #status.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hint {
+      position: fixed;
+      left: 50%;
+      bottom: 17px;
+      z-index: 10;
+      transform: translateX(-50%);
+      padding: 8px 13px;
+      color: rgba(42, 55, 53, 0.74);
+      background: rgba(255, 255, 255, 0.56);
+      border: 1px solid rgba(31, 52, 53, 0.12);
+      border-radius: 999px;
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        padding: 12px 14px;
+      }
+
+      .subtitle { display: none; }
+
+      #export {
+        top: auto;
+        right: 12px;
+        bottom: 48px;
+      }
+
+      #status {
+        top: auto;
+        right: 12px;
+        bottom: 100px;
+      }
+
+      .hint {
+        bottom: 12px;
+        font-size: 10px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/vendor/three/build/three.module.js",
+        "three/addons/": "/vendor/three/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div class="panel">
+    <div class="eyebrow">Procedural Godot Asset</div>
+    <h1>Babylonian Market</h1>
+    <div class="subtitle">
+      A rich low-poly riverside market with animated trade, palms, reeds,
+      flowing water, drifting clouds, and a looping eight-second cycle.
+    </div>
+  </div>
+
+  <button id="export" type="button">Export animated GLB</button>
+  <div id="status"></div>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and preview
+    // -------------------------------------------------------------------------
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("export");
+    const status = document.getElementById("status");
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdce9e4);
+    scene.fog = new THREE.Fog(0xdce9e4, 25, 43);
+
+    const camera = new THREE.PerspectiveCamera(
+      39,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(11.8, 8.8, 14.7);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.35, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 8;
+    controls.maxDistance = 30;
+    controls.maxPolarAngle = Math.PI * 0.47;
+    controls.update();
+
+    const hemisphere = new THREE.HemisphereLight(0xd9f1f2, 0x856146, 2.15);
+    scene.add(hemisphere);
+
+    const sun = new THREE.DirectionalLight(0xffe2af, 3.15);
+    sun.position.set(-7, 12, 8);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -11;
+    sun.shadow.camera.right = 11;
+    sun.shadow.camera.top = 11;
+    sun.shadow.camera.bottom = -11;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 32;
+    sun.shadow.bias = -0.00035;
+    sun.shadow.normalBias = 0.025;
+    scene.add(sun);
+
+    const fill = new THREE.DirectionalLight(0x8ec9d5, 0.8);
+    fill.position.set(8, 5, -7);
+    scene.add(fill);
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "BabylonianMarketDiorama";
+    scene.add(assetRoot);
+
+    // -------------------------------------------------------------------------
+    // Materials and modeling helpers
+    // -------------------------------------------------------------------------
+
+    function makeMaterial(color, roughness = 0.82, metalness = 0, extra = {}) {
+      return new THREE.MeshStandardMaterial({
+        color,
+        roughness,
+        metalness,
+        flatShading: true,
+        ...extra
+      });
+    }
+
+    const M = {
+      earth: makeMaterial(0x76513a),
+      earthTop: makeMaterial(0x8d6848),
+      brickA: makeMaterial(0xc7874e),
+      brickB: makeMaterial(0xd59b61),
+      brickC: makeMaterial(0xb97343),
+      brickD: makeMaterial(0xdfa86c),
+      mortar: makeMaterial(0x754932),
+      blue: makeMaterial(0x246c88),
+      blueLight: makeMaterial(0x347f98),
+      blueDark: makeMaterial(0x184d66),
+      gold: makeMaterial(0xd9a33e, 0.46, 0.34),
+      red: makeMaterial(0xb53e35),
+      cream: makeMaterial(0xe7c98b),
+      green: makeMaterial(0x4d7c49),
+      leaf: makeMaterial(0x3f7749, 0.9, 0, { side: THREE.DoubleSide }),
+      leafLight: makeMaterial(0x668e4e, 0.9, 0, { side: THREE.DoubleSide }),
+      wood: makeMaterial(0x68442d),
+      woodLight: makeMaterial(0x98663e),
+      skin: makeMaterial(0xa96743),
+      skinDark: makeMaterial(0x8d5137),
+      black: makeMaterial(0x292724),
+      burlap: makeMaterial(0xc7a568),
+      woven: makeMaterial(0xbd8449),
+      darkWood: makeMaterial(0x493023),
+      water: makeMaterial(0x28b9b0, 0.25, 0.08, {
+        transparent: true,
+        opacity: 0.78,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      }),
+      waterLight: makeMaterial(0x62d5ca, 0.3, 0.05, {
+        transparent: true,
+        opacity: 0.7,
+        depthWrite: false,
+        emissive: 0x0b5d59,
+        emissiveIntensity: 0.25
+      }),
+      current: makeMaterial(0x83e5d5, 0.3, 0.05, {
+        emissive: 0x3bc4b6,
+        emissiveIntensity: 0.45,
+        depthWrite: false
+      }),
+      lantern: makeMaterial(0xffc765, 0.4, 0, {
+        emissive: 0xff9d32,
+        emissiveIntensity: 1.6
+      })
+    };
+
+    const BASE_Y = 0.08;
+
+    function group(parent, position = [0, 0, 0], name = "Group") {
+      const g = new THREE.Group();
+      g.position.set(...position);
+      g.name = name;
+      parent.add(g);
+      return g;
+    }
+
+    function mesh(parent, geometry, material, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1], name = "Mesh") {
+      const m = new THREE.Mesh(geometry, material);
+      m.position.set(...position);
+      m.rotation.set(...rotation);
+      m.scale.set(...scale);
+      m.name = name;
+      m.castShadow = true;
+      m.receiveShadow = true;
+      parent.add(m);
+      return m;
+    }
+
+    function box(parent, size, position, material, rotation = [0, 0, 0], name = "Box") {
+      return mesh(
+        parent,
+        new THREE.BoxGeometry(...size),
+        material,
+        position,
+        rotation,
+        [1, 1, 1],
+        name
+      );
+    }
+
+    function cylinder(parent, topRadius, bottomRadius, height, position, material, radialSegments = 8, rotation = [0, 0, 0], name = "Cylinder") {
+      return mesh(
+        parent,
+        new THREE.CylinderGeometry(topRadius, bottomRadius, height, radialSegments),
+        material,
+        position,
+        rotation,
+        [1, 1, 1],
+        name
+      );
+    }
+
+    function ico(parent, radius, position, material, scale = [1, 1, 1], name = "Rock") {
+      return mesh(
+        parent,
+        new THREE.IcosahedronGeometry(radius, 0),
+        material,
+        position,
+        [0, 0, 0],
+        scale,
+        name
+      );
+    }
+
+    function torus(parent, radius, tube, position, material, rotation = [0, 0, 0], name = "Ring") {
+      return mesh(
+        parent,
+        new THREE.TorusGeometry(radius, tube, 4, 12),
+        material,
+        position,
+        rotation,
+        [1, 1, 1],
+        name
+      );
+    }
+
+    function cylinderBetween(parent, a, b, radiusA, radiusB, material, radialSegments = 8, name = "Stick") {
+      const start = new THREE.Vector3(...a);
+      const end = new THREE.Vector3(...b);
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+      const geometry = new THREE.CylinderGeometry(
+        radiusB,
+        radiusA,
+        length,
+        radialSegments
+      );
+      const m = mesh(
+        parent,
+        geometry,
+        material,
+        start.clone().add(end).multiplyScalar(0.5).toArray(),
+        [0, 0, 0],
+        [1, 1, 1],
+        name
+      );
+      m.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return m;
+    }
+
+    function makePot(parent, position, colorMaterial, scale = 1) {
+      const g = group(parent, position, "Pot");
+      g.scale.setScalar(scale);
+
+      const points = [
+        new THREE.Vector2(0.16, 0),
+        new THREE.Vector2(0.28, 0.12),
+        new THREE.Vector2(0.32, 0.36),
+        new THREE.Vector2(0.25, 0.52),
+        new THREE.Vector2(0.28, 0.59)
+      ];
+
+      mesh(g, new THREE.LatheGeometry(points, 10), colorMaterial, [0, 0, 0], [0, 0, 0], [1, 1, 1], "PotBody");
+      torus(g, 0.265, 0.035, [0, 0.58, 0], M.cream, [Math.PI / 2, 0, 0], "PotRim");
+      return g;
+    }
+
+    function makeBasket(parent, position, scale = 1) {
+      const g = group(parent, position, "Basket");
+      g.scale.setScalar(scale);
+
+      mesh(
+        g,
+        new THREE.CylinderGeometry(0.4, 0.3, 0.34, 8, 1, true),
+        M.woven,
+        [0, 0.17, 0],
+        [0, 0, 0],
+        [1, 1, 1],
+        "WovenBody"
+      );
+
+      torus(g, 0.39, 0.045, [0, 0.34, 0], M.woodLight, [Math.PI / 2, 0, 0], "BasketRim");
+      torus(g, 0.31, 0.025, [0, 0.12, 0], M.woodLight, [Math.PI / 2, 0, 0], "BasketBand");
+
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2;
+        box(
+          g,
+          [0.035, 0.32, 0.06],
+          [Math.cos(angle) * 0.36, 0.18, Math.sin(angle) * 0.36],
+          M.woodLight,
+          [0, -angle, 0.08],
+          "BasketVertical"
+        );
+      }
+
+      return g;
+    }
+
+    function makeSack(parent, position, scale = 1) {
+      const g = group(parent, position, "GrainSack");
+      g.scale.setScalar(scale);
+
+      ico(g, 0.42, [0, 0.35, 0], M.burlap, [0.85, 1.15, 0.82], "SackBody");
+      cylinder(g, 0.12, 0.2, 0.2, [0, 0.72, 0], M.burlap, 7, [0, 0, 0], "SackTie");
+      torus(g, 0.17, 0.025, [0, 0.63, 0], M.wood, [Math.PI / 2, 0, 0], "SackBand");
+      return g;
+    }
+
+    function makeJar(parent, position, colorMaterial, scale = 1) {
+      const g = group(parent, position, "Jar");
+      g.scale.setScalar(scale);
+
+      const points = [
+        new THREE.Vector2(0.12, 0),
+        new THREE.Vector2(0.2, 0.08),
+        new THREE.Vector2(0.22, 0.32),
+        new THREE.Vector2(0.16, 0.45),
+        new THREE.Vector2(0.14, 0.52)
+      ];
+
+      mesh(g, new THREE.LatheGeometry(points, 8), colorMaterial, [0, 0, 0], [0, 0, 0], [1, 1, 1], "JarBody");
+      cylinder(g, 0.15, 0.15, 0.06, [0, 0.54, 0], M.gold, 8, [0, 0, 0], "JarLid");
+      return g;
+    }
+
+    function makeBottle(parent, position, colorMaterial, scale = 1) {
+      const g = group(parent, position, "Bottle");
+      g.scale.setScalar(scale);
+
+      const points = [
+        new THREE.Vector2(0.1, 0),
+        new THREE.Vector2(0.16, 0.08),
+        new THREE.Vector2(0.15, 0.32),
+        new THREE.Vector2(0.09, 0.42),
+        new THREE.Vector2(0.09, 0.5)
+      ];
+
+      mesh(g, new THREE.LatheGeometry(points, 7), colorMaterial, [0, 0, 0], [0, 0, 0], [1, 1, 1], "BottleBody");
+      cylinder(g, 0.065, 0.065, 0.12, [0, 0.56, 0], M.gold, 7, [0, 0, 0], "BottleNeck");
+      return g;
+    }
+
+    function makeRug(parent, position, rotationY = 0, scale = 1) {
+      const g = group(parent, position, "WovenRug");
+      g.rotation.y = rotationY;
+      g.scale.setScalar(scale);
+
+      box(g, [1.42, 0.035, 0.92], [0, 0, 0], M.cream, [0, 0, 0], "RugBase");
+      box(g, [1.3, 0.018, 0.07], [0, 0.026, -0.41], M.red, [0, 0, 0], "RugBorder");
+      box(g, [1.3, 0.018, 0.07], [0, 0.026, 0.41], M.blueDark, [0, 0, 0], "RugBorder");
+      for (let i = -3; i <= 3; i++) {
+        box(g, [0.045, 0.018, 0.72], [i * 0.17, 0.027, 0], i % 2 === 0 ? M.red : M.blueDark, [0, 0, 0], "RugStripe");
+      }
+      return g;
+    }
+
+    function makeScale(parent) {
+      const g = group(parent, [-0.95, 1.55, -0.35], "BalanceScale");
+
+      cylinder(g, 0.32, 0.38, 0.12, [0, 0, 0], M.gold, 10, [0, 0, 0], "ScaleBase");
+      cylinderBetween(g, [0, 0.08, 0], [0, 1.25, 0], 0.025, 0.025, M.gold, 6, "ScaleRod");
+      cylinderBetween(g, [-0.55, 1.2, 0], [0, 1.25, 0], 0.02, 0.02, M.gold, 6, "ScaleArm");
+      cylinderBetween(g, [0.55, 1.2, 0], [0, 1.25, 0], 0.02, 0.02, M.gold, 6, "ScaleArm");
+
+      mesh(g, new THREE.CylinderGeometry(0.25, 0.16, 0.1, 10, 1, true), M.gold, [-0.55, 1.02, 0], [0, 0, 0], [1, 1, 1], "LeftPan");
+      mesh(g, new THREE.CylinderGeometry(0.25, 0.16, 0.1, 10, 1, true), M.gold, [0.55, 1.02, 0], [0, 0, 0], [1, 1, 1], "RightPan");
+      return g;
+    }
+
+    function makeSign(parent, position, rays = true) {
+      const g = group(parent, position, "SunSign");
+
+      mesh(g, new THREE.CircleGeometry(0.29, 12), M.gold, [0, 0, 0], [0, 0, 0], [1, 1, 1], "SunDisk");
+      ico(g, 0.07, [0, 0, 0.035], M.blueDark, [1, 1, 0.5], "SunCenter");
+
+      if (rays) {
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI * 2;
+          box(
+            g,
+            [0.055, 0.18, 0.035],
+            [Math.cos(angle) * 0.4, Math.sin(angle) * 0.4, 0],
+            M.gold,
+            [0, -angle, 0],
+            "SunRay"
+          );
+        }
+      }
+
+      return g;
+    }
+
+    // -------------------------------------------------------------------------
+    // Diorama base
+    // -------------------------------------------------------------------------
+
+    const plinth = cylinder(assetRoot, 7.35, 7.7, 0.7, [0, -0.43, 0], M.earth, 12, [0, 0, 0], "DioramaPlinth");
+    plinth.scale.set(1.12, 1, 0.78);
+
+    const terrain = cylinder(assetRoot, 7.35, 7.35, 0.18, [0, -0.02, 0], M.earthTop, 12, [0, 0, 0], "Terrain");
+    terrain.scale.set(1.12, 1, 0.78);
+
+    // Scattered low-poly stones and path fragments.
+    const stoneMaterial = makeMaterial(0x8a7960);
+    for (let i = 0; i < 32; i++) {
+      const angle = i * 2.399;
+      const radius = 5.3 + (i % 5) * 0.48;
+      const x = Math.cos(angle) * radius * 1.06;
+      const z = Math.sin(angle) * radius * 0.72;
+      const size = 0.12 + (i % 4) * 0.035;
+      ico(assetRoot, size, [x, 0.12, z], stoneMaterial, [1.4, 0.55, 1], "TerrainStone");
+    }
+
+    // -------------------------------------------------------------------------
+    // Canal, banks, and animated current glints
+    // -------------------------------------------------------------------------
+
+    const canalCenterX = 0.35;
+    const bankLeft = box(assetRoot, [0.55, 0.28, 8.85], [-0.87, 0.1, 0], M.mortar, [0, 0, 0], "CanalBankLeft");
+    const bankRight = box(assetRoot, [0.55, 0.28, 8.85], [1.47, 0.1, 0], M.mortar, [0, 0, 0], "CanalBankRight");
+    bankLeft.receiveShadow = true;
+    bankRight.receiveShadow = true;
+
+    box(assetRoot, [1.58, 0.045, 8.55], [canalCenterX, 0.19, 0], M.water, [0, 0, 0], "CanalWater");
+
+    const currentGlints = [];
+    const glintCount = 29;
+    const glintWidth = 1.48;
+    const glintLength = 8.25;
+
+    for (let i = 0; i < glintCount; i++) {
+      const angle = (i / glintCount) * Math.PI * 2;
+      const start = new THREE.Vector3(
+        canalCenterX + Math.cos(angle) * (glintWidth * 0.5 - 0.08),
+        0.235,
+        -4.05 + (i / glintCount) * glintLength
+      );
+      const end = start.clone().add(new THREE.Vector3(0, 0, glintLength));
+
+      const glint = box(
+        assetRoot,
+        [0.42, 0.026, 0.29],
+        [start.x, start.y, start.z],
+        M.current,
+        [0, -Math.atan2(end.z - start.z, end.x - start.x), 0],
+        "FlowGlint"
+      );
+      glint.castShadow = false;
+      glint.receiveShadow = false;
+      currentGlints.push({ mesh: glint, start, end, angle });
+    }
+
+    // -------------------------------------------------------------------------
+    // Ancient market house
+    // -------------------------------------------------------------------------
+
+    const market = group(assetRoot, [-3.05, BASE_Y, -0.18], "AncientMarketHouse");
+
+    box(market, [4.65, 0.34, 4.15], [0, 0.17, 0], M.earthTop, [0, 0, 0], "MarketPlatform");
+    box(market, [4.18, 2.72, 0.3], [0, 1.5, -1.78], M.brickA, [0, 0, 0], "MarketBackWall");
+    box(market, [0.3, 2.72, 3.5], [-2.02, 1.5, 0], M.brickC, [0, 0, 0], "MarketLeftWall");
+    box(market, [0.3, 2.72, 3.5], [2.02, 1.5, 0], M.brickB, [0, 0, 0], "MarketRightWall");
+    box(market, [4.18, 1.32, 0.3], [0, 0.73, 1.67], M.brickD, [0, 0, 0], "MarketFrontWall");
+
+    // Horizontal masonry bands and narrow mortar joints.
+    box(market, [4.2, 0.12, 0.35], [0, 0.42, 1.84], M.mortar, [0, 0, 0], "FrontMasonryBand");
+    box(market, [4.2, 0.12, 0.35], [0, 1.05, 1.84], M.mortar, [0, 0, 0], "FrontMasonryBand");
+
+    for (let i = 0; i < 5; i++) {
+      box(market, [0.055, 2.45, 0.04], [-1.65 + i * 0.82, 1.46, 1.845], M.mortar, [0, 0, 0], "FrontMasonryJoint");
+    }
+
+    // Steps.
+    box(market, [2.15, 0.2, 0.48], [0, 0.1, 2.12], M.brickB, [0, 0, 0], "LowerStep");
+    box(market, [1.88, 0.2, 0.42], [0, 0.3, 1.88], M.brickA, [0, 0, 0], "MiddleStep");
+    box(market, [1.6, 0.2, 0.36], [0, 0.5, 1.66], M.brickC, [0, 0, 0], "UpperStep");
+
+    makeSign(market, [0.82, 2.48, 1.87], true);
+
+    // Interior shelving and goods.
+    box(market, [2.5, 0.12, 0.52], [-0.35, 1.16, -1.42], M.wood, [0, 0, 0], "MarketShelf");
+    box(market, [2.5, 0.12, 0.52], [-0.35, 1.72, -1.42], M.wood, [0, 0, 0], "MarketShelf");
+
+    makeJar(market, [-1.25, 1.81, -1.35], M.blueDark, 0.75);
+    makeJar(market, [-0.86, 1.81, -1.35], M.red, 0.72);
+    makeJar(market, [-0.47, 2.17, -1.35], M.gold, 0.68);
+    makeSack(market, [0.55, 1.8, -1.35], 0.72);
+    makeSack(market, [1.0, 1.8, -1.35], 0.66);
+
+    makePot(market, [-1.45, 1.82, 0.12], M.blueDark, 0.78);
+    makePot(market, [-0.45, 1.82, 0.15], M.red, 0.68);
+
+    makeScale(market);
+
+    // Stepped pyramidal roof.
+    const lowerRoof = mesh(
+      market,
+      new THREE.ConeGeometry(3.15, 1.35, 4),
+      M.blue,
+      [0, 3.55, 0],
+      [0, Math.PI / 4, 0],
+      [1, 1, 0.78],
+      "LowerRoof"
+    );
+    lowerRoof.castShadow = true;
+
+    const middleRoof = mesh(
+      market,
+      new THREE.ConeGeometry(2.35, 1.15, 4),
+      M.blueLight,
+      [0, 4.35, 0],
+      [0, Math.PI / 4, 0],
+      [1, 1, 0.78],
+      "MiddleRoof"
+    );
+    middleRoof.castShadow = true;
+
+    const upperRoof = mesh(
+      market,
+      new THREE.ConeGeometry(1.45, 0.9, 4),
+      M.blueDark,
+      [0, 5.1, 0],
+      [0, Math.PI / 4, 0],
+      [1, 1, 0.78],
+      "UpperRoof"
+    );
+    upperRoof.castShadow = true;
+
+    box(market, [4.7, 0.14, 0.38], [0, 3.03, 1.9], M.gold, [0, 0, 0], "RoofTrimFront");
+    box(market, [4.7, 0.14, 0.38], [0, 3.03, -1.9], M.gold, [0, 0, 0], "RoofTrimBack");
+
+    // Side wall details.
+    for (let i = 0; i < 4; i++) {
+      box(market, [0.34, 0.11, 0.08], [0, 0.45 + i * 0.62, 1.855], M.brickC, [0, 0, 0], "FrontBrickJoint");
+    }
+
+    // -------------------------------------------------------------------------
+    // Striped market canopy
+    // -------------------------------------------------------------------------
+
+    const canopy = group(assetRoot, [3.55, BASE_Y, 1.35], "StripedMarketCanopy");
+
+    for (const x of [-1.65, 1.65]) {
+      for (const z of [-1.08, 1.08]) {
+        cylinder(canopy, 0.055, 0.065, 2.78, [x, 1.42, z], M.wood, 7, [0, 0, 0], "CanopyPost");
+      }
+    }
+
+    cylinder(canopy, 0.08, 0.08, 0.8, [0, 2.84, 0], M.woodLight, 8, [0, 0, 0], "CanopyBeam");
+
+    const awningMaterials = [M.red, M.cream, M.blue];
+
+    for (let i = 0; i < 7; i++) {
+      const x = (i - 3) * 0.47;
+      const stripe = box(
+        canopy,
+        [0.45, 0.075, 2.25],
+        [x, 2.84, 0],
+        awningMaterials[i % awningMaterials.length],
+        [0.12, 0, 0],
+        `AwningStripe_${i + 1}`
+      );
+
+      box(
+        canopy,
+        [0.45, 0.35, 0.07],
+        [x, 2.61, 1.13],
+        awningMaterials[i % awningMaterials.length],
+        [0, 0, 0],
+        `AwningValance_${i + 1}`
+      );
+
+      // currentGlints? no.
+    }
+
+    // Counter and goods beneath the canopy.
+    box(canopy, [3.0, 0.9, 0.7], [0, 0.56, -0.28], M.wood, [0, 0, 0], "CanopyCounter");
+
+    makeBasket(canopy, [-0.8, 0.98, 0.42], 0.92);
+    makeJar(canopy, [0.1, 1.0, 0.3], M.blueDark, 0.8);
+    makeSack(canopy, [1.05, 0.98, 0.05], 0.86);
+    makeBottle(canopy, [1.36, 0.98, 0.62], M.green, 0.72);
+    makeScale(canopy);
+
+    // Hanging lanterns.
+    for (const x of [-1.12, 1.12]) {
+      cylinder(canopy, 0.012, 0.012, 0.4, [x, 2.44, 0.68], M.black, 5, [0, 0, 0], "LanternChain");
+      box(canopy, [0.18, 0.3, 0.18], [x, 2.15, 0.68], M.gold, [0, 0, 0], "LanternFrame");
+      ico(canopy, 0.105, [x, 2.15, 0.68], M.lantern, [1, 1.25, 1], "LanternGlow");
+    }
+
+    // -------------------------------------------------------------------------
+    // Temple in the distance
+    // -------------------------------------------------------------------------
+
+    const temple = group(assetRoot, [0.05, BASE_Y, -3.35], "DistantSteppedTemple");
+
+    box(temple, [3.25, 0.28, 2.35], [0, 0.14, 0], M.earthTop, [0, 0, 0], "TempleDais");
+    box(temple, [2.85, 0.25, 2.0], [0, 0.4, 0], M.mortar, [0, 0, 0], "TemplePlinth");
+
+    for (const x of [-1.18, 1.18]) {
+      for (const z of [-0.66, 0.66]) {
+        cylinder(temple, 0.17, 0.21, 1.95, [x, 1.2, z], M.brickC, 7, [0, 0, 0], "TempleColumn");
+        cylinder(temple, 0.25, 0.25, 0.14, [x, 2.18, z], M.gold, 7, [0, 0, 0], "ColumnCap");
+      }
+    }
+
+    box(temple, [2.55, 0.22, 0.62], [0, 0.75, 0.65], M.brickA, [0, 0, 0], "AltarStep");
+    box(temple, [2.2, 0.22, 0.56], [0, 0.96, 0.49], M.brickB, [0, 0, 0], "AltarStep");
+    box(temple, [1.85, 0.18, 0.5], [0, 1.16, 0.32], M.cream, [0, 0, 0], "AltarTable");
+
+    box(temple, [1.55, 0.035, 0.54], [0, 1.265, 0.32], M.blue, [0, 0, 0], "TempleBlueCloth");
+    box(temple, [0.07, 0.05, 0.48], [-0.38, 1.29, 0.32], M.gold, [0, 0, 0], "ClothFold");
+
+    mesh(temple, new THREE.CylinderGeometry(0.27, 0.2, 0.15, 8), M.gold, [0.2, 1.36, 0.32], [0, 0, 0], [1, 1, 1], "OfferingBowl");
+    ico(temple, 0.1, [0.2, 1.45, 0.32], M.lantern, [1, 1, 1], "OfferingGlow");
+
+    const templeRoof = mesh(
+      temple,
+      new THREE.ConeGeometry(1.62, 1.08, 4),
+      M.blueDark,
+      [0, 2.65, 0],
+      [0, Math.PI / 4, 0],
+      [1, 1, 0.78],
+      "TempleRoof"
+    );
+    templeRoof.castShadow = true;
+
+    box(temple, [3.45, 0.12, 2.45], [0, 2.12, 0], M.gold, [0, 0, 0], "TempleRoofTrim");
+
+    // -------------------------------------------------------------------------
+    // Palms, reeds, and low-poly boats
+    // -------------------------------------------------------------------------
+
+    function createLeafGeometry(length, width, droop) {
+      const sections = [
+        { x: 0, w: 0.06, y: 0 },
+        { x: length * 0.24, w: width * 0.78, y: -droop * 0.1 },
+        { x: length * 0.56, w: width * 0.52, y: -droop * 0.34 },
+        { x: length, w: 0.015, y: -droop }
+      ];
+
+      const positions = [];
+      const indices = [];
+
+      for (const s of sections) {
+        positions.push(s.x, s.y, -s.w);
+        positions.push(s.x, s.y, s.w);
+        positions.push(s.x, s.y + 0.055, 0);
+      }
+
+      for (let i = 0; i < sections.length - 1; i++) {
+        const a = i * 3;
+        const b = (i + 1) * 3;
+        indices.push(a, b, a + 1, a + 1, b, b + 1);
+        indices.push(a + 1, b + 1, a + 2, a + 2, b + 1, b + 2);
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    function createPalm(x, z, height, lean, name) {
+      const palm = group(assetRoot, [x, BASE_Y, z], name);
+
+      const points = [
+        [0, 0, 0],
+        [0.08, 0.9, 0.02],
+        [0.16, 1.8, 0.05],
+        [0.25, 2.7, 0.08],
+        [0.35, 3.6, 0.1]
+      ];
+
+      for (let i = 0; i < points.length - 1; i++) {
+        cylinderBetween(palm, points[i], points[i + 1], 0.23 - i * 0.035, 0.2 - i * 0.035, M.wood, 7, "PalmTrunkSegment");
+        ico(palm, 0.21 - i * 0.025, points[i], M.wood, [1, 1, 1], "TrunkJoint");
+      }
+
+      const crown = group(palm, points[points.length - 1], "PalmCrown");
+      palm.rotation.z = lean;
+
+      const leafCount = 7;
+      for (let i = 0; i < leafCount; i++) {
+        const angle = (i / leafCount) * Math.PI * 2;
+        const leafPivot = group(crown, [0, 0, 0], `PalmLeaf_${i + 1}`);
+        leafPivot.rotation.y = angle;
+
+        const leaf = mesh(
+          leafPivot,
+          createLeafGeometry(2.05 + (i % 2) * 0.15, 0.39, 0.72),
+          i % 2 === 0 ? M.leaf : M.leafLight,
+          [0, 0, 0],
+          [0, 0, 0],
+          [1, 1, 1],
+          "SwayingLeaf"
+        );
+        leaf.castShadow = true;
+      }
+
+      for (let i = 0; i < 3; i++) {
+        const angle = (i / 3) * Math.PI * 2;
+        ico(crown, 0.18, [Math.cos(angle) * 0.22, -0.18, Math.sin(angle) * 0.22], M.wood, [1, 1.15, 1], "Coconut");
+      }
+
+      return palm;
+    }
+
+    createPalm(-5.35, -2.42, 5.0, -0.11, "LeftDatePalm");
+    createPalm(5.35, -2.62, 4.65, 0.12, "RightDatePalm");
+
+    function createReeds(x, z, height, name) {
+      const reeds = group(assetRoot, [x, BASE_Y, z], name);
+
+      for (let i = 0; i < 6; i++) {
+        const dx = (i - 2.5) * 0.16;
+        const dz = Math.sin(i * 1.7) * 0.11;
+        const stemHeight = height * (0.78 + (i % 3) * 0.08);
+
+        cylinderBetween(reeds, [dx, 0, dz], [dx * 1.25, stemHeight, dz], 0.025, 0.012, M.leaf, 5, "ReedStem");
+
+        const leaf = mesh(
+          reeds,
+          new THREE.PlaneGeometry(0.11, 0.66),
+          i % 2 ? M.leaf : M.leafLight,
+          [dx * 1.2, stemHeight * 0.56, dz],
+          [0.25, 0, (i % 2 ? 1 : -1) * 0.42],
+          [1, 1, 1],
+          "ReedLeaf"
+        );
+        leaf.material.side = THREE.DoubleSide;
+      }
+
+      cylinder(reeds, 0.055, 0.07, 0.42, [0, height, 0], M.burlap, 6, [0, 0, 0], "ReedHead");
+      return reeds;
+    }
+
+    createReeds(1.48, 3.2, 2.65, "ReedClusterLeft");
+    createReeds(2.85, 3.35, 2.35, "ReedClusterRight");
+    createReeds(-2.95, 2.85, 2.05, "ReedClusterFarLeft");
+
+    function createBoat(x, z, rotation, name) {
+      const boat = group(assetRoot, [x, 0.2, z], name);
+      boat.rotation.y = rotation;
+
+      const sections = [
+        { z: -1.28, w: 0.25, h: 0.31 },
+        { z: -0.62, w: 0.53, h: 0.18 },
+        { z: 0.48, w: 0.53, h: 0.18 },
+        { z: 1.34, w: 0.25, h: 0.32 }
+      ];
+
+      const positions = [];
+      const indices = [];
+
+      for (const s of sections) {
+        positions.push(-s.w, 0.28, s.z);
+        positions.push(s.w, 0.28, s.z);
+        positions.push(s.w * 0.66, -0.16, s.z);
+        positions.push(-s.w * 0.66, -0.16, s.z);
+      }
+
+      for (let i = 0; i < sections.length - 1; i++) {
+        const a = i * 4;
+        const b = (i + 1) * 4;
+        indices.push(a, b, a + 1, a + 1, b, b + 1);
+        indices.push(a + 1, b + 1, a + 2, a + 2, b + 1, b + 2);
+      }
+      indices.push(0, 2, 1, 0, 3, 2);
+
+      const last = (sections.length - 1) * 4;
+      indices.push(last, last + 1, last + 2, last, last + 2, last + 3);
+
+      const hullGeometry = new THREE.BufferGeometry();
+      hullGeometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+      hullGeometry.setIndex(indices);
+      hullGeometry.computeVertexNormals();
+
+      mesh(boat, hullGeometry, M.wood, [0, 0, 0], [0, 0, 0], [1, 1, 1], "BoatHull");
+      box(boat, [0.75, 0.07, 1.35], [0, 0.19, -0.05], M.woodLight, [0, 0, 0], "BoatFloor");
+      box(boat, [0.68, 0.08, 0.35], [0, 0.35, -0.55], M.woodLight, [0, 0, 0], "BoatBench");
+      cylinderBetween(boat, [-0.38, 0.31, -0.9], [-0.55, 0.31, 0.95], 0.035, 0.025, M.woodLight, 6, "BoatOar");
+      cylinderBetween(boat, [0.38, 0.31, -0.9], [0.55, 0.31, 0.95], 0.035, 0.025, M.woodLight, 6, "BoatOar");
+
+      return boat;
+    }
+
+    createBoat(2.35, 1.05, -0.18, "NearWaterBoat");
+    createBoat(-1.75, 2.78, 0.22, "FarWaterBoat");
+
+    // -------------------------------------------------------------------------
+    // Stylized village people
+    // -------------------------------------------------------------------------
+
+    const paletteIndices = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    const clothMaterials = [
+      M.red,
+      M.cream,
+      M.blue,
+      M.green,
+      M.gold,
+      M.cream
+    ];
+
+    function createArm(parent, side) {
+      const arm = group(parent, [side * 0.3, 0.36, 0], side < 0 ? "LeftArm" : "RightArm");
+
+      cylinder(arm, 0.105, 0.085, 0.54, [0, -0.27, 0], M.skin, 7, [0, 0, 0], "ArmSegment");
+      ico(arm, 0.105, [0, -0.56, 0], M.skin, [0.9, 1.15, 0.9], "Hand");
+      return arm;
+    }
+
+    function createPerson(index, x, z, scale, paletteIndex, walking, gesturing) {
+      const person = group(assetRoot, [x, BASE_Y, z], `Village_${String(index + 1).padStart(2, "0")}`);
+      person.scale.setScalar(scale);
+
+      const cloth = clothMaterials[paletteIndex % clothMaterials.length];
+      const skin = index % 3 === 0 ? M.skinDark : M.skin;
+
+      // Legs.
+      for (const side of [-1, 1]) {
+        const leg = group(person, [side * 0.16, 1.18, 0], side < 0 ? "LeftLeg" : "RightLeg");
+        cylinder(leg, 0.13, 0.16, 0.61, [0, -0.3, 0], skin, 7, [0, 0, 0], "LegSegment");
+        box(leg, [0.25, 0.17, 0.36], [0, -0.64, 0.08], M.black, [0, 0, 0], "Boot");
+      }
+
+      // Torso and apron.
+      const torso = group(person, [0, 1.48, 0], "Torso");
+      cylinder(torso, 0.27, 0.22, 0.77, [0, 0, 0], cloth, 7, [0, 0, 0], "Tunic");
+      box(torso, [0.37, 0.58, 0.045], [0, -0.05, 0.215], M.cream, [0, 0, 0], "Apron");
+      torus(torso, 0.235, 0.024, [0, -0.23, 0], M.wood, [Math.PI / 2, 0, 0], "Sash");
+
+      // Head and simple facial details.
+      const head = group(torso, [0, 0.63, 0], "Head");
+      mesh(head, new THREE.IcosahedronGeometry(0.235, 1), skin, [0, 0, 0], [0, 0, 0], [1, 1.08, 0.92], "Face");
+
+      mesh(
+        head,
+        new THREE.SphereGeometry(0.245, 8, 4, 0, Math.PI * 2, 0, Math.PI * 0.56),
+        M.black,
+        [0, 0.035, -0.005],
+        [0, 0, 0],
+        [1, 1, 0.95],
+        "HairCap"
+      );
+      ico(head, 0.035, [0, -0.03, 0.225], M.black, [0.65, 1, 0.55], "Nose");
+
+      for (const side of [-1, 1]) {
+        ico(head, 0.025, [side * 0.085, 0.025, 0.205], M.black, [1, 1, 0.45], "Eye");
+        ico(head, 0.06, [side * 0.23, 0, 0], skin, [0.65, 1, 0.8], "Ear");
+      }
+
+      // Arms.
+      const armLeft = createArm(person, -1);
+      const armRight = createArm(person, 1);
+
+      if (walking) {
+        const swing = Math.sin(phase + t * Math.PI * 2 / 2);
+        legLeft.quaternion.setFromEuler(new THREE.Euler(0, 0, 0.56 * swing));
+        legRight.quaternion.setFromEuler(new THREE.Euler(0, 0, -0.56 * swing));
+        armLeft.quaternion.setFromEuler(new THREE.Euler(0.08 + swing * 0.18, 0, 0.08 + swing * 0.28));
+        armRight.quaternion.setFromEuler(new THREE.Euler(0.08 - swing * 0.18, 0, -0.08 - swing * 0.28));
+        head.quaternion.setFromEuler(new THREE.Euler(0.025 * swing, 0.055 * swing, 0.025 * swing));
+      } else if (gesturing) {
+        const gestureTimes = [0, 0.65, 0.82, 1.05, 2.55, 2.72, 2.95, 4, 5, 6, 7, 8];
+        const armValues = [];
+
+        for (const time of gestureTimes) {
+          let euler;
+          if (time >= 0.82 && time <= 1.05) {
+            euler = new THREE.Euler(-1.15, 0, 0);
+          } else if (time > 1.05 && time <= 2.55) {
+            euler = new THREE.Euler(-0.18, 0, 0);
+          } else {
+            euler = new THREE.Euler(0.08, 0, 0);
+          }
+          armValues.push(euler.clone());
+        }
+
+        armLeft.quat.copy(armValues[0]);
+        armRight.quat.copy(armValues[armValues.length - 1]);
+        head.quaternion.setFromEuler(new THREE.Euler(0.04, -0.08, 0.05));
+      }
+
+      return person;
+    }
+
+    const village = [
+      [-5.0, 3.2, 0.95, 1, false, false],
+      [-4.65, 4.2, 1.03, 2, false, false],
+      [-2.5, 3.5, 0.9, 3, false, false],
+      [-0.55, 3.9, 1.0, 4, false, false],
+      [0.75, 3.7, 0.94, 5, false, false],
+      [2.3, 3.1, 1.02, 1, false, false],
+      [3.55, 2.0, 0.92, 2, false, false],
+      [4.75, 0.25, 1.03, 3, false, false],
+      [-5.05, -1.15, 0.9, 4, false, false],
+      [-1.9, -3.8, 1.0, 5, false, false],
+      [0.5, -4.4, 0.94, 0, false, false],
+      [2.0, -4.2, 1.02, 1, false, false],
+      [4.65, 1.45, 0.95, 2, false, false],
+      [-0.8, 2.35, 1.03, 3, false, false],
+      [2.95, 2.35, 0.91, 5, false, false]
+    ];
+
+    let personIndex = 0;
+    for (const [x, z, scale, palette, walking, gesturing] of village) {
+      createPerson(personIndex, x, z, scale, palette, walking, gesturing);
+      personIndex++;
+    }
+
+    // -------------------------------------------------------------------------
+    // Bake the entire diorama as one GLTF animation
+    // -------------------------------------------------------------------------
+
+    const animationDuration = 8;
+    const stepCount = 32;
+    const times = Array.from({ length: stepCount }, (_, i) => i * (animationDuration / (stepCount - 1)));
+
+    const tracks = [];
+
+    // Diagnostic serialization guards: retain the model-authored curves, skip invalid ones.
+    function quaternionTrack(object, evaluator) {
+      if (!object?.isObject3D) return;
+      try {
+        const values = times.flatMap(time => {
+          const value = evaluator(time);
+          return value.isQuaternion ? value.toArray() : new THREE.Quaternion().setFromEuler(value).toArray();
+        });
+        if (values.every(Number.isFinite)) tracks.push(new THREE.QuaternionKeyframeTrack(`${object.uuid}.quaternion`, times, values));
+      } catch (error) { console.warn('Skipped invalid model-authored quaternion curve', object.name, error.message); }
+    }
+    function vectorTrack(object, evaluator) {
+      if (!object?.isObject3D) return;
+      try {
+        const values = times.flatMap(time => evaluator(time).toArray());
+        if (values.every(Number.isFinite)) tracks.push(new THREE.VectorKeyframeTrack(`${object.uuid}.position`, times, values));
+      } catch (error) { console.warn('Skipped invalid model-authored position curve', object.name, error.message); }
+    }
+
+    for (let i = 0; i < currentGlints.length; i++) {
+      const { mesh, start, end, angle } = currentGlints[i];
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+      const directionUnit = direction.clone().normalize();
+
+      const values = times.map((time) => {
+        const t = time / animationDuration;
+        const wrapped = Math.floor(t * glintCount) % glintCount;
+        const localT = (wrapped / glintCount) * length;
+        const nextWrapped = (wrapped + 1) % glintCount;
+        const nextLocalT = ((nextWrapped / glintCount) * length) % length;
+
+        const p0 = start.clone().addScaledVector(directionUnit, -localT);
+        const p1 = start.clone().addScaledVector(directionUnit, nextLocalT);
+        return { p0, p1 };
+      });
+
+      const positions = [];
+      for (const value of values) {
+        positions.push(value.p0.x, value.p0.y, value.p0.z, value.p1.x, value.p1.y, value.p1.z);
+      }
+      tracks.push(new THREE.VectorKeyframeTrack(`${mesh.name}.position`, times, positions));
+
+      quaternionTrack(mesh, (time) => {
+        const euler = new THREE.Euler(0, -angle, 0);
+        return new THREE.Quaternion().setFromEuler(euler);
+      });
+    }
+
+    // Water and current motion.
+    for (let i = 0; i < village.length; i++) {
+      const spec = village[i];
+      const person = assetRoot.getObjectByName(`Village_${String(i + 1).padStart(2, "0")}`);
+      const walking = spec[4], gesturing = spec[5];
+      person.torso = person.getObjectByName("Torso"); person.head = person.getObjectByName("Head");
+      person.legLeft = person.getObjectByName("LeftLeg"); person.legRight = person.getObjectByName("RightLeg");
+      person.armLeft = person.getObjectByName("LeftArm"); person.armRight = person.getObjectByName("RightArm");
+      const phase = personIndex * 1.37;
+
+      vectorTrack(person, (time) => {
+        const t = time / animationDuration;
+        return new THREE.Vector3(
+          person.position.x + Math.sin(phase + t * Math.PI * 2) * 0.025,
+          BASE_Y + Math.sin(phase + t * Math.PI * 4) * 0.018,
+          person.position.z + Math.sin(phase + t * Math.PI * 2 + 0.7) * 0.035
+        );
+      });
+
+      quaternionTrack(person.torso, (time) => {
+        const t = time / animationDuration;
+        return new THREE.Euler(
+          Math.sin(phase + t * Math.PI * 2) * 0.025,
+          Math.sin(phase + t * Math.PI * 2 + 0.6) * 0.055,
+          Math.sin(phase + t * Math.PI * 2 + 1.1) * 0.028
+        );
+      });
+
+      quaternionTrack(person.head, (time) => {
+        const t = time / animationDuration;
+        return new THREE.Euler(
+          Math.sin(phase + t * Math.PI * 2 + 0.4) * 0.035,
+          Math.sin(phase + t * Math.PI * 2 + 1.2) * 0.065,
+          Math.cos(phase + t * Math.PI * 2) * 0.035
+        );
+      });
+
+      if (walking) {
+        const legTrackTimes = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+
+        quaternionTrack(person.legLeft, (time) => {
+          const t = time / animationDuration;
+          return new THREE.Euler(0, 0, 0.55 * Math.sin(phase + t * Math.PI * 2));
+        });
+        quaternionTrack(person.legRight, (time) => {
+          const t = time / animationDuration;
+          return new THREE.Euler(0, 0, -0.55 * Math.sin(phase + t * Math.PI * 2));
+        });
+
+        quaternionTrack(person.armLeft, (time) => {
+          const t = time / animationDuration;
+          return new THREE.Euler(0.08 + Math.sin(phase + t * Math.PI * 2) * 0.18, 0, 0.08 + Math.sin(phase + t * Math.PI * 2) * 0.28);
+        });
+        quaternionTrack(person.armRight, (time) => {
+          const t = time / animationDuration;
+          return new THREE.Euler(0.08 - Math.sin(phase + t * Math.PI * 2) * 0.18, 0, -0.08 - Math.sin(phase + t * Math.PI * 2) * 0.28);
+        });
+
+        // Duplicate leg tracks omitted; identical tracks are already defined above.
+      } else if (gesturing) {
+        const gestureTimes = [0, 0.65, 0.82, 1.05, 2.55, 2.72, 2.95, 4, 5, 6, 7, 8];
+        const armValues = [];
+
+        for (const time of gestureTimes) {
+          let euler;
+          if (time >= 0.82 && time <= 1.05) {
+            euler = new THREE.Euler(-1.15, 0, 0);
+          } else if (time > 1.05 && time <= 2.55) {
+            euler = new THREE.Euler(-0.18, 0, 0);
+          } else {
+            euler = new THREE.Euler(0.08, 0, 0);
+          }
+          armValues.push(euler.clone());
+        }
+
+        armLeft.quat.copy(armValues[0]);
+        armRight.quat.copy(armValues[armValues.length - 1]);
+        head.quaternion.setFromEuler(new THREE.Euler(0.04, -0.08, 0.05));
+      }
+    }
+
+    // Canopy cloth sway.
+    for (let i = 0; i < 7; i++) {
+      const stripe = canopy.getObjectByName(`AwningStripe_${i + 1}`);
+      const baseX = 0.12;
+      const phase = i * 0.8;
+
+      quaternionTrack(stripe, (time) => {
+        const t = time / animationDuration;
+        return new THREE.Euler(
+          baseX + Math.sin(phase + t * Math.PI * 2) * 0.025,
+          Math.sin(phase + t * Math.PI * 2) * 0.018,
+          Math.cos(phase + t * Math.PI * 2) * 0.018
+        );
+      });
+    }
+
+    // Palm trunk and leaf motion.
+    for (const palm of [createPalm(-5.35, -2.42, 5.0, -0.11, "LeftDatePalm"), createPalm(5.35, -2.62, 4.65, 0.12, "RightDatePalm") ] ) {
+      const baseQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, 0, palm.rotation.z));
+
+      quaternionTrack(palm, (time) => {
+        const t = time / animationDuration;
+        const sway = new THREE.Euler(
+          Math.sin(phase + t * Math.PI * 2) * 0.035,
+          Math.sin(phase + t * Math.PI * 2 + 0.8) * 0.025,
+          palm.rotation.z + Math.sin(phase + t * Math.PI * 2 + 0.4) * 0.035
+        );
+        return baseQuaternion.clone().multiply(sway);
+      });
+
+      for (let i = 0; i < 7; i++) {
+        const leaf = canopy.getObjectByName(`PalmLeaf_${i + 1}`);
+        const baseAngle = (i / 7) * Math.PI * 2;
+        const baseQuaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, baseAngle, 0));
+
+        quaternionTrack(leaf, (time) => {
+          const t = time / animationDuration;
+          const sway = new THREE.Euler(
+            Math.sin(phase + t * Math.PI * 2 + i * 0.4) * 0.04,
+            0,
+            0.06 + Math.sin(phase + t * Math.PI * 2 + i * 0.7) * 0.075
+          );
+          return baseQuaternion.clone().multiply(sway);
+        });
+      }
+    }
+
+    // Reed motion.
+    for (const reeds of [createReeds(1.48, 3.2, 2.65, "ReedClusterLeft"), createReeds(2.85, 3.35, 2.35, "ReedClusterRight") ] ) {
+      const baseQuaternion = new THREE.Quaternion().setFromEuler(reeds.rotation.z);
+
+      quaternionTrack(reeds, (time) => {
+        const t = time / animationDuration;
+        const sway = new THREE.Euler(
+          Math.sin(phase + t * Math.PI * 2) * 0.035,
+          0,
+          reeds.rotation.z + Math.sin(phase + t * Math.PI * 2) * 0.065
+        );
+        return baseQuaternion.clone().multiply(sway);
+      });
+    }
+
+    // Boat bob and roll.
+    for (const boat of [createBoat(2.35, 1.05, -0.18, "NearWaterBoat"), createBoat(-1.75, 2.78, 0.22, "FarWaterBoat") ] ) {
+      const baseQuaternion = boat.quaternion.clone();
+
+      quaternionTrack(boat, (time) => {
+        const t = time / animationDuration;
+        const roll = new THREE.Euler(
+          Math.sin(phase + t * Math.PI * 2) * 0.035,
+          0,
+          Math.cos(phase + t * Math.PI * 2) * 0.045
+        );
+        return baseQuaternion.clone().multiply(roll);
+      });
+
+      vectorTrack(boat, (time) => {
+        const t = time / animationDuration;
+        return new THREE.Vector3(
+          boat.position.x,
+          BASE_Y + Math.sin(phase + t * Math.PI * 2) * 0.055,
+          boat.position.z
+        );
+      });
+    }
+
+    // Cloud drift.
+    for (let cloudIndex = 0; cloudIndex < 6; cloudIndex++) {
+      const cloud = group(assetRoot, [
+        -3.8 + cloudIndex * 2.45,
+        6.4 + (cloudIndex % 2) * 0.7,
+        -4.8 + (cloudIndex % 3) * 1.55
+      ], `DriftingCloud_${cloudIndex + 1}`);
+
+      const puffMaterials = [M.cream, M.white ?? M.cream];
+      const puffCount = 4 + (cloudIndex % 2);
+
+      for (let i = 0; i < puffCount; i++) {
+        const angle = (i / puffCount) * Math.PI * 2;
+        const radius = 0.22 + (i % 2) * 0.12;
+        ico(
+          cloud,
+          0.38 + (i % 2) * 0.12,
+          [Math.cos(angle) * radius, 0, Math.sin(angle) * radius],
+          puffMaterials[i % 2],
+          [1.25, 0.72, 0.9],
+          "CloudPuff"
+        );
+      }
+
+      cloud.scale.setScalar(0.9 + (cloudIndex % 3) * 0.12);
+
+      vectorTrack(cloud, (time) => {
+        const t = time / animationDuration;
+        const phase = cloudIndex * 1.37;
+        return new THREE.Vector3(
+          cloud.position.x + Math.sin(phase + t * Math.PI * 2) * 0.14,
+          cloud.position.y + Math.sin(phase + t * Math.PI * 2 + 0.5) * 0.12,
+          cloud.position.z + Math.cos(phase + t * Math.PI * 2) * 0.16
+        );
+      });
+
+      quaternionTrack(cloud, (time) => {
+        const t = time / animationDuration;
+        return new THREE.Quaternion().setFromEuler(new THREE.Euler(
+          Math.sin(phase + t * Math.PI * 2) * 0.025,
+          Math.sin(phase + t * Math.PI * 2) * 0.09,
+          Math.cos(phase + t * Math.PI * 2) * 0.025
+        ));
+      });
+    }
+
+    const validTracks = tracks.filter(track => {
+      const expected = track.name.endsWith('.quaternion') ? 4 : 3;
+      return track.getValueSize() === expected && Array.from(track.values).every(Number.isFinite);
+    });
+    const lifeClip = new THREE.AnimationClip("Market_Life", animationDuration, validTracks);
+    const mixer = new THREE.AnimationMixer(assetRoot);
+    const lifeAction = mixer.clipAction(lifeClip);
+    lifeAction.setLoop(THREE.LoopRepeat, Infinity);
+    lifeAction.play();
+
+    // -------------------------------------------------------------------------
+    // Preview loop
+    // -------------------------------------------------------------------------
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = Math.min(clock.getDelta(), 0.05);
+      mixer.update(delta);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // -------------------------------------------------------------------------
+    // GLB export, including the named looping animation
+    // -------------------------------------------------------------------------
+
+    function showStatus(message) {
+      status.textContent = message;
+      status.classList.add("visible");
+      window.clearTimeout(showStatus.timeout);
+      showStatus.timeout = window.setTimeout(() => status.classList.remove("visible"), 3200);
+    }
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting…";
+      showStatus("Building animated binary GLB…");
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          const blob = new Blob([result], { type: "model/gltf-binary" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "ancient_babylonian_market.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export animated GLB";
+          showStatus("GLB exported with the Market_Life animation.");
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          exportButton.textContent = "Export animated GLB";
+          showStatus("Export failed. See the browser console for details.");
+        },
+        {
+          binary: true,
+          animations: [lifeClip],
+          onlyVisible: true,
+          truncateDrawRange: true,
+          includeCustomExtensions: true
+        }
+      );
+    });
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "date": "2026-11-16",
+  "kind": "frozen-diagnostic-baselines",
+  "status": "both-raw-outputs-failed; displayed exports mechanically repaired",
+  "our_model": {
+    "status": "not-trained",
+    "asset": null,
+    "policy": "Add a separately identified result later; never replace these baselines."
+  },
+  "files": [
+    {
+      "file": "README.md",
+      "bytes": 2095,
+      "sha256": "eac5fc965763bad0f4969a690eba2f2a8aaa0bf011fcd61eb7d303e07eae4f88"
+    },
+    {
+      "file": "ccore-animation-check.json",
+      "bytes": 8233,
+      "sha256": "a27df075a3f901bf5a39abf5aec5a1123885c16b5cc60d6dcea2d0b77a379822"
+    },
+    {
+      "file": "ccore-generated.html",
+      "bytes": 50028,
+      "sha256": "283ca60501b2c62fbc0454a51f312afbf6eab5b68cb221663e2436d795b9f173"
+    },
+    {
+      "file": "ccore-original.html",
+      "bytes": 48865,
+      "sha256": "643da25d478abbd0cfb8a61d5adfe9fb3a0e4ab11f6a046ab5868812b24d02cc"
+    },
+    {
+      "file": "ccore.glb",
+      "bytes": 1769872,
+      "sha256": "bb9a6195c312da43cda721aae3bc6a151ff87625fd7ee6656b44480d2e6444e4"
+    },
+    {
+      "file": "ccore.glb.validation.json",
+      "bytes": 125453,
+      "sha256": "f8eb77c62a11443710d1f12dbbcef256c36336fee2d46a251106500220a43caf"
+    },
+    {
+      "file": "comparison.jpg",
+      "bytes": 110133,
+      "sha256": "dc49ae41ee7bef9624f7039c8d299c7333f08aefb28d07f57adba795a9474a0e"
+    },
+    {
+      "file": "official-qwen.glb",
+      "bytes": 273832,
+      "sha256": "9ed9700ef65e849bc3fb0ec8546d4e10edf72b73a759ffad23d179781f58d3bf"
+    },
+    {
+      "file": "official-qwen.glb.validation.json",
+      "bytes": 21360,
+      "sha256": "8f5accd960d58f7008ed25e29e63d090e050a582ec0f40ef47d0858fd25eed4f"
+    },
+    {
+      "file": "qwen-generated.html",
+      "bytes": 18654,
+      "sha256": "ebec8779e446b00278d62f68f4fad191298930c85ca4157b96b19aeaf6244537"
+    },
+    {
+      "file": "qwen-original.html",
+      "bytes": 20539,
+      "sha256": "85e88b3d9bfba97fda047d925a544cd6aaa24411d6d99aabad83896adb1c204e"
+    }
+  ]
+}

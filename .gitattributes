@@ -1,2 +1,4 @@
 # Preserve exact unified-diff evidence, including original whitespace.
 eval/results/*.patch -whitespace
+# Retain model-generated evidence byte for byte.
+eval/baselines/*/*.html -whitespace

@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Babylonian Marketplace - GLB Exporter</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        #container { width: 100vw; height: 100vh; }
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            pointer-events: auto;
+            border: 1px solid #444;
+        }
+        h1 { margin: 0 0 10px 0; font-size: 18px; color: #d4a373; }
+        p { font-size: 12px; color: #ccc; margin-bottom: 10px; }
+        button {
+            background: #d97706;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background: #b45309; }
+        #loading {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #888;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<div id="ui">
+    <h1>Babylonian Marketplace</h1>
+    <p>Low-poly Aesthetic • Late Afternoon Light • 16 Animated Villagers</p>
+    <button id="exportBtn">Export GLB</button>
+</div>
+
+<div id="loading">Loading Assets...</div>
+
+<!-- Import Maps Polyfill -->
+<script>
+    const importMap = {
+        'imports/*': `https://unpkg.com/three@0.160.0/examples/jsm/`
+    };
+
+    document.head.insertAdjacentHTML("beforeend", `
+        <script type="importmap">
+            {"imports": {"three": "https://unpkg.com/three@0.160.0/build/three.module.js"}}
+        </script>
+    `);
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+    import { createNoise3D } from 'three/addons/math/createNoise3D.js';
+    import { createNoise2D } from 'three/addons/math/createNoise2D.js';
+
+    // --- Configuration ---
+    const CONFIG = {
+        waterColor: 0x00ced1,      // Turquoise
+        skyColorTop: 0xffcc00,     // Sunset yellow
+        skyColorBot: 0xff9900,
+        wallColor: 0xd4a373,       // Ochre mudbrick
+        roofColor: 0x8c7b75,       // Terracotta
+        clothColor: 0x1e3a8a,      // Lapis Blue
+        palmLeavesColor: 0x228b22
+    };
+
+    // --- Procedural Texture Generator ---
+    function createVoxelTexture(color, noiseAmount = 20) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        
+        ctx.fillStyle = '#' + new THREE.Color(color).getHexString();
+        ctx.fillRect(0, 0, 64, 64);
+        
+        // Add noise
+        for (let i = 0; i < 400; i++) {
+            ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.15})`;
+            ctx.fillRect(Math.random() * 64, Math.random() * 64, 2, 2);
+            ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.1})`;
+            ctx.fillRect(Math.random() * 64, Math.random() * 64, 2, 2);
+        }
+        // Add a border
+        ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(0,0,64,64);
+        
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.magFilter = THREE.NearestFilter; // Retro feel
+        return texture;
+    }
+
+    // --- Scene Setup ---
+    const container = document.getElementById('container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(CONFIG.skyColorTop);
+    scene.fog = new THREE.Fog(CONFIG.skyColorBot, 50, 250);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 30, 80);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: false, log: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+    // Lighting
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffaa33, 1.2); // Warm sun
+    dirLight.position.set(50, 60, 30);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 200;
+    dirLight.shadow.camera.left = -50;
+    dirLight.shadow.camera.right = 50;
+    dirLight.shadow.camera.top = 50;
+    dirLight.shadow.camera.bottom = -50;
+    scene.add(dirLight);
+
+    // --- Helpers ---
+    const materialWall = new THREE.MeshStandardMaterial({ map: createVoxelTexture(CONFIG.wallColor), roughness: 0.8 });
+    const materialRoof = new THREE.MeshStandardMaterial({ map: createVoxelTexture(CONFIG.roofColor), roughness: 0.9 });
+    const materialWater = new THREE.MeshStandardMaterial({ color: CONFIG.waterColor, roughness: 0.8 });
+    const materialTemple = new THREE.MeshStandardMaterial({ map: createVoxelTexture(CONFIG.wallColor), metalness: 0.3, roughness: 0.5 });
+    
+    // --- Ground & Water ---
+    // Ground
+    const groundGeo = new THREE.PlaneGeometry(200, 200);
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Water Shader (Simple water flow)
+    const waterGeo = new THREE.PlaneGeometry(40, 100); // Canal width x length
+    const waterMat = new THREE.ShaderMaterial({
+        uniforms: {
+            uTime: { value: 0 },
+            uColor: { value: new THREE.Color(CONFIG.waterColor) }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            uniform float uTime;
+            varying float vY;
+            void main() {
+                vUv = uv;
+                vY = y;
+                vec3 pos = position;
+                // Simple wave
+                pos.z += sin(pos.x * 0.1 + uTime) * 0.5;
+                pos.y += sin(pos.x * 0.2 + uTime * 2.0) * 0.2;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform vec3 uColor;
+            varying vec2 vUv;
+            varying float vY;
+            void main() {
+                float mixColor = mix(vec3(0.0, 0.4, 0.8), vec3(0.8, 0.9, 0.9), vY * 2.0);
+                vec3 finalColor = mix(uColor, mixColor, vY * 1.0);
+                gl_FragColor = vec4(finalColor, 1.0);
+            }
+        `,
+        side: THREE.DoubleSide
+    });
+    const water = new THREE.Mesh(waterGeo, waterMat);
+    water.rotation.x = -Math.PI / 2;
+    water.position.set(0, -0.1, 10);
+    scene.add(water);
+
+    // --- Building Structures ---
+
+    // 1. The Stepped Temple (Back)
+    function buildTemple() {
+        const group = new THREE.Group();
+        const stepWidth = 12;
+        const height = 15;
+        
+        for (let i = 0; i < 5; i++) {
+            const h = height - (i * 3);
+            const w = stepWidth + (i * 2);
+            const geo = new THREE.BoxGeometry(w, h, w);
+            const mesh = new THREE.Mesh(geo, materialTemple);
+            mesh.position.y = i * 3 + h/2;
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            group.add(mesh);
+            // Add some columns
+            for(let j=0; j<2; j++) {
+                const col = new THREE.Mesh(new THREE.BoxGeometry(2, 4, 2), materialTemple);
+                col.position.y = i * 3 + h/2 - 2;
+                col.position.z = (j===0 ? -w/2 : w/2) + 2;
+                group.add(col);
+            }
+        }
+        
+        // Spire
+        const spireGeo = new THREE.CylinderGeometry(2, 1, 8, 8);
+        const spire = new THREE.Mesh(spireGeo, new THREE.MeshStandardMaterial({color: 0xffd700}));
+        spire.position.y = 10;
+        group.add(spire);
+
+        group.position.set(-25, 0, -20);
+        scene.add(group);
+    }
+    buildTemple();
+
+    // 2. The Blue Gateway (Left)
+    function buildGateway() {
+        const group = new THREE.Group();
+        
+        // Base walls
+        const wallGeo = new THREE.BoxGeometry(20, 10, 8);
+        const w1 = new THREE.Mesh(wallGeo, materialWall);
+        w1.position.set(0, 5, -3);
+        const w2 = new THREE.Mesh(wallGeo, materialWall);
+        w2.position.set(0, 5, 3);
+        group.add(w1, w2);
+
+        // Arch
+        const archHeight = 8;
+        const archGeo = new THREE.BoxGeometry(18, archHeight, 1);
+        const arch = new THREE.Mesh(archGeo, new THREE.MeshStandardMaterial({color: 0x0047ab}));
+        arch.position.set(0, archHeight/2, 0);
+        group.add(arch);
+
+        // Pillars
+        const pillarGeo = new THREE.CylinderGeometry(1, 1, 12, 8);
+        const p1 = new THREE.Mesh(pillarGeo, materialWall);
+        p1.position.set(-9, 6, 0);
+        const p2 = new THREE.Mesh(pillarGeo, materialWall);
+        p2.position.set(9, 6, 0);
+        group.add(p1, p2);
+
+        // Blue glazed tiles (decoration)
+        const tileGeo = new THREE.BoxGeometry(4, 2, 0.5);
+        const t1 = new THREE.Mesh(tileGeo, new THREE.MeshStandardMaterial({color: 0x0047ab}));
+        t1.position.set(-5, 2, -3);
+        const t2 = new THREE.Mesh(tileGeo, new THREE.MeshStandardMaterial({color: 0x0047ab}));
+        t2.position.set(5, 2, -3);
+        group.add(t1, t2);
+
+        // Roof
+        const roofGeo = new THREE.ConeGeometry(19, 6, 4);
+        const roof = new THREE.Mesh(roofGeo, materialRoof);
+        roof.position.set(0, 15, 0);
+        group.add(roof);
+
+        group.position.set(-50, 0, 0);
+        scene.add(group);
+    }
+    buildGateway();
+
+    // 3. Houses & Warehouses
+    function buildHouse(x, z, width, depth, floors, type) {
+        const group = new THREE.Group();
+        const w = width;
+        const d = depth;
+        const h = floors * 4;
+        const wallH = 3;
+        
+        // Base
+        const baseGeo = new THREE.BoxGeometry(w, 4, d);
+        const base = new THREE.Mesh(baseGeo, materialWall);
+        base.position.y = 2;
+        base.castShadow = true;
+        base.receiveShadow = true;
+        group.add(base);
+
+        // Stacked blocks
+        for(let i=1; i<floors; i++) {
+            const layerH = 4;
+            const layerGeo = new THREE.BoxGeometry(w, layerH, d);
+            const layer = new THREE.Mesh(layerGeo, type === 'warehouse' ? new THREE.MeshStandardMaterial({color: 0x556b2f}) : materialWall);
+            layer.position.y = i * layerH;
+            layer.castShadow = true;
+            layer.receiveShadow = true;
+            group.add(layer);
+        }
+
+        // Roof
+        const roofGeo = new THREE.ConeGeometry(w * 0.8, 3, 4);
+        const roof = new THREE.Mesh(roofGeo, materialRoof);
+        roof.position.y = h + 1.5;
+        roof.castShadow = true;
+        group.add(roof);
+
+        // Door
+        const doorGeo = new THREE.BoxGeometry(w * 0.3, wallH, 2);
+        const door = new THREE.Mesh(doorGeo, new THREE.MeshStandardMaterial({color: 0x331111}));
+        door.position.set(0, wallH/2, d/2);
+        group.add(door);
+
+        group.position.set(x, 0, z);
+        scene.add(group);
+        return group; // Return for potential customization
+    }
+
+    // Randomize houses
+    const houses = [];
+    for(let i=0; i<8; i++) {
+        const w = Math.random() * 10 + 8;
+        const d = Math.random() * 10 + 8;
+        const f = Math.floor(Math.random() * 3) + 2;
+        const type = Math.random() > 0.5 ? 'warehouse' : 'residential';
+        const house = buildHouse(i * 12, 0, w, d, f, type);
+        houses.push(house);
+    }
+
+    // --- Villagers ---
+    const villagers = [];
+    const villagerCount = 16;
+
+    function createVillager(x, z, speed) {
+        const group = new THREE.Group();
+        
+        // Body
+        const bodyGeo = new THREE.BoxGeometry(1, 1.5, 1);
+        const bodyMat = new THREE.MeshStandardMaterial({ color: CONFIG.clothColor });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.position.y = 0.75;
+        group.add(body);
+
+        // Head
+        const headGeo = new THREE.BoxGeometry(0.6, 0.6, 0.6);
+        const headMat = new THREE.MeshStandardMaterial({ color: 0xffdbac });
+        const head = new THREE.Mesh(headGeo, headMat);
+        head.position.y = 1.9;
+        group.add(head);
+
+        // Cloth (cape)
+        const clothGeo = new THREE.PlaneGeometry(0.4, 1.8);
+        const clothMat = new THREE.MeshStandardMaterial({ color: 0xff0066 }); // vibrant
+        const cloth = new THREE.Mesh(clothGeo, clothMat);
+        cloth.rotation.x = -Math.PI / 2;
+        cloth.position.set(0, 1.8, 0.3);
+        group.add(cloth);
+
+        // Random item
+        const hasItem = Math.random() > 0.5;
+        if(hasItem) {
+            const itemGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
+            const item = new THREE.Mesh(itemGeo, new THREE.MeshStandardMaterial({ color: 0xffa500 }));
+            item.position.set(0, 1.5, 0.8);
+            group.add(item);
+        }
+
+        // Animation Mixers (Simple keyframes)
+        const mixer = new THREE.AnimationMixer(group);
+        
+        // Walk Cycle
+        const walkAction = new THREE.AnimationAction(mixer);
+        walkAction.setLoop(THREE.LoopRepeat);
+        walkAction.setTimeOffset(speed * 60); // Speed multiplier
+        mixer.cloneAction(walkAction); // Clone to prevent conflicts
+        walkAction.isCloned = true;
+
+        // Idle / Look
+        const idleAction = new THREE.AnimationAction(mixer);
+        idleAction.setLoop(THREE.LoopRepeat);
+        mixer.cloneAction(idleAction);
+        idleAction.isCloned = true;
+
+        // Store references for manual manipulation (since we can't load external JSON actions easily)
+        group.userData = { 
+            walkSpeed: speed, 
+            targetX: x, 
+            targetZ: z, 
+            pathIndex: 0, 
+            items: [], 
+            headRotation: Math.random() * Math.PI * 2 
+        };
+
+        group.position.set(x, 0, z);
+        group.castShadow = true;
+        scene.add(group);
+        villagers.push(group);
+    }
+
+    // Generate Villagers on paths
+    const paths = [
+        [-60, -20], [60, -20], // Left/Right edges
+        [0, 60], [0, -60],     // Top/Bottom edges
+        [-30, 30], [30, 30],   // Near center
+        [-30, -30], [30, -30]  // Near center
+    ];
+
+    for(let i=0; i<villagerCount; i++) {
+        const path = paths[i % paths.length];
+        createVillager(path[0], path[1], Math.random() * 0.2 + 0.05);
+    }
+
+    // --- Date Palms & Trees ---
+    function buildTree(x, z) {
+        const group = new THREE.Group();
+        
+        // Trunk
+        const trunkGeo = new THREE.CylinderGeometry(0.5, 0.7, 3, 8);
+        const trunk = new THREE.Mesh(trunkGeo, new THREE.MeshStandardMaterial({color: 0x3d2817}));
+        trunk.position.y = 1.5;
+        group.add(trunk);
+
+        // Leaves (Frustum)
+        const leavesGeo = new THREE.ConeGeometry(3, 6, 8);
+        const leaves = new THREE.Mesh(leavesGeo, new THREE.MeshStandardMaterial({color: CONFIG.palmLeavesColor}));
+        leaves.position.y = 4;
+        leaves.rotation.y = Math.PI/2;
+        group.add(leaves);
+        
+        // Second Leaf Cluster
+        const leaves2 = leaves.clone();
+        leaves2.position.y = 7;
+        leaves2.rotation.z = 0.2;
+        group.add(leaves2);
+
+        group.position.set(x, 0, z);
+        scene.add(group);
+    }
+
+    // Trees
+    buildTree(-40, 10);
+    buildTree(40, 10);
+    buildTree(-10, -50);
+    buildTree(10, -50);
+    
+    // --- Reed Boats ---
+    function buildBoat(x, z) {
+        const group = new THREE.Group();
+        const hullGeo = new THREE.BoxGeometry(4, 0.5, 1);
+        const hull = new THREE.Mesh(hullGeo, new THREE.MeshStandardMaterial({color: 0x8b4513}));
+        hull.position.y = 0.25;
+        group.add(hull);
+        
+        // Canvas
+        const canvasGeo = new THREE.BoxGeometry(3.5, 0.4, 0.6);
+        const canvas = new THREE.Mesh(canvasGeo, new THREE.MeshStandardMaterial({color: 0xcba845}));
+        canvas.position.set(0, 0.5, 0.8);
+        group.add(canvas);
+
+        group.position.set(x, -0.1, z);
+        scene.add(group);
+    }
+
+    buildBoat(-15, 5);
+    buildBoat(15, 5);
+    buildBoat(-20, -10);
+
+    // --- Clouds ---
+    const clouds = [];
+    const cloudGeo = new THREE.BoxGeometry(10, 3, 3);
+    const cloudMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8 });
+    
+    for(let i=0; i<8; i++) {
+        const cloud = new THREE.Mesh(cloudGeo, cloudMat);
+        cloud.position.set((Math.random()-0.5)*200, 40, (Math.random()-0.5)*50);
+        scene.add(cloud);
+        clouds.push(cloud);
+    }
+
+    // --- Main Loop & Logic ---
+    const clock = new THREE.Clock();
+    const exporter = new GLTFExporter();
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        const time = clock.getElapsedTime();
+
+        // Water Flow
+        waterMat.uniforms.uTime.value = time;
+
+        // Clouds
+        clouds.forEach(c => {
+            c.position.x += 0.02;
+            c.position.z -= 0.01;
+            if(c.position.x > 100) c.position.x = -100;
+            if(c.position.z > 50) c.position.z = -50;
+        });
+
+        // Swaying Palms/Cloth
+        villagers.forEach(v => {
+            // Sway cloth
+            v.children[2].rotation.z = Math.sin(time * 2 + v.position.x) * 0.1;
+            
+            // Head bobbing
+            v.children[1].rotation.z = Math.sin(time * 3 + v.userData.pathIndex) * 0.05;
+        });
+
+        // Update Villagers (Simple State Machine)
+        villagers.forEach(v => {
+            const target = v.userData.targetX + (v.userData.pathIndex * 60);
+            
+            // Smooth movement towards target
+            v.position.x += (target - v.position.x) * 0.02;
+            
+            // Walk animation speed variation
+            const speed = v.userData.walkSpeed;
+            const walkAction = v.mixer.actions[0];
+            const idleAction = v.mixer.actions[1];
+            
+            // Randomly switch between walking (moving fast) and idle (looking around)
+            if (Math.random() < 0.01) {
+                // Randomly choose action
+                if(Math.random() > 0.5) {
+                    v.userData.walkSpeed = 0.2;
+                    walkAction.enabled = true;
+                    idleAction.enabled = false;
+                } else {
+                    v.userData.walkSpeed = 0.05;
+                    walkAction.enabled = false;
+                    idleAction.enabled = true;
+                }
+            }
+
+            // Random Head Look
+            v.userData.headRotation = Math.sin(time + v.userData.pathIndex) * 0.5;
+            v.children[1].rotation.z = v.userData.headRotation;
+        });
+
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // --- Export Logic ---
+    const exportBtn = document.getElementById('exportBtn');
+    
+    exportBtn.addEventListener('click', () => {
+        // Temporarily disable lights for export (optional, but cleaner)
+        const originalLight = dirLight.intensity;
+        dirLight.intensity = 0;
+        
+        // Convert to GLB
+        const glbResult = exporter.parse(scene, {
+            binary: true,
+            preserveId: false
+        });
+
+        dirLight.intensity = originalLight;
+
+        const blob = new Blob([glbResult], { type: "application/octet-stream" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'babylon_marketplace.glb';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        // Reset camera for next view
+        camera.position.set(0, 30, 80);
+        camera.lookAt(0,0,0);
+    });
+
+</script>
+</body>
+</html>

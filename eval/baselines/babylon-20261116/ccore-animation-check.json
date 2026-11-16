@@ -1,0 +1,446 @@
+{
+  "summary": {
+    "channels": 87,
+    "nonconstant_channels": 58,
+    "person_roots": 15,
+    "leg_animation_channels": 0,
+    "cloud_animation_channels": 6
+  },
+  "channels": [
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "FlowGlint",
+      "path": "rotation",
+      "nonconstant": false
+    },
+    {
+      "node": "Village_01",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_02",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_03",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_04",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_05",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_06",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_07",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_08",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_09",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_10",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_11",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_12",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_13",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_14",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Village_15",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "Torso",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "Head",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "AwningStripe_1",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "AwningStripe_2",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "AwningStripe_3",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "AwningStripe_4",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "AwningStripe_5",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "AwningStripe_6",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "AwningStripe_7",
+      "path": "rotation",
+      "nonconstant": true
+    },
+    {
+      "node": "DriftingCloud_1",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "DriftingCloud_2",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "DriftingCloud_3",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "DriftingCloud_4",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "DriftingCloud_5",
+      "path": "translation",
+      "nonconstant": true
+    },
+    {
+      "node": "DriftingCloud_6",
+      "path": "translation",
+      "nonconstant": true
+    }
+  ]
+}

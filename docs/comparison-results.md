@@ -23,7 +23,7 @@ Official needed broken import-map bootstrap corrected, two unused nonexistent ad
 
 CCORE needed stray non-code text commented, malformed arrow callbacks and duplicate calls fixed, track value serialization guarded, existing person descriptors bound to existing scene objects, and invalid/nonfinite curves filtered. Skipped curves were not replaced. Its existing geometry, fifteen-person list, movement formulas and walking flags remain. [Official patch](../eval/results/qwen-native-repair.patch) and [CCORE patch](../eval/results/ccore-native-repair.patch) preserve the mechanical edits, separate from dependency staging.
 
-Repairs were exploratory and did not use a predeclared equal repair budget. Do not score these as raw successes or use repair effort as a fair ranking. Original responses/source and exact repair variants remain in local evidence. No stock geometry, teacher-designed geometry or new motion curves were inserted. Publisher GGUF versus locally converted GGUF is another confound. The exact historical upstream training-input revision is undisclosed.
+Repairs were exploratory and did not use a predeclared equal repair budget. Do not score these as raw successes or use repair effort as a fair ranking. Original responses/source and exact repair variants remain in local evidence. No stock geometry, teacher-designed geometry or new motion curves were inserted. Generated HTML uses unseeded browser randomness; a fixed model seed does not make source re-execution deterministic. The frozen GLBs are the canonical displayed outputs. Publisher GGUF versus locally converted GGUF is another confound. The exact historical upstream training-input revision is undisclosed.
 
 ## All earlier trials retained
 
