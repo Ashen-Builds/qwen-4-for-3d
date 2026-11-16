@@ -1,6 +1,6 @@
 # Replies summary
 
-A summary of the 132 replies to [@ashen_one's post](https://x.com/ashen_one/status/2122000927418699866), pulled 2026-11-16. They're grouped by theme with each point credited to its author's handle; likes are in parentheses where it helps. Every reply is quoted in full in [`raw-replies.md`](raw-replies.md).
+A summary of the 141 replies to [@ashen_one's post](https://x.com/ashen_one/status/2122000927418699866), pulled 2026-11-16. They're grouped by theme with each point credited to its author's handle; likes are in parentheses where it helps. Every reply is quoted in full in [`raw-replies.md`](raw-replies.md).
 
 > **How to read this.** Plain bullets are what repliers said. Anything marked **Our notes** we checked ourselves against docs or Hugging Face on 2026-11-16, and it isn't from the thread.
 
@@ -137,3 +137,8 @@ The full plan is in [`dataset-plan.md`](dataset-plan.md). The ideas, credited:
 - **Counterpoint:** [@0x77fE](https://x.com/0x77fE/status/2122321383116157071) says to save time and money and use a cloud LLM. Ashen replied he agrees cloud LLMs stay better until a local model is justified. [@olipdsanders](https://x.com/olipdsanders/status/2122338609961251135) says there's a lot of bad advice in the thread.
 - **Ashen's stated plan:** when he starts, he'll share everything, make it open source, post on Hugging Face and make content around it.
 - **Noise:** [@mitch2you80](https://x.com/mitch2you80/status/2122337323396575575) and [@IntlOptions](https://x.com/IntlOptions/status/2122345525374820782) were about the @bot request. [@8bit_Slats](https://x.com/8bit_Slats/status/2122329240863408351) linked an earlier post of theirs.
+
+### 2026-11-16, 1:30 PM ET
+
+- [ ] **Run a tiny pilot first:** do a couple of training runs on very small models with about 500 examples, so mistakes cost about 5 hours and ~$10 instead of 6 days and $100 (@csgriff_).
+- Cost and time data points: tens of dollars up to a few hundred on a rented GPU depending on model size (@ElGuiscardo); a QLoRA 4-bit run on one 24 GB GPU over a 50k-instruction JSONL usually finishes in an hour or two, and collecting targets is the slow part (@HotTakeDaily_); a few weeks on a large machine (@TheOneRavenous). Ashen said he's sharing everything in the repo.

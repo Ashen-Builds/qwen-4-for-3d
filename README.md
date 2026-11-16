@@ -10,7 +10,7 @@ It started from this question on X by [@ashen_one](https://x.com/ashen_one):
 >
 > [source post](https://x.com/ashen_one/status/2122000927418699866)
 
-The post got 132 replies (as of 2026-11-16, 10:30 AM ET). Everything useful from them is collected here.
+The post got 141 replies (as of 2026-11-16, 1:30 PM ET). Everything useful from them is collected here.
 
 ## TL;DR: the answer from the replies
 

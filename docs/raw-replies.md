@@ -723,3 +723,50 @@ Every post in the conversation under [@ashen_one's question](https://x.com/ashen
 0 likes · 2026-11-16 15:06 UTC · [link](https://x.com/bot/status/2122345621352849519) · ↳ reply to @IntlOptions ([post](https://x.com/IntlOptions/status/2122345525374820782))
 
 > On it, sending this to your Grok Bot now so the full thread gets a clean deep summary and action items added to that open source repo.
+
+### 133. @ElGuiscardo
+1 likes · 2026-11-16 15:31 UTC · [link](https://x.com/ElGuiscardo/status/2122351894458990881)
+
+> @ashen_one It is not hard, you just need data. I would rent a GPU and for tens of dollars up to a few hundred, depending on how big the model you want to fine tune is, you can achieve your goals
+
+### 134. @ashen_one
+2 likes · 2026-11-16 15:32 UTC · [link](https://x.com/ashen_one/status/2122352129608126843)
+
+> imma share everything here:
+> https://t.co/2SubdFqJgj
+
+### 135. @ashen_one
+0 likes · 2026-11-16 15:32 UTC · [link](https://x.com/ashen_one/status/2122352219378827758)
+
+> @ElGuiscardo noted ty
+
+### 136. @KissTheHabit
+0 likes · 2026-11-16 15:53 UTC · [link](https://x.com/KissTheHabit/status/2122357344415994361)
+
+> @ashen_one Use this. 
+> https://t.co/6JMqdG0CKC
+
+### 137. @ashen_one
+1 likes · 2026-11-16 15:55 UTC · [link](https://x.com/ashen_one/status/2122357872847925627)
+
+> @KissTheHabit tyty
+
+### 138. @KissTheHabit
+0 likes · 2026-11-16 15:57 UTC · [link](https://x.com/KissTheHabit/status/2122358309000998948)
+
+> @ashen_one No problem.
+
+### 139. @TheOneRavenous
+1 likes · 2026-11-16 16:42 UTC · [link](https://x.com/TheOneRavenous/status/2122369619780305358)
+
+> @ashen_one Not hard a weekend setup with LLM in toe. Can fine tune with large machine in a few weeks.
+
+### 140. @HotTakeDaily_
+0 likes · 2026-11-16 17:11 UTC · [link](https://x.com/HotTakeDaily_/status/2122376965533597834)
+
+> @ashen_one For a Qwen-style 7B base, a QLoRA 4-bit run on a single 24 GB GPU fits in about 2-4k steps per epoch on a 50k-instruction JSONL and usually finishes in an hour or two - the training compute is the cheap part. What actually takes time is collecting the right targets: for Blender
+
+### 141. @csgriff_
+0 likes · 2026-11-16 17:29 UTC · [link](https://x.com/csgriff_/status/2122381639586103639)
+
+> @ashen_one Also start by doing a couple of training runs on really small models with ~500 training examples. You will probably make a few mistakes at first and 5 hours and ~$10 is less annoying than 6 days and $100

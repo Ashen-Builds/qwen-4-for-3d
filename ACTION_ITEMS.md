@@ -79,3 +79,8 @@ Ordered so you can **start today** on current Qwen and port to Qwen 4 when it dr
 - [ ] **Free compute option:** try a Colab or Runpod setup script written by an AI before renting more (@botzero_net, @Thirty3lab). Ashen has the Google $200/m plan.
 - [ ] **Hugging Face publishing:** free accounts have a 100GB private cap, so put GGUF quants in their own repo (@i2bhai8).
 - [ ] **Optional no-training track:** build reference examples grounded in standards like ISO threads (@8bit_Slats).
+
+### 2026-11-16, 1:30 PM ET
+
+- [ ] **Run a tiny pilot first:** do a couple of training runs on very small models with about 500 examples, so mistakes cost about 5 hours and ~$10 instead of 6 days and $100 (@csgriff_).
+- Cost and time data points: tens of dollars up to a few hundred on a rented GPU depending on model size (@ElGuiscardo); a QLoRA 4-bit run on one 24 GB GPU over a 50k-instruction JSONL usually finishes in an hour or two, and collecting targets is the slow part (@HotTakeDaily_); a few weeks on a large machine (@TheOneRavenous). Ashen said he's sharing everything in the repo.
