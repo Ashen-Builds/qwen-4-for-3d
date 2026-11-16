@@ -17,3 +17,10 @@ Updated 2026-11-16. Remote: `Ashen-Builds/qwen-4-for-3d`, branch `Astra`.
 - Build held-out Blender tasks, capture real MCP schemas/episodes and an isolated execution/scene/visual verifier.
 - Filter rights, duplicates, sample families, token lengths and failures before training.
 - Compare stock base, existing specialization and our adapter on independent tasks before claiming improvement.
+
+## Owner clarification and research — 2026-11-16
+
+- Owner prefers extending CCORE's existing 4B work and serving low-memory local users. End result is portable game-importable 3D assets (prefer GLB); Blender MCP is optional. Still no training or model-weight downloads.
+- Found a closer candidate: `ccore/Qwen3.5-4B-GLB-3D-Coder` and matching `ccore/ThreeJS-3D-GLB-Assets`, separate from the scene checkpoint/data already reviewed. Recommendation is to evaluate this GLB specialization, then add a new LoRA for measured gaps. Exact compatibility and quality remain untested.
+- `docs/glb-direction-and-neyra.md` records pinned resources, actual model-file metadata, Neyra source findings and proposed tests. Neyra source cloned for static review only; not installed/executed. No new dataset or weights downloaded.
+- Neyra lint/verdict/merge-integrity ideas fit, but defaults (512 training / 32 evaluation output tokens, greedy decoding) do not fit CCORE's ~20K-token sampled output recipe. Need custom exported-asset scoring and backend checks.
