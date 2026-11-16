@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-16",
+  "status": "complete-and-size-verified-in-Drive",
+  "source_payload_bytes": 21484759314,
+  "source_payload_files": 216,
+  "kits": [
+    {
+      "file": "training-data-kit.zip",
+      "bytes": 24789846,
+      "sha256": "d5fcd64748c9a947922e8dfe9bb443af6256b90509e35fb40246cdc6ee34ba8d",
+      "source_commit": "7b8d1181e3a3faff052210f681cf53ea848857db"
+    },
+    {
+      "file": "run-kit.zip",
+      "bytes": 10341534,
+      "sha256": "f3e888de4c2f00e925d90b4ef78f818878a355704f6863e8ffeaab1dc244e267",
+      "source_commit": "7b8d1181e3a3faff052210f681cf53ea848857db"
+    }
+  ],
+  "canonical_source_and_kit_bytes": 21519890694,
+  "checks": [
+    "All source package part names and byte sizes verified in Drive",
+    "Both kit names, sizes and destination verified in Drive",
+    "Completion index read back through connector",
+    "Local multi-part restore and SHA256 verified",
+    "Training data, source history and final kits scanned for secrets"
+  ],
+  "scope": "Local SHA256 manifests plus remote presence/size verification; not a full cloud-byte re-download",
+  "training_started": false,
+  "scheduled_start": false
+}
