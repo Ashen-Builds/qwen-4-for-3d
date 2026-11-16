@@ -37,3 +37,7 @@ The connected Drive uploader accepts local file references; no direct Hub-to-Dri
 Before transfer: select the owner's intended connected Drive account and folder, verify available quota, preserve sharing, inventory the selected bytes, record notices and use resumable transfers. After transfer: verify sizes/checksums and retain a manifest of Drive file IDs. A folder/index alone is not a payload archive. No sharing expansion is authorized.
 
 Resource compilation is productive as a curated, reproducible cache. Unrestricted mirroring mostly adds duplicate model variants, overlapping data and irrelevant assets. Downloaded data still needs quality, rights, compatibility and overlap filtering before training.
+
+## Current connection blocker
+
+The owner selected the destination account. Folder search succeeded, but folder creation returned `ACCESS_TOKEN_SCOPE_INSUFFICIENT` / `PERMISSION_DENIED`. The existing Google Drive plugin is installed/enabled; no reconnect action is exposed to this session. The user must reauthenticate the selected Drive connection with the write scope requested for creating the archive. No folder or payload was created, no sharing changed, and no alternate account was substituted. Local index and manifest are prepared.
