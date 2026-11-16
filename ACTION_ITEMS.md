@@ -69,3 +69,13 @@ Ordered so you can **start today** on current Qwen and port to Qwen 4 when it dr
 ---
 
 **Rule of thumb from the thread:** the training run is cheap ($3–$100 per run reported). Your edge is a verified, schema-exact Blender dataset and an honest eval. Start collecting today.
+
+## Updates
+
+### 2026-11-16, 10:30 AM ET
+
+- [ ] **Smoke-test the base model first.** Run the untuned Qwen against the Blender MCP tools and log where it fails before you train anything (@thesimaximalist).
+- [ ] **Keep only verified episodes.** Count a training example only if the scene assertions pass, not just because the call didn't error (@sebuzdugan). Skip tutorial videos as data unless they're turned into tool-call steps (@olipdsanders, @botzero_net).
+- [ ] **Free compute option:** try a Colab or Runpod setup script written by an AI before renting more (@botzero_net, @Thirty3lab). Ashen has the Google $200/m plan.
+- [ ] **Hugging Face publishing:** free accounts have a 100GB private cap, so put GGUF quants in their own repo (@i2bhai8).
+- [ ] **Optional no-training track:** build reference examples grounded in standards like ISO threads (@8bit_Slats).

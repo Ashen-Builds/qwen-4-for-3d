@@ -1,9 +1,9 @@
 # Raw replies
 
-Every post in the conversation under [@ashen_one's question](https://x.com/ashen_one/status/2122000927418699866), pulled from the X API (`conversation_id:2122000927418699866`) on 2026-11-16 at about 7:25 AM ET.
+Every post in the conversation under [@ashen_one's question](https://x.com/ashen_one/status/2122000927418699866), pulled from the X API (`conversation_id:2122000927418699866`) on 2026-11-16 at about 7:25 AM ET, and re-pulled at about 10:30 AM ET (replies 112–132 added).
 
-- Total posts in the conversation, original included: **112**
-- Replies: **111**. That's 9 by @ashen_one (including the @bot request), 3 by @grok, 1 by @bot, and **98 from other accounts**
+- Total posts in the conversation, original included: **133**
+- Replies: **132**. That's 14 by @ashen_one (including the @bot request), 3 by @grok, 2 by @bot, and **113 from other accounts**
 - Like counts were captured when the posts were pulled. Short links (`t.co`) are expanded to the URL X resolved them to.
 - Leading @mentions are stripped from the text. Nested replies show which post they answer.
 
@@ -615,3 +615,111 @@ Every post in the conversation under [@ashen_one's question](https://x.com/ashen
 0 likes · 2026-11-16 12:23 UTC · [link](https://x.com/bot/status/2122304513021235661) · ↳ reply to @ashen_one ([post](https://x.com/ashen_one/status/2122304482767982741))
 
 > Got it, sending this straight to your Grok Bot so you can dig in right away.
+
+### 112. @jiabianju
+1 likes · 2026-11-16 12:32 UTC · [link](https://x.com/jiabianju/status/2122306765685461432)
+
+> 你需要从hugging face找到你想要的资料，然后训练若干个LORA，把训练成果最好的一个LORA连接到你的QWEN上。过程问问GPT或者Claude。
+
+### 113. @thesimaximalist
+1 likes · 2026-11-16 12:33 UTC · [link](https://x.com/thesimaximalist/status/2122307104665137394)
+
+> QLoRA can make smaller models manageable to tune on one GPU; training time depends on model size, hardware and tokens. For Blender MCP, I’d test the base model with tools first. Collecting successful tool-call sequences for training may be the bigger job
+
+### 114. @sebuzdugan
+1 likes · 2026-11-16 12:52 UTC · [link](https://x.com/sebuzdugan/status/2122311843263676499)
+
+> for blender, build training data from verified scene results, not just tool calls that don't crash
+
+### 115. @ashen_one
+1 likes · 2026-11-16 12:55 UTC · [link](https://x.com/ashen_one/status/2122312481553158334)
+
+> fs once its done ill post on hugging face
+
+### 116. @botzero_net
+1 likes · 2026-11-16 13:11 UTC · [link](https://x.com/botzero_net/status/2122316565538336984)
+
+> Best thing you can do that's basically free is start collecting your training dataset.  Download videos, tutorials, find cheap massive courses--anything that can show the steps.  This can actually be the trickiest part especially if you're avoiding copyrighted materials, but if
+
+### 117. @ashen_one
+1 likes · 2026-11-16 13:20 UTC · [link](https://x.com/ashen_one/status/2122318854839799958) · ↳ reply to @botzero_net ([post](https://x.com/botzero_net/status/2122316565538336984))
+
+> what is Colab? i have the $200/m google
+
+### 118. @0x77fE
+1 likes · 2026-11-16 13:30 UTC · [link](https://x.com/0x77fE/status/2122321383116157071)
+
+> Save your time and money, use a LLM.
+
+### 119. @ashen_one
+1 likes · 2026-11-16 13:31 UTC · [link](https://x.com/ashen_one/status/2122321652591604098)
+
+> thanks guys, everything I learned here. Eventually, when I start, I'll be sure to share everything, make it all open source, post it on Hugging Face, and make a bunch of content around it. Thank you for all the advice here.
+
+### 120. @ashen_one
+0 likes · 2026-11-16 13:32 UTC · [link](https://x.com/ashen_one/status/2122321832049070492) · ↳ reply to @0x77fE ([post](https://x.com/0x77fE/status/2122321383116157071))
+
+> I will. Until I can justify using the local model, LLMs cloud-based will always be much better, of course
+
+### 121. @botzero_net
+0 likes · 2026-11-16 13:38 UTC · [link](https://x.com/botzero_net/status/2122323475234787470) · ↳ reply to @ashen_one ([post](https://x.com/ashen_one/status/2122318854839799958))
+
+> Free compute!  With your sub you probably get more credits.  Basically you can have your favorite AI adapt or write the colab setup (a script to set up the machine) and use the free compute on real datacenter hardware rather than just consumer GPUs.
+> https://colab.research.google.com/
+
+### 122. @8bit_Slats
+0 likes · 2026-11-16 13:56 UTC · [link](https://x.com/8bit_Slats/status/2122328001828266089)
+
+> I began to do something like this but instead of going the training route. I produced examples built with referenced standards like ISO metric thread standards etc
+>
+> Tedious, long but working
+
+### 123. @8bit_Slats
+0 likes · 2026-11-16 14:01 UTC · [link](https://x.com/8bit_Slats/status/2122329240863408351) · ↳ reply to @8bit_Slats ([post](https://x.com/8bit_Slats/status/2122328001828266089))
+
+> https://x.com/8bit_Slats/status/2072110091105386801?a=Uy8tCor7z1H2r-w_keI&s=19
+
+### 124. @Thirty3lab
+0 likes · 2026-11-16 14:23 UTC · [link](https://x.com/Thirty3lab/status/2122334863173042472)
+
+> Yeah I know nothing about it and have been doing it pretty good for my wife and her business. Used Runpod connected my agent, downloaded relevant datasets and got the agent to create the correct format for fine-tuning, and it’s done a great job.
+
+### 125. @mitch2you80
+1 likes · 2026-11-16 14:33 UTC · [link](https://x.com/mitch2you80/status/2122337323396575575) · ↳ reply to @ashen_one ([post](https://x.com/ashen_one/status/2122304482767982741))
+
+> that's pretty damn genius.
+
+### 126. @olipdsanders
+1 likes · 2026-11-16 14:37 UTC · [link](https://x.com/olipdsanders/status/2122338338858254686) · ↳ reply to @botzero_net ([post](https://x.com/botzero_net/status/2122316565538336984))
+
+> Videos and online tutorials won't help. The models need the specific tool calls and step by steps for fine tuning.
+
+### 127. @olipdsanders
+0 likes · 2026-11-16 14:38 UTC · [link](https://x.com/olipdsanders/status/2122338609961251135)
+
+> Lots of bad advice here unfortunately.
+
+### 128. @botzero_net
+1 likes · 2026-11-16 14:41 UTC · [link](https://x.com/botzero_net/status/2122339266181079266) · ↳ reply to @olipdsanders ([post](https://x.com/olipdsanders/status/2122338338858254686))
+
+> True!  If you aren't using a multimodal model to train, it won't be able to extract frames or text from the videos.  And more generally, videos won't be useful if they don't explain or show steps.
+
+### 129. @i2bhai8
+0 likes · 2026-11-16 14:46 UTC · [link](https://x.com/i2bhai8/status/2122340429974880597) · ↳ reply to @ashen_one ([post](https://x.com/ashen_one/status/2122321652591604098))
+
+> One ceiling before you upload: free accounts get 100GB of private storage and public repos are best-effort, so a large checkpoint plus quants can outgrow it fast. Put GGUF quants in their own repo to keep it manageable.
+
+### 130. @ashen_one
+0 likes · 2026-11-16 14:48 UTC · [link](https://x.com/ashen_one/status/2122341074001920192) · ↳ reply to @mitch2you80 ([post](https://x.com/mitch2you80/status/2122337323396575575))
+
+> bot is sick
+
+### 131. @IntlOptions
+0 likes · 2026-11-16 15:06 UTC · [link](https://x.com/IntlOptions/status/2122345525374820782) · ↳ reply to @ashen_one ([post](https://x.com/ashen_one/status/2122304482767982741))
+
+> do the above work too
+
+### 132. @bot
+0 likes · 2026-11-16 15:06 UTC · [link](https://x.com/bot/status/2122345621352849519) · ↳ reply to @IntlOptions ([post](https://x.com/IntlOptions/status/2122345525374820782))
+
+> On it, sending this to your Grok Bot now so the full thread gets a clean deep summary and action items added to that open source repo.

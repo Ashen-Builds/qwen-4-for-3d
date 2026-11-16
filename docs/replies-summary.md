@@ -1,6 +1,6 @@
 # Replies summary
 
-A summary of the 111 replies to [@ashen_one's post](https://x.com/ashen_one/status/2122000927418699866), pulled 2026-11-16. They're grouped by theme with each point credited to its author's handle; likes are in parentheses where it helps. Every reply is quoted in full in [`raw-replies.md`](raw-replies.md).
+A summary of the 132 replies to [@ashen_one's post](https://x.com/ashen_one/status/2122000927418699866), pulled 2026-11-16. They're grouped by theme with each point credited to its author's handle; likes are in parentheses where it helps. Every reply is quoted in full in [`raw-replies.md`](raw-replies.md).
 
 > **How to read this.** Plain bullets are what repliers said. Anything marked **Our notes** we checked ourselves against docs or Hugging Face on 2026-11-16, and it isn't from the thread.
 
@@ -122,3 +122,18 @@ The full plan is in [`dataset-plan.md`](dataset-plan.md). The ideas, credited:
 - Beginner video, end-to-end small-LLM fine-tune on DGX Spark: https://www.youtube.com/watch?v=2hoNAr-id-E (@Zruft14)
 - SEAL, self-adapting LMs (research): https://github.com/Continual-Intelligence/SEAL (@gptnori)
 - Autoresearch: https://autoresearch.sfcompute.com (@einarvollset)
+
+## Updates
+
+### 2026-11-16, 10:30 AM ET: 21 new replies (#112–#132)
+
+- **Test before you train:** [@thesimaximalist](https://x.com/thesimaximalist/status/2122307104665137394) says to test the base model with the Blender MCP tools first, and that collecting successful tool-call sequences may be the bigger job than the tuning (QLoRA makes smaller models tunable on one GPU).
+- **Verified data only:** [@sebuzdugan](https://x.com/sebuzdugan/status/2122311843263676499) says to build training data from verified scene results, not from tool calls that merely don't crash. This backs the scene-assertion verifier already in the plan.
+- **Tool-call traces, not tutorial videos:** [@olipdsanders](https://x.com/olipdsanders/status/2122338338858254686) says video tutorials won't help, because the models need the specific tool calls and step-by-steps. [@botzero_net](https://x.com/botzero_net/status/2122339266181079266) agrees: videos only help with a multimodal model that can extract frames, and only if they show the steps. Earlier, [@botzero_net](https://x.com/botzero_net/status/2122316565538336984) had suggested starting free by collecting tutorials and courses as a dataset. Treat that as the weaker route.
+- **Standards-grounded examples instead of training:** [@8bit_Slats](https://x.com/8bit_Slats/status/2122328001828266089) skipped training and built examples from referenced standards (ISO metric thread standards and similar). Tedious and long, but working. Fits the skills/harness alternative in §8.
+- **Free or cheap compute:** [@botzero_net](https://x.com/botzero_net/status/2122323475234787470) points to Google Colab (Ashen asked what it is and said he has the $200/m Google plan) and says to have an AI write the Colab setup script. [@Thirty3lab](https://x.com/Thirty3lab/status/2122334863173042472) used Runpod, connected an agent, downloaded relevant datasets and had the agent write the fine-tuning format, with good results.
+- **Hugging Face limits:** [@i2bhai8](https://x.com/i2bhai8/status/2122340429974880597) says free accounts get 100GB private storage and public repos are best-effort, so a big checkpoint plus quants can outgrow it. Put GGUF quants in their own repo.
+- **Source of data:** [@jiabianju](https://x.com/jiabianju/status/2122306765685461432) (in Chinese) says to find data on Hugging Face, train several LoRAs, and attach the best one to Qwen.
+- **Counterpoint:** [@0x77fE](https://x.com/0x77fE/status/2122321383116157071) says to save time and money and use a cloud LLM. Ashen replied he agrees cloud LLMs stay better until a local model is justified. [@olipdsanders](https://x.com/olipdsanders/status/2122338609961251135) says there's a lot of bad advice in the thread.
+- **Ashen's stated plan:** when he starts, he'll share everything, make it open source, post on Hugging Face and make content around it.
+- **Noise:** [@mitch2you80](https://x.com/mitch2you80/status/2122337323396575575) and [@IntlOptions](https://x.com/IntlOptions/status/2122345525374820782) were about the @bot request. [@8bit_Slats](https://x.com/8bit_Slats/status/2122329240863408351) linked an earlier post of theirs.
