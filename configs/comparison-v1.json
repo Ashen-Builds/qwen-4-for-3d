@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "status": "proposed-not-executed",
-  "task_id": "babylon-marketplace-v1",
-  "user_prompt_file": "eval/prompts/babylon-marketplace-v1.txt",
+  "status": "completed-raw-failures-diagnostic-exports",
+  "task_id": "babylon-marketplace-v3",
+  "user_prompt_file": "eval/prompts/babylon-marketplace-v3.txt",
   "system_prompt": {
     "source": "ccore/Qwen3.5-4B-GLB-3D-Coder",
     "revision": "8f32a199f8b22fe3157b9c5c8b42b052a0750dd3",
@@ -11,8 +11,8 @@
     "policy": "Extract the author's documented system prompt from the pinned downloaded card, save its hash in the run receipt, and supply exactly the same text to every comparison arm. Do not append arm-specific instructions."
   },
   "arms_in_requested_run_order": [
-    "ccore_glb",
     "upstream_qwen",
+    "ccore_glb",
     "ours_future"
   ],
   "ours_future_status": "not-trained-not-available",
@@ -24,15 +24,15 @@
     "repetition_penalty": 1.0,
     "thinking": true,
     "seed": 42,
-    "proposed_max_new_tokens": 65536,
-    "proposed_context_tokens": 131072,
-    "proposed_wall_time_minutes_per_arm": 60,
-    "qualification": "Preflight runtime support and actual memory before execution. These finite limits are proposed resource bounds, not the author's unlimited-output recommendation. Truncation/timeouts count as failures under the declared budget; never silently raise limits for only one arm."
+    "qualification": "Native Q8_0 primary pair; earlier two MLX v2 pairs are separate retained failures. Limits common within each pair.",
+    "max_new_tokens": 49152,
+    "context_tokens": 65536,
+    "wall_time_minutes_per_arm": 40
   },
   "runtime": {
-    "backend": "unselected",
-    "common_compute_dtype": "unselected",
-    "policy": "Use a common compatible backend, effective compute dtype, device policy, dependency bundle and limits. Preserve required tokenizer/template behavior and disclose unavoidable differences. Run serially through the shared GPU slot protocol. Official Qwen includes 15 extra mtp.* tensors absent from CCORE; disable MTP/speculative decoding for the controlled baseline and record how the backend handles these weights.",
+    "backend": "llama.cpp Metal 4ddf2b9470b44b122e8a5404ae199f04cd03bcec",
+    "common_compute_dtype": "Q8_0 weights, native mixed-precision Metal kernels",
+    "policy": "Official original converted with matching llama.cpp source; CCORE uses verified publisher Q8_0. Quantizer provenance differs; not a controlled full-precision attribution study. Processes run serially through GPU slots and exit before next model. No MTP/speculation.",
     "multi_token_prediction": false
   },
   "first_pass": {
@@ -43,5 +43,11 @@
     "status": "planned",
     "policy": "Predeclare seeds and equal attempt/repair budgets; report all runs rather than the best screenshot."
   },
-  "holdout_policy": "Never train on this prompt, near-duplicates, these outputs or targeted teacher corrections. Use separate task families for failure-driven training data."
+  "holdout_policy": "Never train on this prompt, near-duplicates, these outputs or targeted teacher corrections. Use separate task families for failure-driven training data.",
+  "diagnostic_exports": {
+    "status": "mechanically repaired, separately labeled",
+    "repairs_predeclared_equal_budget": false,
+    "scoring": "Exploratory rescue only; never score as a raw pass or fair repair-cost ranking",
+    "report": "eval/results/babylon-20261116.json"
+  }
 }

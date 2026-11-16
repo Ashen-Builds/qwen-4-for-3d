@@ -1,0 +1,2 @@
+# Preserve exact unified-diff evidence, including original whitespace.
+eval/results/*.patch -whitespace

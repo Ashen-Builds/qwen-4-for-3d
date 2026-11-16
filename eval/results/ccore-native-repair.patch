@@ -1,0 +1,108 @@
+--- original.html
++++ diagnostic-repairs.html
+@@ -754,7 +754,7 @@
+         `AwningValance_${i + 1}`
+       );
+ 
+-      currentGlints? no.
++      // currentGlints? no.
+     }
+ 
+     // Counter and goods beneath the canopy.
+@@ -1105,17 +1105,23 @@
+ 
+     const tracks = [];
+ 
++    // Diagnostic serialization guards: retain the model-authored curves, skip invalid ones.
+     function quaternionTrack(object, evaluator) {
+-      const values = times.map((time) => {
+-        const euler = evaluator(time);
+-        return new THREE.Quaternion().setFromEuler(euler).toArray();
+-      });
+-      tracks.push(new THREE.QuaternionKeyframeTrack(`${object.name}.quaternion`, times, values));
+-    }
+-
++      if (!object?.isObject3D) return;
++      try {
++        const values = times.flatMap(time => {
++          const value = evaluator(time);
++          return value.isQuaternion ? value.toArray() : new THREE.Quaternion().setFromEuler(value).toArray();
++        });
++        if (values.every(Number.isFinite)) tracks.push(new THREE.QuaternionKeyframeTrack(`${object.uuid}.quaternion`, times, values));
++      } catch (error) { console.warn('Skipped invalid model-authored quaternion curve', object.name, error.message); }
++    }
+     function vectorTrack(object, evaluator) {
+-      const values = times.map((time) => evaluator(time).toArray());
+-      tracks.push(new THREE.VectorKeyframeTrack(`${object.name}.position`, times, values));
++      if (!object?.isObject3D) return;
++      try {
++        const values = times.flatMap(time => evaluator(time).toArray());
++        if (values.every(Number.isFinite)) tracks.push(new THREE.VectorKeyframeTrack(`${object.uuid}.position`, times, values));
++      } catch (error) { console.warn('Skipped invalid model-authored position curve', object.name, error.message); }
+     }
+ 
+     for (let i = 0; i < currentGlints.length; i++) {
+@@ -1150,15 +1156,20 @@
+ 
+     // Water and current motion.
+     for (let i = 0; i < village.length; i++) {
+-      const person = village[i];
++      const spec = village[i];
++      const person = assetRoot.getObjectByName(`Village_${String(i + 1).padStart(2, "0")}`);
++      const walking = spec[4], gesturing = spec[5];
++      person.torso = person.getObjectByName("Torso"); person.head = person.getObjectByName("Head");
++      person.legLeft = person.getObjectByName("LeftLeg"); person.legRight = person.getObjectByName("RightLeg");
++      person.armLeft = person.getObjectByName("LeftArm"); person.armRight = person.getObjectByName("RightArm");
+       const phase = personIndex * 1.37;
+ 
+       vectorTrack(person, (time) => {
+         const t = time / animationDuration;
+         return new THREE.Vector3(
+-          person.x + Math.sin(phase + t * Math.PI * 2) * 0.025,
++          person.position.x + Math.sin(phase + t * Math.PI * 2) * 0.025,
+           BASE_Y + Math.sin(phase + t * Math.PI * 4) * 0.018,
+-          person.z + Math.sin(phase + t * Math.PI * 2 + 0.7) * 0.035
++          person.position.z + Math.sin(phase + t * Math.PI * 2 + 0.7) * 0.035
+         );
+       });
+ 
+@@ -1192,23 +1203,16 @@
+           return new THREE.Euler(0, 0, -0.55 * Math.sin(phase + t * Math.PI * 2));
+         });
+ 
+-        quaternionTrack(person.armLeft, (time)) => {
++        quaternionTrack(person.armLeft, (time) => {
+           const t = time / animationDuration;
+           return new THREE.Euler(0.08 + Math.sin(phase + t * Math.PI * 2) * 0.18, 0, 0.08 + Math.sin(phase + t * Math.PI * 2) * 0.28);
+         });
+-        quaternionTrack(person.armRight, (time)) => {
++        quaternionTrack(person.armRight, (time) => {
+           const t = time / animationDuration;
+           return new THREE.Euler(0.08 - Math.sin(phase + t * Math.PI * 2) * 0.18, 0, -0.08 - Math.sin(phase + t * Math.PI * 2) * 0.28);
+         });
+ 
+-        quaternionTrack(person.legLeft, (time)) => {
+-          const t = time / animationDuration;
+-          return new THREE.Euler(0, 0, 0.55 * Math.sin(phase + t * Math.PI * 2));
+-        }
+-        quaternionTrack(person.legRight, (time)) => {
+-          const t = time / animationDuration;
+-          return new THREE.Euler(0, 0, -0.55 * Math.sin(phase + t * Math.PI * 2));
+-        };
++        // Duplicate leg tracks omitted; identical tracks are already defined above.
+       } else if (gesturing) {
+         const gestureTimes = [0, 0.65, 0.82, 1.05, 2.55, 2.72, 2.95, 4, 5, 6, 7, 8];
+         const armValues = [];
+@@ -1363,7 +1367,11 @@
+       });
+     }
+ 
+-    const lifeClip = new THREE.AnimationClip("Market_Life", animationDuration, tracks);
++    const validTracks = tracks.filter(track => {
++      const expected = track.name.endsWith('.quaternion') ? 4 : 3;
++      return track.getValueSize() === expected && Array.from(track.values).every(Number.isFinite);
++    });
++    const lifeClip = new THREE.AnimationClip("Market_Life", animationDuration, validTracks);
+     const mixer = new THREE.AnimationMixer(assetRoot);
+     const lifeAction = mixer.clipAction(lifeClip);
+     lifeAction.setLoop(THREE.LoopRepeat, Infinity);

@@ -1,0 +1,11 @@
+Create a beautiful, densely detailed voxel diorama of a living ancient Babylonian marketplace beside a canal in Mesopotamia. It must feel like a small inhabited town, not a collection of isolated blocks.
+
+Composition: a winding market street opens into a busy central square. A turquoise canal runs along one side, crossed by a small arched bridge. Arrange stepped mud-brick homes, roof terraces, shaded courtyards and a modest blue-glazed ceremonial gateway around the square. Add date palms, reed boats and a distant stepped temple silhouette. Keep the entire village readable from an elevated three-quarter view.
+
+Detail: create distinct stalls selling pottery, woven rugs, dates, grain and copper goods. Include cloth awnings, baskets, amphorae, stacked crates, roof ladders, patterned paving and little signs of daily life. Use warm ochre brick, lapis-blue accents, teal water, colorful textiles and soft late-afternoon shadows. All forms, including people and clouds, should have a coherent handcrafted voxel style.
+
+Life: include at least 16 recognizable villagers. Some walk along clear looping routes with moving legs and arms; others trade, gesture, carry baskets or tend stalls. Animate flowing water, slowly drifting clouds and subtle awning or palm movement. Make motion calm, continuous and loopable; avoid people walking through buildings.
+
+Deliver one complete Three.js 0.160.0 HTML page with an orbitable preview and an Export GLB button. Use matching addons with an import map. Build all asset geometry procedurally; use no external models or textures. Keep geometry/materials reusable and the scene practical for real-time viewing.
+
+The exported GLB must contain the village, materials and actual animation clips for its moving components. Use exportable animation tracks rather than relying only on a JavaScript render loop. Include an async window.exportGLB() function returning the GLB ArrayBuffer. Exclude preview-only grids, UI and helpers from the exported asset. Return the complete HTML in one fenced code block.

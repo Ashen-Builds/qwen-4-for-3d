@@ -6,15 +6,15 @@ Updated 2026-11-16. This is a plan, not an active trainer or automation.
 
 Extend a small CCORE 4B specialization to produce useful game-importable 3D assets locally, with GLB as the primary exchange format. Preserve existing Three.js strengths; introduce Blender Python/MCP where it improves the outcome. Low-memory inference is a measured release goal, not a claim based solely on weight size.
 
-Current authorization covers downloading both models and updating this repository. The owner deferred tests until download completion. Do not start inference, asset generation, external critique calls, training, an overnight goal or a deployment as part of acquisition.
+Owner subsequently authorized local tests, improved prompts, Chrome previews and optional CLI critiques. These are now completed as documented in [comparison results](comparison-results.md). No training or deployment authorized by this comparison task.
 
 ## A/B/C comparison
 
 | Arm | Checkpoint | Purpose |
 | --- | --- | --- |
-| A, first | `ccore/Qwen3.5-4B-GLB-3D-Coder` | Existing 3D specialization |
-| B, second | `Qwen/Qwen3.5-4B` | Official upstream before CCORE's specialization; already generally post-trained |
-| C, future | A plus our tracked LoRA | Measure additional improvement; absent until actually trained |
+| B, second | `ccore/Qwen3.5-4B-GLB-3D-Coder` | Existing 3D specialization |
+| A, first | `Qwen/Qwen3.5-4B` | Official upstream before CCORE's specialization; already generally post-trained |
+| C, future | B plus our tracked LoRA | Measure additional improvement; absent until actually trained |
 
 Pin revisions in `configs/model-snapshots.json`. CCORE identifies the upstream repository, but the inspected GLB materials do not specify its exact historical training-input commit. Do not claim a byte-for-byte reconstruction of that historical input. Do not substitute `Qwen3.5-4B-Base` or a community quantization for B without changing the declaration.
 
@@ -24,7 +24,7 @@ The first demonstration uses one attempt per arm with no repairs. A single resul
 
 ## First asset: animated voxel Babylon marketplace
 
-Owner wants a super-detailed voxel village/town inspired by ancient Iraq/Babylon: people walking and trading in a marketplace, flowing water, moving clouds and animated components. Canonical request: `eval/prompts/babylon-marketplace-v1.txt`. It replaces the earlier suggested static treasure chest. No scene has been generated.
+Owner wants a super-detailed voxel village/town inspired by ancient Iraq/Babylon: people walking and trading in a marketplace, flowing water, moving clouds and animated components. Canonical request: `eval/prompts/babylon-marketplace-v3.txt`. It replaces the earlier suggested static treasure chest. Primary v3 native results and earlier v2 failures are retained; see results.
 
 Use the documented CCORE system instruction from its pinned downloaded README. Keep the request concise while judging all requirements below. Source retrieval must not improve only one arm: this benchmark explicitly requests each model's own generated voxel output. Any later sourced assets/motion must be declared and offered under identical conditions to every arm.
 
@@ -34,7 +34,7 @@ This whole-town animation is an intentionally demanding owner-selected task. Do 
 
 1. Confirm manifests and index/shard/header integrity without loading remote custom code.
 2. Choose a backend supporting Qwen3.5's hybrid architecture and original checkpoints; qualify short load/generation only after the owner starts testing.
-3. Select common precision and limits from measured memory. Current config values are proposals, not verified capacity.
+3. Select common precision and limits from measured memory. Primary native limits and completed status are recorded in the comparison config.
 4. Check session ownership, desktop health, stream flag and shared GPU slots. Run models serially with task-owned processes. Never unload another session's model or bypass a tripwire.
 5. Qualify a controlled local browser/export runner and common local dependencies. Log URL substitutions separately. Constrain external network, filesystem and process access from generated code.
 
@@ -56,7 +56,7 @@ Declare acceptance thresholds after hardware/backend profiling and before compar
 
 ## Critique and orchestration
 
-Owner clarified that optional critics must use the subscription CLIs: **Gemini Hydrogen 4 only** and **Devin SWE2 only**. Do not substitute Carbon or a paid Devin model. Exact CLI model IDs, available tools/accounts and any data-transfer requirements still need qualification before use. They are candidates, not active workers or confirmed providers. No messages or calls were sent.
+Owner clarified that optional critics must use the subscription CLIs: **Gemini Hydrogen 4 only** and **Devin SWE2 only**. Do not substitute Carbon or a paid Devin model. Exact CLI model IDs, available tools/accounts and any data-transfer requirements still need qualification before use. They are candidates, not active workers or confirmed providers. Devin CLI swe-2-high was verified listed Free and used for read-only sandboxed code critique. Gemini was not called.
 
 Run deterministic file/scene checks first. Then provide anonymous equal-condition views, playback and rubric to an authorized critic; hide model labels, preserve per-dimension scores/disagreements, and have the current agent inspect each generated evaluation output. Randomize presentation independently of serial run order. Screenshots cannot verify export animation. Calibrate critics against owner/current-agent judgments rather than treating preferences as ground truth.
 
@@ -76,6 +76,6 @@ Before launch, fix training mixture/rights, held-out families, run budget (time/
 
 ## Sources and tooling
 
-CCORE GLB data already helped create A, so testing A on it does not establish generalization. Use independent tests. BlendNet/Bioinspired3D and our verified trajectories can supplement after rights, overlap and version checks. Isolate noncommercial 3DCodeVerse data from permissive-release mixtures unless terms are resolved.
+CCORE GLB data already helped create B, so testing B on it does not establish generalization. Use independent tests. BlendNet/Bioinspired3D and our verified trajectories can supplement after rights, overlap and version checks. Isolate noncommercial 3DCodeVerse data from permissive-release mixtures unless terms are resolved.
 
 Neyra lint/comparison/merge/provenance patterns are useful, but its inspected defaults (512 training / 32 evaluation output tokens, greedy decoding) do not fit long-output assets. Use artifact scoring rather than final-text matching. No Neyra runtime qualification is claimed.

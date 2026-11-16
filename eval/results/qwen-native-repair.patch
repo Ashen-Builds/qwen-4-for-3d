@@ -1,0 +1,128 @@
+--- original.html
++++ diagnostic-static.html
+@@ -52,25 +52,11 @@
+ 
+ <div id="loading">Loading Assets...</div>
+ 
+-<!-- Import Maps Polyfill -->
+-<script>
+-    const importMap = {
+-        'imports/*': `https://unpkg.com/three@0.160.0/examples/jsm/`
+-    };
+-
+-    document.head.insertAdjacentHTML("beforeend", `
+-        <script type="importmap">
+-            {"imports": {"three": "https://unpkg.com/three@0.160.0/build/three.module.js"}}
+-        </script>
+-    `);
+-</script>
+-
++<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/examples/jsm/"}}</script>
+ <script type="module">
+     import * as THREE from 'three';
+     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+     import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+-    import { createNoise3D } from 'three/addons/math/createNoise3D.js';
+-    import { createNoise2D } from 'three/addons/math/createNoise2D.js';
+ 
+     // --- Configuration ---
+     const CONFIG = {
+@@ -377,22 +363,7 @@
+             group.add(item);
+         }
+ 
+-        // Animation Mixers (Simple keyframes)
+-        const mixer = new THREE.AnimationMixer(group);
+-        
+-        // Walk Cycle
+-        const walkAction = new THREE.AnimationAction(mixer);
+-        walkAction.setLoop(THREE.LoopRepeat);
+-        walkAction.setTimeOffset(speed * 60); // Speed multiplier
+-        mixer.cloneAction(walkAction); // Clone to prevent conflicts
+-        walkAction.isCloned = true;
+-
+-        // Idle / Look
+-        const idleAction = new THREE.AnimationAction(mixer);
+-        idleAction.setLoop(THREE.LoopRepeat);
+-        mixer.cloneAction(idleAction);
+-        idleAction.isCloned = true;
+-
++        // Invalid action stubs omitted; no replacement motion authored.
+         // Store references for manual manipulation (since we can't load external JSON actions easily)
+         group.userData = { 
+             walkSpeed: speed, 
+@@ -525,25 +496,6 @@
+             // Smooth movement towards target
+             v.position.x += (target - v.position.x) * 0.02;
+             
+-            // Walk animation speed variation
+-            const speed = v.userData.walkSpeed;
+-            const walkAction = v.mixer.actions[0];
+-            const idleAction = v.mixer.actions[1];
+-            
+-            // Randomly switch between walking (moving fast) and idle (looking around)
+-            if (Math.random() < 0.01) {
+-                // Randomly choose action
+-                if(Math.random() > 0.5) {
+-                    v.userData.walkSpeed = 0.2;
+-                    walkAction.enabled = true;
+-                    idleAction.enabled = false;
+-                } else {
+-                    v.userData.walkSpeed = 0.05;
+-                    walkAction.enabled = false;
+-                    idleAction.enabled = true;
+-                }
+-            }
+-
+             // Random Head Look
+             v.userData.headRotation = Math.sin(time + v.userData.pathIndex) * 0.5;
+             v.children[1].rotation.z = v.userData.headRotation;
+@@ -555,38 +507,16 @@
+ 
+     animate();
+ 
+-    // --- Export Logic ---
+-    const exportBtn = document.getElementById('exportBtn');
+-    
+-    exportBtn.addEventListener('click', () => {
+-        // Temporarily disable lights for export (optional, but cleaner)
+-        const originalLight = dirLight.intensity;
+-        dirLight.intensity = 0;
+-        
+-        // Convert to GLB
+-        const glbResult = exporter.parse(scene, {
+-            binary: true,
+-            preserveId: false
+-        });
+-
+-        dirLight.intensity = originalLight;
+-
+-        const blob = new Blob([glbResult], { type: "application/octet-stream" });
+-        const url = URL.createObjectURL(blob);
+-        
+-        const a = document.createElement('a');
+-        a.href = url;
+-        a.download = 'babylon_marketplace.glb';
+-        document.body.appendChild(a);
+-        a.click();
+-        document.body.removeChild(a);
+-        URL.revokeObjectURL(url);
+-        
+-        // Reset camera for next view
+-        camera.position.set(0, 30, 80);
+-        camera.lookAt(0,0,0);
+-    });
+-
++    // Technical static-export rescue. Scene construction and preview motion are unchanged.
++    async function exportStatic() {
++      const buffer = await exporter.parseAsync(scene, {binary: true});
++      const a = document.createElement('a');
++      a.href = URL.createObjectURL(new Blob([buffer], {type:'model/gltf-binary'}));
++      a.download = 'official-qwen-native-static.glb'; a.click();
++      return buffer;
++    }
++    window.exportGLB = exportStatic;
++    document.getElementById('exportBtn').addEventListener('click', exportStatic);
+ </script>
+ </body>
+ </html>

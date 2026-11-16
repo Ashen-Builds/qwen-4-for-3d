@@ -1,0 +1,103 @@
+{
+  "prompt": "babylon-marketplace-v3",
+  "prompt_sha256": "71f6441c2768c2ba36369fd877b12b98c12454e9798d0dc8bc211ab8b4f244a3",
+  "backend": "matching isolated llama.cpp Metal build 4ddf2b9",
+  "quantization": "Q8_0",
+  "seed": 42,
+  "thinking": true,
+  "order": "official Qwen, process exit, CCORE, process exit",
+  "unassisted_success": false,
+  "qualification": "Repaired diagnostic artifacts, not clean one-shot passes. No geometry designed or motion formulas invented by the assistant. Earlier failed MLX trials preserved.",
+  "models": {
+    "qwen": {
+      "metrics": {
+        "backend": "llama.cpp",
+        "model_file": "qwen-Q8_0.gguf",
+        "elapsed_seconds": 81.00010683300206,
+        "exit_code": 0,
+        "process_exited": true,
+        "complete_html": true,
+        "seed": 42,
+        "thinking": true,
+        "quantization": "Q8_0"
+      },
+      "validation": {
+        "bytes": 273832,
+        "errors": 0,
+        "warnings": 0,
+        "meshes": 133,
+        "nodes": 181,
+        "materials": 96,
+        "animations": [],
+        "extensionsUsed": [
+          "KHR_lights_punctual",
+          "KHR_materials_unlit"
+        ]
+      },
+      "provenance": {
+        "series": "native GGUF / art prompt v3",
+        "raw_export_success": false,
+        "display_variant": "Static export repaired",
+        "geometry_or_animation_authored_by_agent": false,
+        "repairs": [
+          "Correct broken import-map bootstrap",
+          "Remove two unused imports for nonexistent noise addons",
+          "Replace invalid GLTFExporter callback usage with static parseAsync export",
+          "Removed invalid unused AnimationAction setup and action-flag bookkeeping; retained existing manual transforms, no clips created"
+        ],
+        "animation_status": "No export animation tracks authored; static result expected"
+      },
+      "glb_sha256": "9ed9700ef65e849bc3fb0ec8546d4e10edf72b73a759ffad23d179781f58d3bf"
+    },
+    "ccore": {
+      "metrics": {
+        "backend": "llama.cpp",
+        "model_file": "Qwen3.5-4B-GLB-3D-Coder-Q8_0.gguf",
+        "elapsed_seconds": 423.5466817919805,
+        "exit_code": 0,
+        "process_exited": true,
+        "complete_html": true,
+        "seed": 42,
+        "thinking": true,
+        "quantization": "Q8_0"
+      },
+      "validation": {
+        "bytes": 1769872,
+        "errors": 0,
+        "warnings": 0,
+        "meshes": 647,
+        "nodes": 821,
+        "materials": 27,
+        "animations": [
+          {
+            "name": "Market_Life",
+            "channels": 87
+          }
+        ],
+        "extensionsUsed": [
+          "KHR_materials_emissive_strength"
+        ]
+      },
+      "provenance": {
+        "series": "native GGUF / art prompt v3",
+        "raw_syntax_success": false,
+        "display_variant": "Diagnostic: syntax/wiring repaired",
+        "geometry_or_animation_authored_by_agent": false,
+        "repairs": [
+          "Commented one non-code self-note: currentGlints? no.",
+          "Removed extra closing parenthesis in animation callback syntax; formulas unchanged",
+          "Removed malformed duplicate leg-track calls; identical formulas already exist immediately above",
+          "Flattened model-authored track values, accepted Euler/Quaternion callback returns and skipped invalid curves",
+          "Bound existing person descriptors to their existing scene objects and limb groups; used original walking/gesturing flags",
+          "Filtered invalid track value sizes and nonfinite values without adding new motion"
+        ],
+        "export_implementation": "Unmodified model-authored exporter and animation tracks",
+        "limitations": [
+          "Invalid model-authored curves are skipped, not replaced",
+          "Original fifteen-person list and its false walking flags are unchanged"
+        ]
+      },
+      "glb_sha256": "bb9a6195c312da43cda721aae3bc6a151ff87625fd7ee6656b44480d2e6444e4"
+    }
+  }
+}

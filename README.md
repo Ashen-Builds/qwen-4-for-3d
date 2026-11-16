@@ -8,7 +8,7 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 
 - Branch: `Astra`. Source review and pinned practice dataset copies completed.
 - Both original checkpoints downloaded and hash-verified: **CCORE 17.51 GB + official Qwen 9.34 GB**, 28 files total. All shard/index structures checked without loading models. [Verification receipt](configs/download-receipt.json). Weights stay outside Git.
-- No inference, asset generation or training has started. Backend/export compatibility remains untested.
+- Comparison completed on M3 Ultra: both raw outputs failed. Separately labeled repaired GLBs load side by side; CCORE is visually richer but misses walking/full-town requirements. [Results and limitations](docs/comparison-results.md). No training started.
 - First comparison: a detailed animated voxel Babylon-inspired marketplace, using identical prompts and conditions for CCORE, upstream Qwen and later our own adapter.
 - A bounded overnight training goal follows inspected baselines and an explicit start instruction. No training goal or automation is active.
 
@@ -16,7 +16,7 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 
 1. **Acquire and verify:** pinned original checkpoints, tokenizer/config companions and upstream digests.
 2. **Freeze the comparison:** same prompts, settings, declared limits, runtime/precision and seeds; retain raw outputs.
-3. **Run baseline A/B:** CCORE first, upstream Qwen second; retain failures and successful exports.
+3. **Run baseline A/B:** official Qwen first, fully unload, CCORE second; retain failures and successful exports.
 4. **Inspect exported assets:** structure, appearance, motion and destination imports, with preview/export scores separate.
 5. **Curate data:** verified corrections and suitable licensed examples; program-family deduplication and isolated held-out tasks.
 6. **Train a LoRA on CCORE:** bounded checkpoints on Studio; monitor against untouched CCORE.
@@ -27,8 +27,8 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 | File | Purpose |
 | --- | --- |
 | [Pipeline plan](docs/PIPELINE.md) | Fair A/B/C testing, rubric, critic roles and future overnight gates |
-| [Babylon marketplace prompt](eval/prompts/babylon-marketplace-v1.txt) | Shared request, held out from training |
-| [Proposed comparison settings](configs/comparison-v1.json) | Reproducible draft settings, not an active job |
+| [Babylon marketplace prompt](eval/prompts/babylon-marketplace-v3.txt) | Shared request, held out from training |
+| [Recorded comparison settings](configs/comparison-v1.json) | Primary native-pair settings and diagnostic status |
 | [Pinned models](configs/model-snapshots.json) | Acquired revisions and upstream-lineage limitation |
 | [Model downloader](scripts/download_comparison_models.py) | Official Hub SDK and digest checks; never loads models |
 | [Training evidence](docs/ccore-training-evidence.md) | Published CCORE process/data versus missing details |

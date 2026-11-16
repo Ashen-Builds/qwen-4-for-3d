@@ -45,3 +45,34 @@ Updated 2026-11-16. Remote: `Ashen-Builds/qwen-4-for-3d`, branch `Astra`.
 - Owner clarified optional subscription CLI critics: Gemini Hydrogen 4 only, Devin SWE2 only. No critic CLI called.
 - Owner selected core relevant datasets plus both original checkpoints for a Drive archive. Metadata-only subagent compiled sources; `configs/core-archive.json` inventories 5 sources / 88 files / 27,918,579,221 bytes. No archive payload downloaded/uploaded in this task.
 - Owner supplied an existing Drive folder. Connector writes still return ACCESS_TOKEN_SCOPE_INSUFFICIENT, but normal browser upload in the verified owner session succeeded. Archive Index (automatically converted to a native Google Doc) and Core Archive Manifest.json are uploaded; Drive list readback verifies both. No model/dataset payloads transferred. Bulk transfer still needs a remote worker or off-stream upload. Folder/file references are kept in the private wiki, not this public repo.
+
+
+## Active comparison — 2026-11-16
+
+Owner authorized execution, improved prompt and localhost Chrome GLB comparison. Explicit order is official Qwen, fully unload, then CCORE. Owner corrected stream cutoff to 13:00 ET and ended stream; supported off command cleared it, and daily LaunchAgent was updated/reloaded to end 13:00 (not 13:30). Other sessions/engines untouched.
+
+Runtime: task-owned Python 3.12 environment under sibling work/qwen-eval-env; official MLX-LM 0.32.2 / MLX 0.32.4 / Transformers 5.23.0. Native Qwen3.5 text loader, no remote custom code/MTP. Short Qwen benchmark: BF16 55.88 tok/s / 8.55 GB; Q8 group64 96.34 tok/s / 4.69 GB. Nonexclusive capture measurements, not universal backend claims. Both original checkpoints preserved; derived Q8 copies under work/models-derived.
+
+Prompt upgraded to eval/prompts/babylon-marketplace-v2.txt (coherent canal market, Babylonian palette/details, 16 villagers and exportable motion). First matched pass: thinking on, seed42, 65,536-token cap. Official 11,706 tokens / 127.35 s / 93.14 tok/s; CCORE 25,038 tokens / 252.58 s / 99.75 tok/s. Exact prompt token hashes match. Both processes exited and unload receipts saved in work/runs. Neither first-pass final answer is usable: official has TDZ/API/export errors; CCORE has malformed nested script markup and no scene implementation. Raw answers kept, never silently replaced. Devin CLI swe-2-high (listed Free) supplied read-only code critiques with sandbox/auto permission mode; no trust bypass.
+
+A matched secondary retry uses thinking off, seed7, 49,152-token cap. Official retry finished in 70.51 s, 7,399 tokens and was unloaded before CCORE retry started. CCORE retry subsequently completed in 326.49 s /32,682 tokens and exited. All GPU launches wrapped. No training.
+
+User deliverable root is sibling outputs/babylon-comparison. Task-owned loopback server is active on port 8767 (exec session 48144), serving only that directory. Viewer source is in viewer/, dependencies pinned in package.json/lock; local Three.js vendor bundle staged. Browser has not yet been opened on scenes while model inference runs. Need finish retry, unload, stage HTML, inspect in Chrome, click native exports, validate GLBs and present side-by-side. Source-first exception is the owner's explicit pure generated-output benchmark: no stock geometry/motion or agent-authored art is inserted. Mechanical export repairs must be labeled separately; raw-first-pass failures remain visible in report.
+
+
+## Native GGUF cross-check in progress
+
+MLX matched retry completed: official thinking-off output has real geometry but broken animation/export APIs; CCORE emits full scene/track code but module syntax errors and duplicated declarations. No raw pass is a functional success yet. Models are unloaded. Published CCORE Q8_0 GGUF downloaded and SHA256 verified (`68a66e251d96afdf120d7e8886964317b3f628abef5aad85e564b25b44da2a20`); official Qwen original was converted to Q8_0 using llama.cpp source `4ddf2b9470b44b122e8a5404ae199f04cd03bcec`.
+
+Installed global llama.cpp build 10809 is too old for the current converter schema (missing expected blk.0.ssm_beta.weight); one failed load, not a model-quality result. Do not retry the old binary unchanged. Matching isolated release build is running under work/llama-native-build (exec session 41334); source work/llama-review, logs work/llama-build.log/configure.log. Global binary unchanged. Once built, scripts/generate_asset_llama.py needs --binary pointing to isolated CLI, then official native run, verify exit, CCORE native run. If another native load crashes, stop repeated launches.
+
+Browser QA reservation was released via work/browser-qa.release; server 8767 stays active (session 48144). Chrome scene tabs not opened yet. Generated artifact staging/validator/viewer scripts are ready. Final goal remains actual GLBs visible in Chrome with honest raw/repair provenance; no training.
+
+Matching isolated llama.cpp build completed successfully (commit 4ddf2b9, native Metal). Native cross-check is now queued/running in session 76627, official first then CCORE, with concise art-only prompt v3 and recommended thinking mode. Do not confuse the failed old-binary attempt with model quality. Both MLX pairs with v2 are preserved as failed trials; no successful raw GLB yet. Need inspect native outputs, validate in Chrome, export/reimport and retain honest provenance.
+
+
+## Completed comparison and current handoff — 2026-11-16
+
+Native v3 pair completed serially: official 81.00 s, exit; CCORE 423.55 s, exit. Both raw outputs failed. Separate labeled diagnostic repairs yielded actual GLBs: official273,832 bytes/static; CCORE1,769,872 bytes/one87-channel clip. Both Khronos0errors/0warnings and reimported visibly side by side in Chrome. CCORE has15people, no leg-animation channels;58/87channels vary, six cloud channels. No invented geometry/new movement formulas. Not a successful full animated voxel town. Full provenance and limitations: docs/comparison-results.md and eval/results.
+
+Deliverable sibling outputs/babylon-comparison, loopback http://localhost:8767/ (task server session48144) stays open for owner; Chrome comparison screenshot and GLBs retained there. No model process/server remains, no training, no goal or automation. Browser QA slot is released at task end; HTTP server is the intentional remaining task process. Primary promptv3 copied into deliverable prompt.txt. Earlier v2 trials and raw native originals retained locally. Current best next step: independent smaller tasks and reliable animation/export validation before any LoRA pilot. Drive contains index/manifest only; bulk payload archive still pending.

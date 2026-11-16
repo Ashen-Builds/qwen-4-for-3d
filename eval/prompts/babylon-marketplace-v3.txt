@@ -1,0 +1,5 @@
+Create a richly detailed voxel diorama of a bustling ancient Babylonian marketplace beside a turquoise canal. Make a coherent little town with mud-brick homes, stepped roof terraces, shaded courtyards, a blue-glazed gateway, an arched canal bridge, date palms, reed boats and a small stepped temple in the distance.
+
+Fill the market with colorful awnings, pottery, woven rugs, grain sacks, dates, copper goods, baskets and tiny architectural details. Use warm ochre masonry, lapis-blue accents, vibrant textiles and beautiful late-afternoon light.
+
+Bring it to life: at least sixteen voxel villagers walk around and trade, carry goods or gesture at stalls; water visibly flows, clouds drift slowly, and palms or cloth gently sway. Keep movement calm, believable and loopable. The scene and its moving components must export together as a working animated GLB.

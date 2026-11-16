@@ -6,3 +6,4 @@ adapters/
 models/
 .cache/
 runs/
+node_modules/
