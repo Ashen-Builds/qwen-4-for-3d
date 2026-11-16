@@ -18,6 +18,7 @@ def main():
     ]
     for name,root,role in roots:
         archive=args.out/(name+'.zip')
+        if archive.exists():raise FileExistsError('Preserve frozen package; use its manifest to resume uploads: '+str(archive))
         with zipfile.ZipFile(archive,'w',compression=zipfile.ZIP_STORED,allowZip64=True) as z:
             for f in sorted(root.rglob('*')):
                 if f.is_file() and '.cache' not in f.parts and not f.is_symlink():z.write(f,str(f.relative_to(root.parent)))

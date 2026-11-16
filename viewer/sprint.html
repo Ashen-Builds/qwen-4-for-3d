@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Babylon — CCORE / Astra</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e8e4dc;color:#252b2b;font:14px system-ui,sans-serif}header{height:72px;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #c9c8bf}h1{font-size:20px;font-weight:600;margin:0;letter-spacing:-.5px}button,a{font:inherit;color:inherit}button{padding:8px 15px;border:1px solid #b8bdb6;border-radius:7px;background:#f5f3ec;cursor:pointer}nav{display:flex;gap:8px}.views{display:grid;grid-template-columns:1fr 1fr;height:calc(100vh - 72px)}.view{position:relative;min-width:0;border-right:1px solid #c9c8bf}.view:last-child{border:0}.bar{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:linear-gradient(#e8e4dc,#e8e4dc00);pointer-events:none}h2{margin:0;font-size:16px;font-weight:600}.bar a{pointer-events:auto;text-decoration:none;border-bottom:1px solid #8a958e;padding:4px 0}.stats{position:absolute;bottom:17px;left:22px;right:22px;color:#4b5753;font:12px ui-monospace,monospace;z-index:2;pointer-events:none}.status{position:absolute;top:50%;left:0;right:0;text-align:center;color:#5e6a64}canvas{position:fixed;top:72px;left:0;width:100%;height:calc(100vh - 72px);pointer-events:none}a[hidden]{display:none}@media(max-width:700px){header{padding:12px}h1{font-size:16px}.bar{padding:16px 10px}.stats{left:10px;right:10px}h2{font-size:13px}}
+</style>
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/examples/jsm/"}}</script>
+</head><body data-arms="control,ours">
+<header><h1>Babylon — CCORE / Astra</h1><nav><a href="/comparison-report.json" target="_blank">Run report</a><button id="play">Pause</button><button id="reset">Reset views</button></nav></header>
+<div class="views">
+<section class="view" id="control"><div class="bar"><h2>CCORE control</h2><a href="/control/asset.glb" download hidden>Download GLB</a></div><div class="status">Awaiting export</div><div class="stats"></div></section>
+<section class="view" id="ours"><div class="bar"><h2>Astra checkpoint</h2><a href="/ours/asset.glb" download hidden>Download GLB</a></div><div class="status">Awaiting export</div><div class="stats"></div></section>
+</div><canvas id="canvas"></canvas>
+<script type="module" src="/app.js"></script>
+</body></html>

@@ -1,0 +1,27 @@
+# Prepared only. Nothing starts from this file. Pilot after explicit owner instruction.
+model: ../work/models-derived/ccore-bf16
+data: ../work/sprint-prep/training-ready/repairs
+train: false
+test: false
+fine_tune_type: lora
+optimizer: adamw
+seed: 42
+num_layers: 1
+batch_size: 1
+grad_accumulation_steps: 1
+iters: 10
+learning_rate: 0.00001
+max_seq_length: 4096
+grad_checkpoint: true
+mask_prompt: true
+steps_per_report: 1
+steps_per_eval: 5
+val_batches: 2
+save_every: 5
+adapter_path: ../work/sprint-prep/qualification-adapter
+lora_parameters:
+  rank: 8
+  scale: 20.0
+  dropout: 0.0
+trust_remote_code: false
+report_to: null

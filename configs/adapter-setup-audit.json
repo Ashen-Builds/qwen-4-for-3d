@@ -1,0 +1,131 @@
+{
+  "scope": "Untrained module attachment and dtype/shape audit; no model forward, optimizer, gradients or weight updates",
+  "trained_steps": 0,
+  "model_file_directory": "ccore-bf16",
+  "layers": 32,
+  "adapted_last_layers": 1,
+  "final_layer_full_attention": true,
+  "base_tensor_dtypes": {
+    "mlx.core.bfloat16": 402,
+    "mlx.core.float32": 24
+  },
+  "base_parameters": 4205751296,
+  "trainable_parameters": 479232,
+  "trainable_tensors": [
+    {
+      "name": "language_model.model.layers.31.self_attn.q_proj.lora_a",
+      "shape": [
+        2560,
+        8
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.q_proj.lora_b",
+      "shape": [
+        8,
+        8192
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.k_proj.lora_a",
+      "shape": [
+        2560,
+        8
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.k_proj.lora_b",
+      "shape": [
+        8,
+        1024
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.v_proj.lora_a",
+      "shape": [
+        2560,
+        8
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.v_proj.lora_b",
+      "shape": [
+        8,
+        1024
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.o_proj.lora_a",
+      "shape": [
+        4096,
+        8
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.o_proj.lora_b",
+      "shape": [
+        8,
+        2560
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.gate_proj.lora_a",
+      "shape": [
+        2560,
+        8
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.gate_proj.lora_b",
+      "shape": [
+        8,
+        9216
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.down_proj.lora_a",
+      "shape": [
+        9216,
+        8
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.down_proj.lora_b",
+      "shape": [
+        8,
+        2560
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.up_proj.lora_a",
+      "shape": [
+        2560,
+        8
+      ],
+      "dtype": "mlx.core.float32"
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.up_proj.lora_b",
+      "shape": [
+        8,
+        9216
+      ],
+      "dtype": "mlx.core.float32"
+    }
+  ],
+  "initial_lora_b_zero": true,
+  "gradient_save_reload_throughput_qualified": false,
+  "precision_note": "Original checkpoint preserved; task-derived text weights converted to BF16 through official loader/converter."
+}

@@ -1,0 +1,54 @@
+{
+  "date": "2026-11-16",
+  "status": "complete-inventory-verified",
+  "source_packages": 6,
+  "remote_payload_files": 216,
+  "remote_payload_bytes": 21484759314,
+  "packages": [
+    {
+      "package": "3dcodeverse-research-only",
+      "files": 10,
+      "expected": 10,
+      "bytes": 921839250,
+      "complete": true
+    },
+    {
+      "package": "blender-supplements",
+      "files": 1,
+      "bytes": 34716587,
+      "complete": true
+    },
+    {
+      "package": "ccore-glb-dataset",
+      "files": 11,
+      "expected": 11,
+      "bytes": 1030775499,
+      "complete": true
+    },
+    {
+      "package": "ccore-original-checkpoint",
+      "files": 174,
+      "expected": 174,
+      "bytes": 17510227903,
+      "complete": true
+    },
+    {
+      "package": "ccore-scenes-dataset",
+      "files": 15,
+      "expected": 15,
+      "bytes": 1504217442,
+      "complete": true
+    },
+    {
+      "package": "pixel-atlas-reference",
+      "files": 5,
+      "expected": 5,
+      "bytes": 482982633,
+      "complete": true
+    }
+  ],
+  "problems": [],
+  "verification": "Every remote part name and byte size checked. Local SHA256 manifests uploaded. Not a complete cloud-byte re-download.",
+  "extra_recovery_copies": 1,
+  "recovery_note": "A duplicate copy was renamed with a duplicate-copy suffix; it is not part of the canonical restore set."
+}

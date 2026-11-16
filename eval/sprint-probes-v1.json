@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "status": "frozen-before-additional-training; not generated yet",
+  "scope": "Held out from our added training only; absence from upstream pretraining cannot be established",
+  "seeds": [
+    42,
+    1234
+  ],
+  "final": [
+    {
+      "id": "waterwheel",
+      "family": "waterwheel",
+      "exclude_training_aliases": [
+        "waterwheel",
+        "water wheel"
+      ],
+      "prompt": "A canal-fed wooden waterwheel with a supported axle, buckets and a stone trough; existing waterwheel rotation must survive GLB export. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "orrery",
+      "family": "orrery",
+      "exclude_training_aliases": [
+        "orrery"
+      ],
+      "prompt": "A compact brass orrery with four planet arms, a stationary base and independently turning arms. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "sundial",
+      "family": "sundial",
+      "exclude_training_aliases": [
+        "sundial"
+      ],
+      "prompt": "A stepped terracotta sundial courtyard with an angled gnomon, engraved hour blocks and two benches. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "drawbridge",
+      "family": "drawbridge",
+      "exclude_training_aliases": [
+        "drawbridge",
+        "draw bridge"
+      ],
+      "prompt": "A small drawbridge with a separate hinged deck, towers, chains and a looped opening cycle. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "windmill",
+      "family": "windmill",
+      "exclude_training_aliases": [
+        "windmill",
+        "wind mill"
+      ],
+      "prompt": "A low-poly grain windmill with a fixed masonry tower, four rotating sails and sacks by its door. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "lighthouse",
+      "family": "lighthouse",
+      "exclude_training_aliases": [
+        "lighthouse"
+      ],
+      "prompt": "A coastal beacon tower with stairs, a separate lantern, a revolving light housing and rocky plinth. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "sluice",
+      "family": "sluice",
+      "exclude_training_aliases": [
+        "sluice"
+      ],
+      "prompt": "A miniature irrigation sluice with two sliding gates, three channels and a looped gate demonstration. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "abacus",
+      "family": "abacus",
+      "exclude_training_aliases": [
+        "abacus"
+      ],
+      "prompt": "A market counting abacus with distinct rods, two bead colors, a wooden stand and countable beads. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "printingpress",
+      "family": "printingpress",
+      "exclude_training_aliases": [
+        "printing press",
+        "printingpress"
+      ],
+      "prompt": "A wooden screw press with a movable platen, rotating handle and clear safe separation of parts. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "waterclock",
+      "family": "waterclock",
+      "exclude_training_aliases": [
+        "water clock",
+        "waterclock"
+      ],
+      "prompt": "A terracotta water-clock display with separate vessels, a marked float and a slow looped float cycle. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "gantrycrane",
+      "family": "gantrycrane",
+      "exclude_training_aliases": [
+        "gantry crane",
+        "gantrycrane"
+      ],
+      "prompt": "A dockside timber gantry crane with trolley, suspended crate and an exported lifting loop. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "cablecar",
+      "family": "cablecar",
+      "exclude_training_aliases": [
+        "cable car",
+        "cablecar"
+      ],
+      "prompt": "A small cable-car station with a moving cabin traveling between two supports in a loop. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "balloon",
+      "family": "balloon",
+      "exclude_training_aliases": [
+        "balloon"
+      ],
+      "prompt": "A colorful tethered balloon diorama with basket, ropes, anchor posts and gentle looped bobbing. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "crab",
+      "family": "crab",
+      "exclude_training_aliases": [
+        "crab"
+      ],
+      "prompt": "A stylized mechanical crab with distinct legs, shell plates and a readable movement loop. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "observatory",
+      "family": "observatory",
+      "exclude_training_aliases": [
+        "observatory"
+      ],
+      "prompt": "A small courtyard observatory with a rotating telescope assembly, open roof and separate doors. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "aqueduct",
+      "family": "aqueduct",
+      "exclude_training_aliases": [
+        "aqueduct"
+      ],
+      "prompt": "A three-arch stone aqueduct section with a walkable-looking upper channel, end caps and terrain base. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "pergola",
+      "family": "pergola",
+      "exclude_training_aliases": [
+        "pergola"
+      ],
+      "prompt": "A garden pergola with lattice roof, four distinct supports, hanging planters and one gently swinging sign. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "mangrove",
+      "family": "mangrove",
+      "exclude_training_aliases": [
+        "mangrove"
+      ],
+      "prompt": "A low-poly mangrove island with visible prop roots, two water levels and a moored miniature canoe. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "signalbeacon",
+      "family": "signalbeacon",
+      "exclude_training_aliases": [
+        "signal beacon",
+        "signalbeacon"
+      ],
+      "prompt": "A hilltop signal-beacon mechanism with rotating colored shutters, railings and a stairway. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "tidegauge",
+      "family": "tidegauge",
+      "exclude_training_aliases": [
+        "tide gauge",
+        "tidegauge"
+      ],
+      "prompt": "A harbor tide-gauge display with a marked ruler, floating pointer, wooden deck and a slow level cycle. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    }
+  ],
+  "development": [
+    {
+      "id": "bellows",
+      "family": "bellows",
+      "exclude_training_aliases": [
+        "bellows"
+      ],
+      "prompt": "A blacksmith bellows and forge display with a looped hinged-bellows motion. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "yarnswift",
+      "family": "yarnswift",
+      "exclude_training_aliases": [
+        "yarn swift",
+        "yarnswift"
+      ],
+      "prompt": "A yarn swift on a table with a rotating frame and clearly separated stationary supports. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "kineticlantern",
+      "family": "kineticlantern",
+      "exclude_training_aliases": [
+        "kinetic lantern",
+        "kineticlantern"
+      ],
+      "prompt": "A hanging kinetic lantern with nested turning rings and a fixed mounting frame. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    },
+    {
+      "id": "basculegate",
+      "family": "basculegate",
+      "exclude_training_aliases": [
+        "bascule gate",
+        "basculegate"
+      ],
+      "prompt": "A garden bascule gate with two distinct pivots, a post and an exported opening loop. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts."
+    }
+  ],
+  "showcase": {
+    "prompt_file": "eval/prompts/babylon-marketplace-v3.txt",
+    "seed": 42,
+    "role": "repeated showcase/development monitor, never a training target or independent final-test score"
+  }
+}

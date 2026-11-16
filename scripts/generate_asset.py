@@ -14,6 +14,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--model", required=True)
     p.add_argument("--out", type=Path, required=True)
+    p.add_argument("--adapter", type=Path, help="Frozen adapter directory for a future checkpoint; omitted for untouched CCORE")
     p.add_argument("--prompt", type=Path)
     p.add_argument("--card", type=Path)
     p.add_argument("--max-tokens", type=int, default=32768)
@@ -31,9 +32,24 @@ def main():
     from mlx_lm import load, stream_generate
     from mlx_lm.sample_utils import make_sampler
 
+    if args.out.exists() and any((args.out / name).exists() for name in ["metrics.json", "response.txt"]):
+        raise SystemExit("Preserve existing run evidence; choose a new output directory")
     args.out.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
-    model, tokenizer = load(args.model, tokenizer_config={"trust_remote_code": False})
+    load_options = {"tokenizer_config": {"trust_remote_code": False}}
+    if args.adapter is not None:
+        if not args.adapter.is_dir():
+            raise SystemExit("Adapter directory missing")
+        load_options["adapter_path"] = str(args.adapter)
+        adapter_files = []
+        for file in sorted(args.adapter.iterdir()):
+            if file.is_file() and file.suffix in {".json", ".safetensors"}:
+                adapter_files.append({"file": file.name, "sha256": hashlib.sha256(file.read_bytes()).hexdigest()})
+    else:
+        adapter_files = []
+    (args.out / "adapter-input.json").write_text(json.dumps({"adapter_present": args.adapter is not None, "files": adapter_files}, indent=2) + "\n")
+    model, tokenizer = load(args.model, **load_options)
+    model.eval()
     loaded = time.monotonic()
     mx.set_cache_limit(2 * 1024**3)
     if args.benchmark:

@@ -11,7 +11,8 @@ renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const loader=new GLTFLoader(), views=[];
 let playing=true, previous=0;
-for(const id of ['qwen','ccore']){
+const armIds=(document.body.dataset.arms||'qwen,ccore').split(',');
+for(const id of armIds){
   const el=document.getElementById(id),scene=new THREE.Scene();
   scene.background=new THREE.Color('#e8e4dc');
   const camera=new THREE.PerspectiveCamera(40,1,.05,1000);
@@ -21,8 +22,7 @@ for(const id of ['qwen','ccore']){
   const fill=new THREE.DirectionalLight(0xc6e2ff,1.1);fill.position.set(-15,10,-10);scene.add(fill);
   const view={id,el,scene,camera,controls,mixer:null,height:5};views.push(view);reset(view);
   el.querySelectorAll('.bar a').forEach(a=>a.addEventListener('pointerdown',e=>e.stopPropagation()));
-  fetch(`/${id}/result.json`).then(r=>r.json()).then(r=>{view.variant=r.display_variant||''}).catch(()=>{});
-  fetch(`/${id}/asset.glb`,{method:'HEAD'}).then(r=>{
+  fetch(`/${id}/result.json`).then(r=>r.json()).then(r=>{view.variant=r.display_variant||'Unlabeled export'}).catch(()=>{view.variant='Unlabeled export'}).then(()=>fetch(`/${id}/asset.glb`,{method:'HEAD'})).then(r=>{
     if(!r.ok)throw new Error('Export unavailable');
     loader.load(`/${id}/asset.glb`,gltf=>{
       const root=gltf.scene;
@@ -35,7 +35,7 @@ for(const id of ['qwen','ccore']){
       view.height=size.y*scale; reset(view);
       el.querySelector('.status').hidden=true;el.querySelector('a').hidden=false;
       let meshes=0,triangles=0;root.traverse(o=>{if(o.isMesh){meshes++;triangles+=(o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count)/3*(o.count||1)}});
-      el.querySelector('.stats').textContent=`${meshes.toLocaleString()} meshes · ${Math.round(triangles).toLocaleString()} triangles · ${gltf.animations.length} clips · ${view.variant||'Diagnostic export'}`;
+      el.querySelector('.stats').textContent=`${meshes.toLocaleString()} meshes · ${Math.round(triangles).toLocaleString()} triangles · ${gltf.animations.length} clips · ${view.variant||'Unlabeled export'}`;
       view.report={meshes,triangles,clips:gltf.animations.length,originalBounds:size.toArray(),viewerScale:scale};
       window.comparisonReports=Object.fromEntries(views.filter(v=>v.report).map(v=>[v.id,v.report]));
     },undefined,e=>{el.querySelector('.status').textContent='GLB load failed';console.error(id,e)});

@@ -1,0 +1,11 @@
+{
+  "checks": {
+    "vocabulary_equal": true,
+    "chat_template_equal": true,
+    "added_vocabulary_equal": true
+  },
+  "sampled_conversations": 104,
+  "actual_training_tokenizer_prefix_and_ids_match": true,
+  "weights_loaded": false,
+  "training_started": false
+}

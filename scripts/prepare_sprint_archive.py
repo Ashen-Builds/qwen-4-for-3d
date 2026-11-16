@@ -34,6 +34,8 @@ def main():
     print(json.dumps({'selected_bytes':total,'sources':len(plans)}),flush=True)
     if not args.download:
         return
+    if (Path.home()/'.cache/gpu-slot/STREAMING').exists():
+        raise RuntimeError('Streaming guard active; defer bulk download')
     args.destination.mkdir(parents=True,exist_ok=True)
     if shutil.disk_usage(args.destination).free < total + 20*1024**3:
         raise RuntimeError('Need payload space plus 20 GiB reserve')

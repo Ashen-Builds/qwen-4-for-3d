@@ -1,0 +1,136 @@
+{
+  "schema": 1,
+  "status": "prepared-for-authorized-qualification; not trained",
+  "source_revision": "276821245d5714b95571465569ed5b844ac6adc7",
+  "datasets": {
+    "replay": {
+      "counts": {
+        "train": 506,
+        "valid": 63
+      },
+      "min_tokens": 9096,
+      "max_tokens": 32659,
+      "cap": 32768,
+      "truncation": false,
+      "exact_mask_prefix": true,
+      "heldout_alias_rows_removed": 7
+    },
+    "repairs": {
+      "counts": {
+        "train": 64,
+        "valid": 16
+      },
+      "min_tokens": 104,
+      "max_tokens": 177,
+      "cap": 4096,
+      "truncation": false,
+      "exact_mask_prefix": true,
+      "heldout_alias_rows_removed": 0
+    }
+  },
+  "family_overlap": 0,
+  "test_policy": "20 final families plus four development families and Babylon excluded by declared aliases; upstream pretraining absence is unknown",
+  "provided_glbs": "All retained replay targets have independently validator-passing supplied exports; source HTML not re-executed",
+  "repair_checks": {
+    "kind": "New targeted API curriculum authored for observed export/track/action failure classes",
+    "rows": {
+      "train": 64,
+      "valid": 16
+    },
+    "program_families": {
+      "train": 8,
+      "valid": 2
+    },
+    "wording_variants_per_family": 8,
+    "qualification": "Wording variants are not independent programs. CPU checks use a licensed publisher GLB; two exporter helpers produce actual validator-passing animated GLBs. This does not prove full-scene visual quality or a training gain.",
+    "source_asset": {
+      "repo": "ccore/ThreeJS-3D-GLB-Assets",
+      "revision": "276821245d5714b95571465569ed5b844ac6adc7",
+      "id": "asset-000674",
+      "license": "MIT declaration; retained source notice"
+    },
+    "checks": [
+      {
+        "family": "export_async",
+        "split": "train",
+        "passed": true,
+        "code_sha256": "23c81c4661447ee2bd2fae70f6dfa38944ab6daee971336469affd2009c9ec0c"
+      },
+      {
+        "family": "export_callback",
+        "split": "train",
+        "passed": true,
+        "code_sha256": "ff9dcd478eec3243e5dcd0663965fe3c224611254d7269d17a5819bcbcdc2d49"
+      },
+      {
+        "family": "quaternion_values",
+        "split": "train",
+        "passed": true,
+        "code_sha256": "08c473cf467c2d2c5a04439b68264dc9d620ea715e3322bdc64e5fbf69155aa5"
+      },
+      {
+        "family": "vector_values",
+        "split": "train",
+        "passed": true,
+        "code_sha256": "468a592702f99fdf3df947b02d0d9e41301185f8b984b1defbddf28eabe8b862"
+      },
+      {
+        "family": "retain_hierarchy",
+        "split": "train",
+        "passed": true,
+        "code_sha256": "6b400f41ac2d883fce0605da66604b6a06fe7e1ec843b2bcb6c2da00b79a6575"
+      },
+      {
+        "family": "finite_tracks",
+        "split": "train",
+        "passed": true,
+        "code_sha256": "9d695f1e718888bc0adaaec6f11c3131b29c16508f207f52c6424a806087c864"
+      },
+      {
+        "family": "independent_clips",
+        "split": "train",
+        "passed": true,
+        "code_sha256": "f93372731e8d868887d51f54cf2203759e01e42ab9bed6acc97855e21b6b2b4e"
+      },
+      {
+        "family": "mixer_actions",
+        "split": "train",
+        "passed": true,
+        "code_sha256": "2411de16c7082b358c5d0d493435bbfeb22f1093a0076c131c1c6eeefa62f351"
+      },
+      {
+        "family": "clip_duration",
+        "split": "valid",
+        "passed": true,
+        "code_sha256": "448ce21e4723e43fa219106fc229210455e44ddd068801c5cb57c5980cecc1b5"
+      },
+      {
+        "family": "typed_binary",
+        "split": "valid",
+        "passed": true,
+        "code_sha256": "fc016236c433e9c7cb888ddc4371b9f44a4e8c747aff0d94af48ab579f552d0a"
+      }
+    ]
+  },
+  "mixture": {
+    "mixing": "Replay rows once; repair rows repeated eight times as explicit example weighting. Repetitions are not independent programs. Provisional mixture, not an optimized recipe.",
+    "mixture_counts": {
+      "train": 1018,
+      "valid": 79
+    },
+    "unique_conversations": {
+      "train": 570,
+      "valid": 79
+    },
+    "repair_families": {
+      "train": 8,
+      "valid": 2
+    },
+    "length_probe_tokens": [
+      9852,
+      20607,
+      32659
+    ],
+    "policy": "Qualification and measured length cost precede any main segment; no truncation; stop on regressions. No training performed."
+  }
+}

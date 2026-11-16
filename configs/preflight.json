@@ -1,0 +1,58 @@
+{
+  "status": "ready-for-authorized-qualification",
+  "training_started": false,
+  "checks": {
+    "training_disabled": true,
+    "remote_code_disabled": true,
+    "external_reporting_disabled": true,
+    "model_present": true,
+    "adapter_shape_check": true,
+    "data_hashes": true,
+    "complete_targets": true,
+    "masks_and_lengths": true,
+    "family_split": true,
+    "actual_training_tokenizer_qualified": true,
+    "frozen_probes": true,
+    "runtime_available": true
+  },
+  "versions": {
+    "mlx": "0.32.4",
+    "mlx-lm": "0.32.2",
+    "transformers": "5.23.0",
+    "huggingface-hub": "2.4.0"
+  },
+  "datasets": {
+    "replay": {
+      "counts": {
+        "train": 506,
+        "valid": 63
+      },
+      "min_tokens": 9096,
+      "max_tokens": 32659,
+      "cap": 32768,
+      "truncation": false,
+      "exact_mask_prefix": true,
+      "heldout_alias_rows_removed": 7
+    },
+    "repairs": {
+      "counts": {
+        "train": 64,
+        "valid": 16
+      },
+      "min_tokens": 104,
+      "max_tokens": 177,
+      "cap": 4096,
+      "truncation": false,
+      "exact_mask_prefix": true,
+      "heldout_alias_rows_removed": 0
+    }
+  },
+  "remaining_live_gate": [
+    "actual backward/finite gradients",
+    "representative-length memory and step time",
+    "save/reload and restored adapter effect",
+    "raw full-scene export and visual regression evaluation"
+  ],
+  "full_unattended_48h_qualified": false,
+  "note": "All these checks are preparation. Do not turn a passing dry run into a claim of training or output improvement."
+}

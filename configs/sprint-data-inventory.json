@@ -35,6 +35,6 @@
     }
   ],
   "status": "Downloaded and hash-verified; static inspection only, not yet a validated training mixture",
-  "archive_status": "Direct connector now passes upload/readback. 100 MiB downstream file limit requires chunks. Blender supplement archive and some numbered parts uploaded; full archive incomplete. Private transfer receipt records IDs and remote size readback.",
+  "archive_status": "Complete: six source packages, 216 canonical remote payload files/parts, 21,484,759,314 bytes; every expected name and byte size verified. Local SHA256 restore manifests uploaded. One extra duplicate retained under a noncanonical suffix.",
   "policy": "No browser or Drive desktop uploads; owner requires direct Codex Google Drive plugin."
 }

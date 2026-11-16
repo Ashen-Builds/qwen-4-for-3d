@@ -10,7 +10,7 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 - Both original checkpoints were downloaded and hash-verified. Official Qwen original/Q8 copies were subsequently deleted at the owner’s request (18.44 GB logical bytes); CCORE stays available. [Acquisition receipt](configs/download-receipt.json), [removal receipt](configs/official-model-removal.json).
 - Comparison completed on M3 Ultra: both raw outputs failed. Separately labeled repaired GLBs load side by side; CCORE is visually richer but misses walking/full-town requirements. [Results and limitations](docs/comparison-results.md). No training started.
 - First comparison: a detailed animated voxel Babylon-inspired marketplace, using identical prompts and conditions for CCORE, upstream Qwen and later our own adapter.
-- A bounded overnight training goal follows inspected baselines and an explicit start instruction. No training goal or automation is active.
+- Preparation is staged: [archive verification](configs/archive-verification.json), [CPU preflight](configs/preflight.json), [48-hour runbook](docs/48-hour-pilot.md). Original CCORE and source datasets are archived through the direct Codex Drive connector. Live gradient/throughput/save-reload qualification intentionally remains unrun. No training, goal or automation is active.
 
 ## Pipeline
 

@@ -57,10 +57,23 @@
   "evaluation": "Regenerate untouched CCORE on chosen common evaluation runtime/precision once before adapter comparisons. Historical repaired Q8 native GLB is a gallery reference, not a raw matched control for a different backend.",
   "training_data_gate": "Pinned rights/provenance, code-family splits, complete assistant targets, no benchmark leakage, independently executed/rendered/export-validated new examples",
   "remaining_unbuilt": [
-    "Verified new training examples targeting measured weaknesses",
-    "Exact Qwen3.5 LoRA backward/save/reload/representative-length qualification",
-    "Frozen train/dev/final family splits and loss-mask/token-length audit",
-    "Safe checkpoint evaluation/export runner and stopping controller"
+    "Live short and representative-length backward/gradient/throughput qualification",
+    "Live adapter save/reload and effect verification",
+    "Fresh matched-runtime raw CCORE control and adapter export/visual comparison",
+    "Observed supervised checkpoint loop through the 48-hour budget"
   ],
-  "readiness": "not-training-ready"
+  "readiness": "preparation-ready; live qualification intentionally unrun",
+  "prepared": [
+    "Complete direct-connector source archive",
+    "BF16 text conversion and zero-update adapter module audit",
+    "Frozen replay and tested generic repair curriculum with exact masks/no truncation",
+    "Final/development probe families and before/after viewer template",
+    "Guarded, plan-only training entrypoint; no schedule or active trainer"
+  ],
+  "qualification_configs": [
+    "configs/lora-qualification.yaml",
+    "configs/lora-length-qualification.yaml",
+    "configs/lora-main-draft.yaml"
+  ],
+  "archive_receipt": "configs/archive-verification.json"
 }
