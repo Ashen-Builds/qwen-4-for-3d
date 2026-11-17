@@ -10,7 +10,7 @@ import struct
 import subprocess
 import sys
 import time
-from overnight_controller import atomic_json, digest, process_identity, terminate_owned, group_members, TERMINAL
+from overnight_controller import atomic_json, digest, process_identity, terminate_owned, group_members, process_tree, tracked_alive, TERMINAL
 
 
 def adapter_valid(file):
@@ -174,8 +174,9 @@ def memory_available():
 
 
 def owned_rss(pid):
-    out=subprocess.run(['ps','-axo','pgid=,rss='],capture_output=True,text=True,timeout=3)
-    return sum(int(fields[1])*1024 for line in out.stdout.splitlines() if len(fields:=line.split())==2 and fields[0]==str(pid))
+    pids=set(process_tree(pid))
+    out=subprocess.run(['ps','-axo','pid=,rss='],capture_output=True,text=True,timeout=3)
+    return sum(int(fields[1])*1024 for line in out.stdout.splitlines() if len(fields:=line.split())==2 and int(fields[0]) in pids)
 
 
 def resource_stop(metrics,rss,available):
@@ -226,7 +227,11 @@ def run_loop(repo,root,engine,auth):
                         engine.event(now,'rejected-review',reason=str(e));path.rename(path.with_suffix('.rejected'))
             action=engine.tick(now,flags)
             if child:
-                job=state['active_job'];reason=action.get('reason') if action and action['action']=='stop' else None
+                job=state['active_job']
+                tracked={int(pid):value for pid,value in job.get('process_tree',{}).items()}
+                if child.poll() is None:tracked.update({pid:process_identity(pid) for pid in process_tree(child.pid)})
+                job['process_tree']=tracked
+                reason=action.get('reason') if action and action['action']=='stop' else None
                 if not reason and now-job['started']>=job['max_seconds']:reason='job-budget'
                 final_training_end=state['deadline']-engine.config.get('final_training_stop_seconds_before_deadline',0)
                 if not reason and job['kind']=='segment' and now>=final_training_end:reason='job-budget'
@@ -234,9 +239,9 @@ def run_loop(repo,root,engine,auth):
                 metrics=read_metrics(Path(job['directory'])/'metrics.jsonl')
                 if not reason:
                     reason=resource_stop(metrics,owned_rss(child.pid),memory_available())
-                if reason:terminate_owned(child,identity)
+                if reason:terminate_owned(child,identity,tracked=tracked)
                 if child.poll() is not None:
-                    if group_members(child.pid):raise RuntimeError('Worker wrapper exited with live descendants')
+                    if tracked_alive(tracked):raise RuntimeError('Worker wrapper exited with live descendants')
                     log.close();result=collect(job,Path(job['directory']),root,child.returncode,reason,now-job['started'])
                     engine.finish(now,result);child=None;identity=None;log=None
             elif action and action['action']=='launch':
@@ -261,9 +266,9 @@ def run_loop(repo,root,engine,auth):
     finally:
         cleanup_error=None
         if child:
-            try:terminate_owned(child,identity)
+            try:terminate_owned(child,identity,tracked={int(k):v for k,v in (state.get('active_job') or {}).get('process_tree',{}).items()})
             except Exception as error:
-                cleanup_error=error;state['status']='stopped';state['orphan_group']=group_members(child.pid)
+                cleanup_error=error;state['status']='stopped';state['orphan_group']=tracked_alive({int(k):v for k,v in (state.get('active_job') or {}).get('process_tree',{}).items()})
         if log:log.close()
         if cleanup_error is None:state['active_job']=None
         atomic_json(root/'state.json',state)

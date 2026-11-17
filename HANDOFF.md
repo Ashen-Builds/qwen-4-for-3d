@@ -134,3 +134,6 @@ Owner submitted attached goal authorizing local training21:00EST Nov16 through08
 
 
 Authorized wait now active: headless tmux astra-overnight-20261116, pane PID41912 at verification, controller state under work/sprint-prep/overnight/astra-overnight-20261116. Status not-started, zero jobs, zero training. Owner authorization file work/sprint-prep/owner-start-overnight-20261116.json hash-matches config and attached goal. No model before21:00EST; baseline then short/reload/length/live review. Config milestones05:00/08:00, training cutoff06:45, drain07:58. All59 dry checks pass. No need for additional owner confirmation; keep current goal active and supervise. Do not start a second controller. Source/data fingerprint is frozen; changing scripts/configs requires stopping owned controller first. HANDOFF/docs/receipt edits do not mutate worker inputs.
+
+
+Prelaunch safety correction: actual gpu_slot source launches the model in a separate session. Stopped only the owned idle controller41912 cleanly (no jobs existed) and extended memory/shutdown tracking to the verified descendant tree across sessions.61 dry checks pass, including detached-child signal/wait and memory accounting. Old prelaunch state retained separately when restarting; no training occurred. Schedule/config authorization unchanged. Do not infer shutdown safety from process-group membership alone.

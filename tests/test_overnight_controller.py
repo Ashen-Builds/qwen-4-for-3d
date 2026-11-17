@@ -8,6 +8,7 @@ import struct
 import subprocess
 import sys
 import tempfile
+import types
 import time
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'scripts'))
@@ -392,3 +393,23 @@ class ElevenHourTests(unittest.TestCase):
     def test_out_of_window_milestone_rejected(self):
         c=copy.deepcopy(self.cfg);c['milestones'].append({'elapsed_hours':24})
         with self.assertRaises(ValueError):new_state(c,'bad')
+
+class DetachedGPUWrapperTests(unittest.TestCase):
+    def test_separate_session_child_is_stopped_with_owned_wrapper(self):
+        from overnight_controller import process_tree,tracked_alive
+        with tempfile.TemporaryDirectory() as temp:
+            marker=Path(temp)/'fixture.json';c=subprocess.Popen([sys.executable,str(REPO/'tests/fixtures/fake_sprint_worker.py'),'--marker',str(marker),'--detached-child'],start_new_session=True)
+            try:
+                for _ in range(200):
+                    if marker.exists():break
+                    time.sleep(.01)
+                tree=process_tree(c.pid);self.assertGreaterEqual(len(tree),2);tracked={pid:process_identity(pid) for pid in tree}
+                terminate_owned(c,process_identity(c.pid),grace=.2,tracked=tracked);self.assertEqual(tracked_alive(tracked),[])
+            finally:
+                if c.poll() is None:os.killpg(c.pid,signal.SIGKILL);c.wait()
+
+    def test_memory_counts_detached_descendants(self):
+        from unittest.mock import patch
+        from overnight_runtime import owned_rss
+        with patch('overnight_runtime.process_tree',return_value=[11,12]),patch('overnight_runtime.subprocess.run',return_value=types.SimpleNamespace(stdout='11 100\n12 200\n13 900\n')):
+            self.assertEqual(owned_rss(11),300*1024)

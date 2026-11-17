@@ -303,26 +303,46 @@ def group_members(pgid):
     return [int(p[0]) for line in out.stdout.splitlines() if len(p:=line.split())==3 and p[1]==str(pgid) and not p[2].startswith('Z')]
 
 
-def terminate_owned(child, identity, grace=60):
-    members=group_members(child.pid)
-    if child.poll() is not None:
-        if members:raise RuntimeError('Exited wrapper still has live descendants; inspected recovery required')
-        return
-    if process_identity(child.pid) != identity or os.getpgid(child.pid) != child.pid:
-        raise RuntimeError('Refusing to signal a process whose identity changed')
-    owned={pid:process_identity(pid) for pid in members}
-    os.killpg(child.pid,signal.SIGTERM);deadline=time.monotonic()+grace
-    while group_members(child.pid) and time.monotonic()<deadline:
+def process_tree(pid):
+    out=subprocess.run(['ps','-axo','pid=,ppid=,stat='],capture_output=True,text=True)
+    records=[line.split() for line in out.stdout.splitlines() if len(line.split())==3]
+    result={pid};changed=True
+    while changed:
+        changed=False
+        for child,parent,status in records:
+            if int(parent) in result and int(child) not in result and not status.startswith('Z'):
+                result.add(int(child));changed=True
+    return sorted(result)
+
+
+def tracked_alive(owned):
+    return [pid for pid,identity in owned.items() if identity and process_identity(pid)==identity and subprocess.run(['ps','-p',str(pid),'-o','stat='],capture_output=True,text=True).stdout.strip()[:1]!='Z']
+
+def terminate_owned(child, identity, grace=60, tracked=None):
+    owned=dict(tracked or {})
+    if child.poll() is None:
+        if process_identity(child.pid)!=identity or os.getpgid(child.pid)!=child.pid:
+            raise RuntimeError('Refusing to signal a process whose identity changed')
+        owned.update({pid:process_identity(pid) for pid in process_tree(child.pid)})
+    elif not tracked and group_members(child.pid):
+        raise RuntimeError('Exited wrapper still has unverified descendants')
+    alive=tracked_alive(owned)
+    if not alive:return
+    # Driver/wrapper first, then any tracked detached-session children.
+    for pid in sorted(alive,key=lambda p:p!=child.pid):
+        if process_identity(pid)==owned[pid]:
+            try:os.kill(pid,signal.SIGTERM)
+            except ProcessLookupError:pass
+    deadline=time.monotonic()+grace
+    while tracked_alive(owned) and time.monotonic()<deadline:
         child.poll();time.sleep(min(.05,max(0,deadline-time.monotonic())))
-    remaining=group_members(child.pid)
-    if remaining:
-        if any(pid not in owned or process_identity(pid)!=owned[pid] for pid in remaining):
-            raise RuntimeError('Unverified descendant remains; refusing automatic relaunch')
-        for pid in remaining:os.kill(pid,signal.SIGKILL)
-    child.wait(timeout=10)
-    deadline=time.monotonic()+2
-    while group_members(child.pid) and time.monotonic()<deadline:time.sleep(.02)
-    if group_members(child.pid):raise RuntimeError('Owned group still exiting; no further launch allowed')
+    for pid in tracked_alive(owned):
+        if process_identity(pid)!=owned[pid]:raise RuntimeError('PID identity changed during stop')
+        try:os.kill(pid,signal.SIGKILL)
+        except ProcessLookupError:pass
+    child.wait(timeout=10);deadline=time.monotonic()+2
+    while tracked_alive(owned) and time.monotonic()<deadline:time.sleep(.02)
+    if tracked_alive(owned):raise RuntimeError('Owned process tree still exiting; no further launch')
 
 
 def recover_after_restart(engine, now, lookup=process_identity):
