@@ -1,8 +1,16 @@
 # Astra 3D overnight experiment
 
-Updated November 17, 2026 at 11:48 EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR #1. **Previous experiment stopped; next eight-hour run is preparation only.** Astra did not beat CCORE on the Babylon marketplace. Results, exact raw/assisted outputs and private backups are preserved. Owner requested discussion notes and a pushed next-steps handoff, not another training launch.
+Updated November 17, 2026 at 13:55 EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR #1. **Direction changed on November 17: image-to-3D single assets.** Read [docs/image-to-3d-plan.md](docs/image-to-3d-plan.md) first; it has the goal, stages, resume commands and the Haiku manager brief. The sections below it in this file describe the stopped November 16 to 17 experiment and remain accurate history.
 
-## Start here: next steps
+## Current state (November 17, 13:55 EST)
+
+- Goal: a local model turns one concept-art image into a GLB asset (characters first) that a laptop can produce overnight for free. Base is CCORE `Qwen3.5-4B-GLB-3D-Coder`; the scene model is downloaded but parked. Full fine-tune with Adafactor on the M3 Ultra, owner's decision. No training is authorized yet.
+- Stage 0 baseline test is built: five Codex reference images, image-capable runner (`llama.cpp` with the vision projector), headless export/validate/render harness, gallery page. One of ten generations ran: original Qwen read the lamp image, wrote a program in 60 s, program crashed (`florishGeo is not defined`), no GLB. The run was stopped at 13:45 because another session's Blender renders held both GPU slots; nine generations remain. Resume commands are in the plan.
+- Machine-local, not in Git: `~/work/models/` (original Qwen 3.5 4B at `851bf6e8`, CCORE 3D Coder at `4b9f05f3`), `~/work/models-derived/qwen-bf16`, `~/work/models-native/lmstudio-community--Qwen3.5-4B-GGUF/` (Q8 + vision projector), `~/work/runs/five-asset-image-20261117/`, `~/work/outputs/five-asset-image-20261117/`. Last night's workspace with the CCORE asset model copies, llama.cpp build and datasets is `~/Documents/Codex/2026-11-16/hey-buddy-we-re-going-to/work/`; the owner chose to keep both models.
+- Checked today: both CCORE models accept images (Qwen3.5 vision tower, untouched), but no dataset example used one. Scenes dataset (4,146) belongs to the scene model, exports no GLB and animates in the render loop. Asset dataset (3,918) characters are rigid parts, no skins, 2 use bones, about a third animated.
+- Nothing is running. No GPU slot is held by this work. Preserve all shared flags.
+
+## Previous experiment: next steps as written at 11:48 EST
 
 1. Read [the final experiment report](docs/overnight-final-20261117.md), [discussion notes](docs/next-eight-hour-discussion.md), and [original reply summary](docs/replies-summary.md). Keep untouched CCORE as the control. Do not treat the repaired Babylon files as raw successes.
 2. Inventory the acquired GLB and older Scenes data by source ID, program family, task type and token length. GLB replay supplied the previous candidate; Scenes was archived but not in its main mixture. Select candidate town/architecture/voxel examples and preserve provenance. Do not silently mix their different output interfaces.

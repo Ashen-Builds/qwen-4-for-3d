@@ -79,3 +79,14 @@ Ordered so you can **start today** on current Qwen and port to Qwen 4 when it dr
 - [ ] **Free compute option:** try a Colab or Runpod setup script written by an AI before renting more (@botzero_net, @Thirty3lab). Ashen has the Google $200/m plan.
 - [ ] **Hugging Face publishing:** free accounts have a 100GB private cap, so put GGUF quants in their own repo (@i2bhai8).
 - [ ] **Optional no-training track:** build reference examples grounded in standards like ISO threads (@8bit_Slats).
+
+### 2026-11-17, backlog from the post-run discussion
+
+Not started. None of these is launch authorization for training.
+
+- [ ] **Export script.** Fixed harness script: open the generated Three.js page headless, record object motion for a few seconds, save scene plus baked motion as one GLB. Prove it on ten existing ThreeJS-3D-Scenes examples. The supervising agent only triggers it and checks the file. Known losses: fog, backgrounds, custom shaders, shader-driven motion.
+- [ ] **Judge on the exported GLB**, not the browser page.
+- [ ] **Baseline before training.** Untouched models on a fixed prompt set, scored on exported output.
+- [ ] **Better examples than the existing datasets.** Open question; replaying data a model was already trained on is not expected to lift it.
+- [ ] **Full fine-tune memory pilot** (Adafactor) at real sequence lengths on the M3 Ultra, before any eight-hour clock.
+- [ ] **Questions for the CCORE author:** learning rate, epochs, max sequence length, reasoning traces in training, what he looks at in hand review.
