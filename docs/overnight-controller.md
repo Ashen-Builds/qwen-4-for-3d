@@ -1,20 +1,20 @@
 # Authorized overnight window — November 16–17
 
-The attached owner goal supersedes the earlier 48-hour proposal: **21:00 EST November 16 through 08:00 EST November 17**, maximum eleven hours including qualification and reviews. Current config: `configs/overnight-11h.json`. Main comparison at 05:00 (generation begins04:00); final comparison at08:00 (generation begins07:00). Main training ends no later than06:45; owned compute drains07:58 before the hard08:00stop.
+The active owner's **Start now** instruction overrides the stale 21:00 text in the attachment. The experiment began **20:42:39 EST November 16** and must stop by **07:42:39 EST November 17**, eleven hours including qualification, pauses and reviews. The direct-code revision retains this original clock; it does not extend the deadline.
 
-The submitted goal is the start authority. A private record captures its attachment hash and exact config hash; it grants no extra scope. A headless controller may wait before21:00 with `--wait-until-start`, but no model worker launches before the window. There is no recurring automation. Routine reviews are performed by Codex.
+Current run: `astra-direct-20261116`; config: `configs/overnight-direct-code.json`; private authorization: `work/sprint-prep/owner-start-direct-20261116.json` under the workspace, outside this checkout. Its scope is `manual-overnight-sprint`. This record documents existing owner authority and the exact config hash; it grants no extra scope. The earlier timed and reasoning-heavy variants are stopped. There is no recurring automation. Codex supervises routine reviews.
 
-The schedule now derives milestone hours and compute windows from config. The original48-hour config/tests remain as regression coverage. No 48-hour checkpoint assumptions apply to the eleven-hour job. The current run ID is `astra-overnight-20261116`, authorization scope `overnight-sprint`.
+The intermediate comparison is due **04:42:39 EST November 17**, with its generation window beginning 03:42:39. Main training drains by **06:27:39**; the final generation window begins 06:42:39. Owned compute shutdown begins **07:40:39**, preserving the configured **120-second shutdown reserve** before the **07:42:39** hard stop. These times derive from the active config's numeric schedule fields. Historical 48-hour fixtures are regression coverage only.
 
 ## Controller operation
 
-Preparation only. The controller is implemented and dry-tested with fake CPU workers; no live trainer has been started. Use the current Codex session as the supervisor/reviewer. The controller does not claim that completed HTML or lower loss proves a good GLB.
+Live direct-code qualification has passed: ten short backward steps, ordinary adapter-effect/reload verification, and three complete-code length probes. Three main segments have completed 300 training steps. The first evaluation at200steps produced complete-length HTML but failed raw JavaScript syntax; no successful raw Astra GLB or visual improvement is established. The current local hold allows a separately qualified capacity revision. Use the current Codex session as supervisor/reviewer. Completed HTML, lower loss and a repaired diagnostic do not prove raw export success.
 
 ## Sequence
 
-Frozen CCORE generation → Codex baseline review → ten short training steps → adapter-effect/reload check → three complete length probes → Codex qualification review → bounded training segments → checkpoint generation and review before each eight-hour deadline.
+Frozen matched CCORE generation → Codex baseline review → ten short training steps → adapter-effect/reload check → three complete length probes → Codex qualification review → bounded training segments → checkpoint generation and review at configured milestones and supervised early checks. The direct-code variant uses no-thinking generation for both fresh control and adapter, with fresh adapter initialization rather than resuming the stopped variant.
 
-The live gates check completed backward steps, finite losses and adapter tensors, nonzero learned B matrices, measured step time, and adapter-effect/reload logits. Gradient norms are not separately instrumented. Live training still has to pass these gates after the owner starts it.
+The live gates check completed backward steps, finite losses and adapter tensors, nonzero learned B matrices, measured step time, and adapter-effect/reload logits. Gradient norms are not separately instrumented. These qualification gates passed for the current variant; exported-asset quality remains a separate review gate.
 
 Each training segment uses at most 25 minutes including resource wait, respects the shared GPU slot, saves every step and copies a valid checkpoint into an immutable directory. Segment iteration count is estimated conservatively from the slowest measured step. A segment resumes **adapter weights only**; Adam state and sampling restart. This is an explicit warm-restart experiment, not bit-exact optimizer continuation.
 
@@ -24,23 +24,19 @@ The current fixed layer scope and data/model/runtime fingerprints cannot silentl
 
 The controller runs phase ordering, resource waits, safety stops, checkpoints, artifact packets and clock deadlines. **Codex must remain active to inspect and acknowledge review packets**, including source/export checks, GLB validation, playback/appearance and the fixed development probes. With no reviewer, it waits safely. Routine reviews do not require waking the owner. Optional CLI critics remain subject to the owner's model restrictions.
 
-The independent final suite is a supervisor responsibility: freeze a candidate before final testing, reserve an allowed compute window, and do not use those scores to tune subsequent checkpoints. If the window/budget is exhausted, report incomplete evaluation. A default overnight-only run has less than 48 compute hours; daytime reports may reuse the last actual output and state its age.
+The independent final suite is a supervisor responsibility: freeze a candidate before final testing, reserve an allowed compute window, and do not use those scores to tune subsequent checkpoints. If the eleven-hour window is exhausted, report incomplete evaluation and stop owned compute. Do not extend this run into daytime or another night.
 
-## Start later, only after the owner's instruction
+## Inspect or resume the authorized run
 
-`python3 scripts/overnight_controller.py` prints a plan/config hash and launches nothing. There is no cron, timer or scheduled start.
-
-After the actual start instruction, Codex records a private authorization JSON with `owner_authorized: true`, `scope: "48-hour-sprint"`, `run_id: "astra-sprint-01"`, the exact printed `config_sha256`, and `allow_daytime_compute: false` unless the owner explicitly permits daytime use. This record documents existing authority; a file itself grants none.
-
-From the checkout, a live start can then run headlessly:
+The owner has already authorized this run. Do not launch a second controller or resume either stopped earlier variant. Inspect current process ownership, the run lock and live worker state before any recovery. The following command reads the current variant's status and launches no worker:
 
 ```sh
-tmux new-session -d -s astra-sprint-01 -c "$PWD" \
-  ../work/qwen-eval-env/bin/python scripts/overnight_controller.py \
-  --run --authorization-file ../work/sprint-prep/owner-start.json
+../work/qwen-eval-env/bin/python scripts/overnight_controller.py \
+  --config configs/overnight-direct-code.json \
+  --run-id astra-direct-20261116 --status
 ```
 
-Do not run this command during preparation. The start refuses before the planned start time. The run directory is exclusive; a second controller cannot acquire its lock. `--status` is read-only. `--run --resume` requires the same authorization/config and refuses a recorded live worker or orphan. It does not take over another session's process.
+Recovery with `--run --resume` requires the same explicit config/run ID and private authorization file. It refuses a recorded live worker or orphan and cannot take over another session's process. Default invocation without live flags is plan-only, but its defaults refer to the older timed configuration; always select this variant explicitly.
 
 ## Review protocol
 
@@ -53,17 +49,17 @@ Decisions are `continue`, `retry` or `stop`. A failed worker cannot be acknowled
 ## Safety and timing
 
 - Streaming, shared GPU pause and this run's `PAUSE` file stop owned compute. Neither global flag is removed by this controller. GPU gate code75 is an availability hold with a five-minute cooldown, not a model crash.
-- Without explicit daytime permission, drain begins at **8:58 a.m. EST**, leaving termination grace before the owner's 9 a.m. use; compute resumes in the next 11 p.m. window. An authorized `DAYTIME_APPROVED` marker can change availability within this run; it never overrides streaming/global pause.
+- This run's main-training cutoff is **06:27:39 EST November 17**. The **120-second** deadline reserve starts owned-compute shutdown at **07:40:39**, before the **07:42:39** hard stop. There is no next-night resume under this authorization; availability markers never extend the deadline or override streaming/global pause.
 - The fixed hard deadline includes pauses and evaluation. No new heavy job starts after it. Reports say unchanged, missing or unreviewed when appropriate; no fabricated GLB is created.
 - The parent monitors reported memory, owned-group RSS and reclaimable system memory. The live training worker sets a 160 GiB **advisory** MLX memory limit and 2 GiB cache; this is not an OS-enforced cap. Live memory/throughput qualification remains mandatory.
 - Stop uses SIGTERM, waits up to 60 seconds for the whole owned group, and uses SIGKILL only for still-verified members as a last resort. An unverified/stuck descendant prevents another launch and requires inspected recovery.
 - `STOP` ends the run; `PAUSE` is the reversible local hold. The controller owns no other engine/session. It opens no terminal window or network listener. A per-controller `caffeinate -w` assertion is created only in live mode and released on exit.
 - Local workers receive offline Hugging Face settings, disabled telemetry and an environment stripped of common API credentials. No paid critic, model upload, merge or deployment is performed automatically.
 
-## Dry test
+## Historical 48-hour dry test
 
 ```sh
 python3 scripts/dry_test_controller.py --out ../outputs/controller-dry-run
 ```
 
-The test advances a fake clock through 48 hours and uses real CPU-only fixture subprocesses for lifecycle checks. No MLX import, model load, optimizer or training step occurs. The report and timeline explicitly label simulated checkpoints and reviews. Live training and GLB quality are not certified by this test.
+This historical regression test advances a fake clock through the original 48-hour schedule and uses real CPU-only fixture subprocesses for lifecycle checks. Its simulated nightly windows and checkpoints do not describe the active eleven-hour run. No MLX import, model load, optimizer or training step occurs in the dry test. Its report and timeline explicitly label simulated checkpoints and reviews; they do not certify live training or GLB quality.

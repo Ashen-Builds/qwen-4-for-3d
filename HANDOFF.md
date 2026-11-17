@@ -1,194 +1,61 @@
-# Qwen 4 for 3D — Astra
+# Astra 3D overnight experiment
 
-Updated 2026-11-16. Remote: `Ashen-Builds/qwen-4-for-3d`, branch `Astra`.
+Updated November16,2026 at23:45EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR#1. The overnight goal is active. No improved Astra asset has been demonstrated.
 
-## Authorization and verified state
+## Authority and fixed deadline
 
-- Initial authority covered explanation/source review/dataset copies only; on 2026-11-16 the owner subsequently authorized downloading CCORE GLB and its official upstream Qwen model, plus updating the open-source plan. Tests follow a later start instruction. Training/inference and engine work have not started.
-- Read all 132 archived replies. Reviewed CCORE and 3DCodeVerse primary cards and official Hub/PEFT documentation.
-- `docs/practice-data.md` records fit, pinned revisions, terms and copy scope. `scripts/copy_practice_datasets.py` reproduces dataset-only copies and verifies upstream digests.
-- Dataset files live outside this checkout under sibling `work/datasets`, in repo-ID/revision folders. Keep raw corpora and machine caches out of GitHub; acquisition manifest and instructions travel in Git instead.
-- Completed 72 file downloads, 2,425,999,835 upstream bytes, checked against upstream digests. Opened all 57 Parquet footers: CCORE has 4,146 text rows plus 4,146 matching preview rows; unique training/validation IDs are disjoint. 3DCodeVerse has 2,028,286 merged text rows plus focused SFT sets of 19,609 Blender, 15,704 bootstrapped Blender, 549 Three.js, and 143 held-out test rows. Footer/schema/ID checks are not code execution or visual verification. Inspection used a temporary `uv` PyArrow environment; no training environment installed.
-- CCORE data is permissive by publisher declaration; 3DCodeVerse aggregate/adapter is noncommercial research. Do not silently mix the aggregate into a permissively released model/data product.
+The owner explicitly answered **Start now as requested**, superseding the attachment's stale9pm restriction. Experiment start20:42:39EST November16; hard stop07:42:39EST November17. Intermediate comparison04:42:39, main-training cutoff06:27:39, shutdown reserve starts07:40:39. Variants never reset the clock.
 
-## Next work, not built
+Local training, evaluation, routine Codex reviews, branch pushes and practical private Drive backups are authorized. No spend, model-weight publication, deployment, main merge, or takeover of another session. Optional critics: verified free Devin SWE2 only; Gemini Hydrogen4 only, currently not available in the installed CLI catalog.
 
-- Select the exact model/base and training backend after owner direction; no model benchmark or compatibility test has been run.
-- Build held-out Blender tasks, capture real MCP schemas/episodes and an isolated execution/scene/visual verifier.
-- Filter rights, duplicates, sample families, token lengths and failures before training.
-- Compare stock base, existing specialization and our adapter on independent tasks before claiming improvement.
+## Current owned state
 
-## Owner clarification and research — 2026-11-16
+The workspace's sibling `work/` contains models, private data and run state; it is not inside this checkout. Actual machine: M3 Ultra,256GiB. Python3.12,MLX0.32.4,MLX-LM0.32.2,Transformers5.23.0. Use the shared GPU-slot wrapper and inspect actual processes before every handoff. The watchdog currently reduces the cap to2; do not weaken it. Run model jobs serially. Preserve streaming/global flags and foreign sessions.
 
-- Owner prefers extending CCORE's existing 4B work and serving low-memory local users. End result is portable game-importable 3D assets (prefer GLB); Blender MCP is optional. Still no training or model-weight downloads.
-- Found a closer candidate: `ccore/Qwen3.5-4B-GLB-3D-Coder` and matching `ccore/ThreeJS-3D-GLB-Assets`, separate from the scene checkpoint/data already reviewed. Recommendation is to evaluate this GLB specialization, then add a new LoRA for measured gaps. Exact compatibility and quality remain untested.
-- `docs/glb-direction-and-neyra.md` records pinned resources, actual model-file metadata, Neyra source findings and proposed tests. Neyra source cloned for static review only; not installed/executed. No new dataset or weights downloaded.
-- Neyra lint/verdict/merge-integrity ideas fit, but defaults (512 training / 32 evaluation output tokens, greedy decoding) do not fit CCORE's ~20K-token sampled output recipe. Need custom exported-asset scoring and backend checks.
+- Current controller: tmux `astra-direct-20261116`; config `configs/overnight-direct-code.json`; private authorization `work/sprint-prep/owner-start-direct-20261116.json`.
+- Run root: `work/sprint-prep/overnight/astra-direct-20261116`. At this update it is cleanly **paused locally**, with no active job, after three100-step main segments. This is an orchestration hold, not a paused user goal.
+- Confirmed controller updates:313=13qualification+300main. Latest immutable checkpoint `checkpoints/job-00007`; no visually accepted best checkpoint yet. Job00007 completed536.94s,reported peak29.56GB.
+- A bounded cached-prefix two-layer SHORT qualification is delegated to `capacity2_probe` with explicit temporary GPU ownership. Root must not launch inference/render/training until that agent verifies unload and returns the slot. No two-layer candidate is adopted yet.
+- Earlier `astra-manual-20261116` controller is stopped; preserve its42-step checkpoint and failed outputs. Older scheduled `astra-overnight-20261116` never trained and must not be restarted.
+- Local server `http://localhost:8767/` serves only sibling `outputs/babylon-comparison`. Inspect its actual process before restarting. The last control-review Chrome tab was closed and its review slot released.
 
+## Model, data and training semantics
 
-## Model acquisition and comparison plan — 2026-11-16
+Base is pinned `ccore/Qwen3.5-4B-GLB-3D-Coder` revision `8f32a199f8b22fe3157b9c5c8b42b052a0750dd3`, derived BF16 text checkpoint in `work/models-derived/ccore-bf16`. Original CCORE weights are retained. Official Qwen3.5-4B weights and derived copies were deleted at the owner's request; historical outputs remain.
 
-- Owner authorized both model downloads. `configs/model-snapshots.json` pins CCORE GLB to `8f32a199f8b22fe3157b9c5c8b42b052a0750dd3` and `Qwen/Qwen3.5-4B` to `851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a`. This is the identified upstream repository, not proof of the undisclosed historical input commit.
-- Downloader copies original Safetensors plus config/tokenizer/license companions; no GGUF/projector/gallery duplicates. `scripts/download_comparison_models.py` verifies upstream digests and index shard presence without loading or executing models.
-- Both original checkpoints complete: CCORE 15 files / 17,510,218,308 bytes; official Qwen 13 files / 9,342,905,899 bytes. All upstream digests verified. All 7 shard headers, tensor shapes/offsets and index maps are valid (723 CCORE / 738 Qwen tensors). Sanitized receipt: `configs/download-receipt.json`. No model loaded or executed.
-- Models are outside this checkout under sibling `work/models`, source-ID/revision directories. Raw weights/caches must not enter GitHub.
-- Owner selected a super-detailed animated voxel Babylon marketplace, people walking/trading, flowing water and moving clouds. Canonical prompt in `eval/prompts/babylon-marketplace-v1.txt`; previous treasure-chest suggestion is superseded.
-- Updated root README, `docs/PIPELINE.md`, `docs/ccore-training-evidence.md` and proposed comparison config. First pass uses same prompts/settings and no repairs; output C is absent until our LoRA exists. Babylon prompt/output/corrections stay held out from training.
-- No inference, asset generation, training goal, automation, external critic invocation or model server started. Devin/Gemini model IDs, access and budgets remain unverified candidates.
+Current one-layer LoRA: layer31 only,rank8,scale20,dropout0,479232trainable parameters,learning rate1e-5. Each segment warm-starts adapter weights; Adam state and iterator restart with seed42+segment_index. This is not exact optimizer continuation. Complete outputs are trained without truncation. Frozen layers0–30 use eval kernels, with gradient detached only at layer31 input.
 
-- Static tokenizer inspection: BPE vocabulary and chat-template text match, while added-token records and normalized tokenizer JSON differ. Runtime/tokenizer behavior still needs qualification; do not declare identical tokenization from template equality alone. Original compute precision differs and must be normalized for comparison.
-- Header inspection located all 15 upstream-only tensors under `mtp.*`; comparison config disables MTP/speculative decoding. No model tensors were modified.
+The initial training-ops equivalence check failed strict tolerances and remains recorded. A separate short check against full-model eval computation **inside autodiff** passed logits/loss/gradients/update/reload exactly. Later independent diagnostics found that eval-prefix computation inside autodiff differs numerically from materializing it outside; do not describe the one-layer runtime as proven identical to every ordinary-inference arithmetic path. The pending two-layer candidate materializes frozen prefix0–29 outside autodiff and tests the native suffix against an independent oracle.
 
-## Streaming and archive selection — 2026-11-16
+Direct-code dataset: `work/sprint-prep/direct-code-proposal/data-v1`,manifest SHA256 `c49f37efe977377c86f221a4579decc55b2841038230194504e6a91828703cb6`.401/47 full-program replay train/dev,64/16 generic repair examples,465/63mixture. Reasoning removed; original final code unchanged. Explicit no-thinking chat formatting in training and matched primary evaluation. Full-field alias exclusion plus canonical-title/normalized-JS connected-component split; zero algorithmic group overlap is not proof of complete semantic independence or absence from CCORE pretraining. Babylon prompt, outputs and scene-specific repairs never enter training.
 
-- Owner is streaming; STREAMING guard verified active. Do not launch local inference/training or bulk uplink transfers during the stream. No model generation/test has begun.
-- Owner clarified optional subscription CLI critics: Gemini Hydrogen 4 only, Devin SWE2 only. No critic CLI called.
-- Owner selected core relevant datasets plus both original checkpoints for a Drive archive. Metadata-only subagent compiled sources; `configs/core-archive.json` inventories 5 sources / 88 files / 27,918,579,221 bytes. No archive payload downloaded/uploaded in this task.
-- Owner supplied an existing Drive folder. Connector writes still return ACCESS_TOKEN_SCOPE_INSUFFICIENT, but normal browser upload in the verified owner session succeeded. Archive Index (automatically converted to a native Google Doc) and Core Archive Manifest.json are uploaded; Drive list readback verifies both. No model/dataset payloads transferred. Bulk transfer still needs a remote worker or off-stream upload. Folder/file references are kept in the private wiki, not this public repo.
+Earlier reasoning-heavy data over-weighted helper rows and missed Bellows/SignalBeacon/observatory components in code. The old Bellows pair is diagnostic, not independent heldout evidence. The fresh direct-code run starts a new adapter from CCORE and does not resume the old42-step lineage.
 
+## Actual evaluation findings
 
-## Active comparison — 2026-11-16
+Use exact unchanged `eval/prompts/babylon-marketplace-v3.txt`,same system prompt/seed42/sampler/49152-token limit/precision/dependencies per matched condition. Raw source is immutable. Every repair stays separately labeled; no manual beautification or sourced-asset insertion into scored outputs.
 
-Owner authorized execution, improved prompt and localhost Chrome GLB comparison. Explicit order is official Qwen, fully unload, then CCORE. Owner corrected stream cutoff to 13:00 ET and ended stream; supported off command cleared it, and daily LaunchAgent was updated/reloaded to end 13:00 (not 13:30). Other sessions/engines untouched.
+- Historical repaired CCORE remains the owner's visual reference. It looked richer than repaired official Qwen but lacked walking/full-town coverage. Both historical raw outputs failed.
+- Fresh thinking-on BF16 CCORE:39594tokens,631.28s; raw syntax/runtime failures. Mechanical diagnostic repairs produced a real reopened2040220-byteGLB with13clips/35channels,Khronos0errors/0warnings. Six villagers,no legwalking,floating palm fronds. Source/patch/provenance/screenshots retained.
+- Old42-step adapter:49152-token showcase cap,no completeHTML/GLB; Bellows cap32768. Approach stopped.
+- Fresh no-thinking CCORE control:49152-token cap/798.47s,repetitive planning and skeletonHTML with ellipses; raw syntaxfail. Merely outperforming this failure is not a visual win.
+- Direct-code200-main-step checkpoint00006:primary no-thinking output finishes12837tokens/202.32s,fullHTML, but raw pseudocode/syntax/runtime/export failures; no rawGLB. About11villager assemblies plus2merchant assemblies; no exportable animation clips. Thinking-on crosscheck also finishes27121tokens/435.88s but fails syntax/export. No demonstrated visual improvement.
+- A static diagnostic of checkpoint00006 is CPU-prepared at `evaluations/checkpoint-00006-diagnostic` and sibling `outputs/babylon-comparison/astra-200step-diagnostic`; not rendered/exported yet. It explicitly interprets pseudocode, omits ambiguous palms and unimplemented sign art, and adds a standard static exporter. It must never count as a raw pass or train target.
 
-Runtime: task-owned Python 3.12 environment under sibling work/qwen-eval-env; official MLX-LM 0.32.2 / MLX 0.32.4 / Transformers 5.23.0. Native Qwen3.5 text loader, no remote custom code/MTP. Short Qwen benchmark: BF16 55.88 tok/s / 8.55 GB; Q8 group64 96.34 tok/s / 4.69 GB. Nonexclusive capture measurements, not universal backend claims. Both original checkpoints preserved; derived Q8 copies under work/models-derived.
+The common render harness in `eval/render-harness` has syntax checks and shared0/2/4second seeks; actual browser validation of this revision remains outstanding. Visual/playback inspection, not a validator or clip count alone, establishes an artifact result.
 
-Prompt upgraded to eval/prompts/babylon-marketplace-v2.txt (coherent canal market, Babylonian palette/details, 16 villagers and exportable motion). First matched pass: thinking on, seed42, 65,536-token cap. Official 11,706 tokens / 127.35 s / 93.14 tok/s; CCORE 25,038 tokens / 252.58 s / 99.75 tok/s. Exact prompt token hashes match. Both processes exited and unload receipts saved in work/runs. Neither first-pass final answer is usable: official has TDZ/API/export errors; CCORE has malformed nested script markup and no scene implementation. Raw answers kept, never silently replaced. Devin CLI swe-2-high (listed Free) supplied read-only code critiques with sandbox/auto permission mode; no trust bypass.
+## Next actions
 
-A matched secondary retry uses thinking off, seed7, 49,152-token cap. Official retry finished in 70.51 s, 7,399 tokens and was unloaded before CCORE retry started. CCORE retry subsequently completed in 326.49 s /32,682 tokens and exited. All GPU launches wrapped. No training.
+1. Get the bounded cached-prefix short-qualification receipt and verified GPU release. If it passes, qualify representative complete lengths before considering adoption. Preserve all earlier failed probes and strict tolerances.
+2. At an owned safe GPU boundary, inspect an actual Astra diagnostic GLB and/or evaluate the300-step checkpoint. Keep failure/assistance labels and compare against both matched control and historical repaired CCORE.
+3. Continue a justified bounded approach within the same deadline. Inspect review packets; routine continuation is Codex's responsibility. Preserve independent final tests and all raw failures. Do not call falling loss a quality win.
+4. Deliver intermediate/final comparisons at the fixed times. By hard stop, stop all owned heavy jobs, leave a labeled localhost GLB comparison in Chrome, save real screenshots/playback evidence, and report better/worse/mixed honestly.
+5. Push sanitized source/results and this rolling handoff; back up new data/checkpoints/results through the **direct Google Drive connector only**, then update the GitHub-backed wiki. Do not claim the old archive contains new live-run checkpoints.
 
-User deliverable root is sibling outputs/babylon-comparison. Task-owned loopback server is active on port 8767 (exec session 48144), serving only that directory. Viewer source is in viewer/, dependencies pinned in package.json/lock; local Three.js vendor bundle staged. Browser has not yet been opened on scenes while model inference runs. Need finish retry, unload, stage HTML, inspect in Chrome, click native exports, validate GLBs and present side-by-side. Source-first exception is the owner's explicit pure generated-output benchmark: no stock geometry/motion or agent-authored art is inserted. Mechanical export repairs must be labeled separately; raw-first-pass failures remain visible in report.
+## Archive and publication evidence
 
+The private source archive is complete:6packages,216canonicalpayload files/parts,21484759314bytes. Remote names/sizes were verified; localSHA256manifests uploaded; no whole-cloud byte redownload. Models and research-restricted corpora stay private. New direct-code data-v1 and the300-step snapshot (100/200/300-step checkpoints, raw200-step evaluations, metrics and manifests) are also uploaded through the connector; remote names/sizes/parents verified. Sizes6113719 and5435769bytes respectively. Later checkpoints still need backup. Account is Haarith; private folder/file IDs are in the archive records, not public Git.
 
-## Native GGUF cross-check in progress
+Publication scans use repository-security guidance and the custom gitleaks rules. A prior command mistakenly continued after a scanner finding and pushed commit2936edf. The finding was a recomputed prompt-token SHA256, not a credential; corrective741003f removed the redundant field and narrowly allowlisted its historical fingerprint. Preserve this disclosure and do not claim that original scan passed. Subsequent full-history scans passed with that exact classified false positive.
 
-MLX matched retry completed: official thinking-off output has real geometry but broken animation/export APIs; CCORE emits full scene/track code but module syntax errors and duplicated declarations. No raw pass is a functional success yet. Models are unloaded. Published CCORE Q8_0 GGUF downloaded and SHA256 verified (`68a66e251d96afdf120d7e8886964317b3f628abef5aad85e564b25b44da2a20`); official Qwen original was converted to Q8_0 using llama.cpp source `4ddf2b9470b44b122e8a5404ae199f04cd03bcec`.
-
-Installed global llama.cpp build 10809 is too old for the current converter schema (missing expected blk.0.ssm_beta.weight); one failed load, not a model-quality result. Do not retry the old binary unchanged. Matching isolated release build is running under work/llama-native-build (exec session 41334); source work/llama-review, logs work/llama-build.log/configure.log. Global binary unchanged. Once built, scripts/generate_asset_llama.py needs --binary pointing to isolated CLI, then official native run, verify exit, CCORE native run. If another native load crashes, stop repeated launches.
-
-Browser QA reservation was released via work/browser-qa.release; server 8767 stays active (session 48144). Chrome scene tabs not opened yet. Generated artifact staging/validator/viewer scripts are ready. Final goal remains actual GLBs visible in Chrome with honest raw/repair provenance; no training.
-
-Matching isolated llama.cpp build completed successfully (commit 4ddf2b9, native Metal). Native cross-check is now queued/running in session 76627, official first then CCORE, with concise art-only prompt v3 and recommended thinking mode. Do not confuse the failed old-binary attempt with model quality. Both MLX pairs with v2 are preserved as failed trials; no successful raw GLB yet. Need inspect native outputs, validate in Chrome, export/reimport and retain honest provenance.
-
-
-## Completed comparison and current handoff — 2026-11-16
-
-Native v3 pair completed serially: official 81.00 s, exit; CCORE 423.55 s, exit. Both raw outputs failed. Separate labeled diagnostic repairs yielded actual GLBs: official273,832 bytes/static; CCORE1,769,872 bytes/one87-channel clip. Both Khronos0errors/0warnings and reimported visibly side by side in Chrome. CCORE has15people, no leg-animation channels;58/87channels vary, six cloud channels. No invented geometry/new movement formulas. Not a successful full animated voxel town. Full provenance and limitations: docs/comparison-results.md and eval/results.
-
-Deliverable sibling outputs/babylon-comparison, loopback http://localhost:8767/ (task server session48144) stays open for owner; Chrome comparison screenshot and GLBs retained there. No model process/server remains, no training, no goal or automation. Browser QA slot is released at task end; HTTP server is the intentional remaining task process. Primary promptv3 copied into deliverable prompt.txt. Earlier v2 trials and raw native originals retained locally. Current best next step: independent smaller tasks and reliable animation/export validation before any LoRA pilot. Drive contains index/manifest only; bulk payload archive still pending.
-
-
-## Frozen GitHub baselines and official-model removal — 2026-11-16
-
-Owner requested visual baseline preservation, future third output, feasibility of48-hour CCORE training and eventual small Qwen4 migration. Added eval/baselines/babylon-20261116 with inspected screenshot, both validated GLBs, original/served native HTML, animation analysis and checksum manifest. Third result explicitly absent until training. These are repaired diagnostics; prior raw failures remain.
-
-Deleted only this task's official Qwen original directory, MLX Q8 and native Q8_0 file after confirming no active inference. Removal receipt records18,443,206,207logical bytes; BF16 duplicate already removed previously. CCORE, baseline evidence and datasets preserved. Original acquisition/archive manifests remain historical; no official payload is on Drive. Redownload is needed for future new official-model inference; stored baseline GLB remains usable.
-
-Added proposed48-hour pilot: qualify actual adapter train/save/reload and long-sequence throughput before committing overnight budget, independent task-family splits, raw-export/animation targets and regression checks. No training authorized/started in this planning turn. Official release log lists Qwen4-Max; official HF Hub API Qwen4 search returns no downloadable models today. No4B/8B availability/date verified. Pipeline/data/evaluation reusable; adapters need retraining for new architecture/checkpoint.
-
-
-## Direct Drive connector restored; preparation receipt — 2026-11-16
-
-Owner requires the Google Drive plugin in Codex; no browser, desktop or rclone upload fallback. After restarting Codex, the schema no longer needs link_id. Profile verifies Haarith. A 143-byte connector test uploaded and read back identically; a 34.7 MB ZIP and numbered parts also uploaded. Private folder/file IDs and remote size readback are in sibling work/sprint-prep/drive-transfer-receipt.json.
-
-Four new dataset copies complete: 65 files / 1,548,434,544 upstream bytes verified. New acquisition, packaging, static audit and reassembly scripts are in scripts/. Public inventory, static audit and tokenizer-only sample are in configs/. The 65-example sample has median 18,424 and maximum 46,376 rendered tokens; arbitrary 8k truncation would cut most examples. Existing CCORE, datasets and baseline evidence remain; official Qwen weights remain deleted.
-
-Plan follows the latest requested start: Mon Nov 16, 23:00 EST, with outputs every eight hours, Tue 09:00 morning review, and hard stop Wed Nov 18, 23:00 EST. No training, goal, scheduler or automation launched. Exact trainer/backward/save/reload qualification, verified new examples/family splits and evaluation controller remain unbuilt. The prior repaired native Q8 CCORE scene is historical evidence; a new common-runtime untreated control is required for the sprint.
-
-Bulk transfers hit a 100 MiB downstream cap and 512 MiB file-materialization ceiling. Prepared 96 MiB numbered parts and checksums. Stopped the slow parallel batch; no transfer worker continues. Last remote readback: research nine parts / 821,175,954 bytes; CCORE GLB six parts / 603,979,776 bytes; supplement ZIP 34,716,587 bytes. Pixel/scenes folders empty; full archive and checkpoint backup incomplete. In-flight calls may have completed after stopping: enumerate folder contents before resuming and avoid duplicate uploads. Model backup has four part-set folders but no verified uploaded model parts. Complete each package's parts, upload checksum/index files and verify the final inventory before deleting local recovery copies.
-
-
-## Complete archive and staged qualification — 2026-11-16
-
-All six source packages completed through the direct Codex Drive connector. Final inventory: 216 canonical payload files/parts, 21,484,759,314 bytes. Every expected remote name/size checked; per-part and whole SHA256 restore manifests uploaded, not a full cloud-byte re-download. One duplicate model part0089 was renamed with a duplicate-copy suffix, preserving its bytes and keeping the canonical restore set unambiguous. Private final receipts under sibling work/sprint-prep; public summary configs/archive-verification.json. Small preparation kit uploads and final index/readback follow this entry.
-
-Prepared BF16 text copy at work/models-derived/ccore-bf16 via official converter under GPU slot; audit loaded it, attached an untrained final-attention-layer LoRA (479,232 trainable parameters), checked zero B matrices, then exited. No training forward, backward, optimizer or gradient step. Original CCORE untouched. GPU cap conservatively2 due stale watchdog; safeguards not changed.
-
-Frozen data: replay506/63 train/dev (complete reasoning+code, source GLBs independently validator-passing); generic repair64/16 (eight train/two dev program families, eight wording variants each, CPU-tested real exports). Exact masks and converted tokenizer equivalence checked; no truncation. Final20 and development4 scene families excluded by aliases; Babylon stays out of training and is a development showcase only. Mixture1018/79 weighted rows corresponds570/79 unique conversations; repeat weighting explicit. Raw data stays private/Drive, summaries and acquisition/curation code in Git.
-
-CPU preflight passes. Training defaults disabled; plan-only entrypoint, missing-authorization rejection verified. Source runtime has slow GDN training fallback; start with short ten-step/last-attention-layer qualification, then complete representative-length cases, save/reload and raw quality regression checks after owner starts. Larger segment budget stays provisional. Supervised48h loop not yet exercised; no daemon, goal, automation or training scheduled. Shared gallery restored after Codex restart using task server session54500 on loopback8767. Model processes exited. User still explicitly says do not train.
-
-
-## Final completion readback — 2026-11-16
-
-Training-data kit24,789,846 bytes and run kit10,341,534 bytes uploaded and exact name/size/parent read back. Canonical source+kit payload total21,519,890,694 bytes, excluding small manifests and one retained duplicate recovery copy. Completion index updated in place and read through the connector with COMPLETE/training-off markers. Historical root index/manifest renamed as historical notes. Source kit records commit7b8d118; subsequent commit contains completion metadata only. Public source summary configs/preparation-archive-receipt.json; private Drive IDs stay in work receipts/wiki.
-
-CPU preflight and absent-authorization rejection pass; active input files remain staged on Studio. Main and length configs remain train:false. No model training, gradient/optimizer update, scheduled job, goal or automation. The first actual training qualification, save/reload, representative-length performance and matched raw before/after remain intentionally unrun until owner starts. Temporary full ZIP/part upload copies are cleaned after verification; original sources, BF16 input, frozen training data, baseline evidence, runtimes and small kits retained. Restored loopback gallery server session54500 remains the intentional task process.
-
-
-## Overnight controller implemented and dry-tested — 2026-11-16
-
-Owner explicitly requested controller completion/dry test only; still do not train. Added overnight_controller.py (pure scheduler/state + exclusive lock/authorization/review CLI), overnight_runtime.py (owned process supervision, immutable snapshots, resource/input/evidence guards), sprint_worker.py (live-only MLX training callback and reload check), and CPU-only tests/fixtures. Default controller invocation is plan-only; live flags plus an actual owner-start record are required, and early launch is refused. No live authorization record, tmux session or training process was created.
-
-53 tests pass, including actual fake CPU subprocesses through a simulated48h two-night schedule, six8h reports, streaming/manual/global holds,8:58drain before9am, hard stop, stale reviews, raw-export evidence/hash requirements, known-PID group cleanup, orphan/recovery refusal, two-failure/two-regression stops, frozen input/runtime changes, adapter validation bounds and environment isolation. Report/timeline in sibling outputs/controller-dry-run; sanitized receipt configs/controller-dry-test.json. No MLX imports in dry tests and zero real model/training workers/steps.
-
-The live controller remains Codex-supervised: it waits for baseline, qualification and milestone review packets. Reviewer evidence must be inside the run and hash-match; raw successes need actual GLB/validator evidence, and repaired diagnostics cannot become accepted raw checkpoints. Codex must stay active to inspect/export/playback/score and acknowledge packets. Main segments resume adapter weights only; optimizer/sampler warm restart is explicit. Live qualification/quality/throughput remains unrun. Source/run-kit refresh follows this entry; data/source archives stay unchanged. See docs/overnight-controller.md for the exact later launch/review/recovery workflow.
-
-
-Controller source pushed as1bd65b6;53 dry checks pass. Drive run-kit.zip updated in place through the connector, now10,369,199bytes, SHA256f8803e19b31f35a6ce9454f0813ba978c676fa224c78f9547e77849b7b4367a9; exact name/size read back. KIT_MANIFEST and completion index refreshed; source/data archives and training-data kit unchanged. Current local run-kit.zip now matches the updated remote. Public preparation receipt updated accordingly. No live controller root, authorization, tmux session, model worker or scheduled training was created.
-
-
-## Active owner goal — eleven-hour overnight experiment
-
-Owner submitted attached goal authorizing local training21:00EST Nov16 through08:00EST Nov17, no updates before21:00. Read attachment at task start. Controller updated to configs/overnight-11h.json; milestones are config-driven at8h/11h (05:00/08:00), sampling one hour beforehand, final training cutoff06:45 and drain07:58. Shared GPU/stream flags honored. No paid services/model publication/project-main merge authorized. Current goal active; performance/quality live gates remain to execute inside the window. Original repaired CCORE asset remains historical reference; fresh BF16 matched control and exact v3/system prompts required. No trained improvement is yet claimed.
-
-
-Authorized wait now active: headless tmux astra-overnight-20261116, pane PID41912 at verification, controller state under work/sprint-prep/overnight/astra-overnight-20261116. Status not-started, zero jobs, zero training. Owner authorization file work/sprint-prep/owner-start-overnight-20261116.json hash-matches config and attached goal. No model before21:00EST; baseline then short/reload/length/live review. Config milestones05:00/08:00, training cutoff06:45, drain07:58. All59 dry checks pass. No need for additional owner confirmation; keep current goal active and supervise. Do not start a second controller. Source/data fingerprint is frozen; changing scripts/configs requires stopping owned controller first. HANDOFF/docs/receipt edits do not mutate worker inputs.
-
-
-Prelaunch safety correction: actual gpu_slot source launches the model in a separate session. Stopped only the owned idle controller41912 cleanly (no jobs existed) and extended memory/shutdown tracking to the verified descendant tree across sessions.61 dry checks pass, including detached-child signal/wait and memory accounting. Old prelaunch state retained separately when restarting; no training occurred. Schedule/config authorization unchanged. Do not infer shutdown safety from process-group membership alone.
-
-
-## Manual start supersedes timed goal — 2026-11-16
-
-Owner paused/cleared the timed goal; its controller stopped cleanly with zero jobs and authorization revoked. New attachment repeated stale9pm text, so asked concise conflict question; owner explicitly answered Start now as requested. This authorizes immediate execution and overrides old9pm restriction. Fresh run astra-manual-20261116 starts20:42:39EST and hard-stops07:42:39EST (11h, before08:00ceiling). Intermediate04:42:39. Config overnight-manual.json, private authorization owner-start-manual-20261116.json. Fresh controller85550, baseline wrapper85569/model85829 at first verification. Preserve other sessions; no source/main/model publication or spend.
-
-Fresh matched BF16 control is currently generating (~66tok/s,9GB peak); no training steps yet. Read-only reviewer identified stop identity drift (python3 resolves to executable path), deadline shutdown reserve and detached-child restart recovery gaps. Prospective supervision-only fixes tested in isolated work/sprint-prep/supervision-fix-test:65 checks pass. Do not change frozen live source until baseline exits and controller idles for review. Then stop only idle owner controller, apply verified fixes, preserve prior input fingerprint, update exact authorized config hash for120s deadline drain and resume at baseline review. Generation/training semantics and prompt stay unchanged. Verify model85829/wrapper85569 have exited before any restart.
-
-
-## Live control and qualification progress — manual run
-
-Fresh control job00001 completed39,594tokens/631.28s,62.97tok/s,9.94GBpeak; raw HTML fails duplicatevillager declaration (plus additional static issues). Raw failure frozen with exact input/source/syntax evidence. Existing repaired nativeCCORE stays visualreference; no quality win claimed. Baseline model exited before training. Short job00002 completed10steps/626targettokens,finite loss,9.25GBpeak. Job00003 ordinary adapter-effect/reload check passed (maxlogit effect1.4375, repeat-load difference0).
-
-Original long job00004 validated in12.63s but completed zero training steps in369.19s; supervisor paused and cleanly stopped it (exit143) to address frozen-GDN training fallback. Original evidence retained. Main controller stopped at idle boundary before runtime changes; no other session touched.
-
-New process-local frozen_prefix_training shim keeps layers0..30 eval on every root.train transition and detaches only the input to final full-attention layer31. Strict scope requires only layer31 LoRA A/B trainable. Whole-type grad_checkpoint disabled; original model files unchanged. Reference-training-ops numerical equivalence failed original strict tolerances and remains recorded. A separate deployed-eval check (ordinary unmodified inference kernels with gradients only on same LoRA) passes all-token logits, loss, gradients, one-update and ordinary reload equality exactly on a complete131token nonzero-adapter example. Two preliminary harness issues retained: inference load_adapters did not freeze base, caught by scope guard; later reload comparison broadcast different sequence shapes, corrected with shape assertion. No tolerance was loosened to call old comparison a pass. Current qualification evidence work/sprint-prep/frozen-prefix-eval-qualified/equivalence.json; six isolated one-step branches across numerical checks, separate from trainer step accounting.
-
-Requalified from short stage with unchanged clock, model, prompt, data and sampler. Job00005 completed10newshortsteps; job00006 reload underway at latestcheck. Total confirmed controller trainingsteps20; full-length optimized qualification follows. Private original fingerprints/state snapshots retained; changed train flags/runtime documented. Current tmux astra-manual-20261116, state under work/sprint-prep/overnight/astra-manual-20261116. Do not launch concurrent model jobs. Goal active, hard stop07:42:39EST, deadline drain120s earlier. No main training segments or candidate GLBs yet.
-
-
-## Main training started — manual run
-
-Optimized requalification passed: job00005 short10steps, job00006 repeat-loader logit delta0/effect1.40625, job00007 full lengths9852/20607/32659 tokens with5.69/12.91/22.63second train steps,51.25GBreported peak. Controller confirmedsteps23 includes original10+optimized10+length3; six isolated one-step numeric-check branches separate. Qualification review acknowledged; job00008 first main segment42steps/1500s cap now active (wrapper34274 at start). No trained quality gain claimed yet.
-
-Rawcontrol job00001 failed syntax; diagnostic copy mechanically repaired and actualGLB exported/reimported in Chrome:2,040,220bytes,0errors/0warnings,13clips/35channels. Six villagers; nolegwalking, floatingpalmfronds defects retained. Patch/provenance and screenshot in run/baseline-diagnostic and outputs/babylon-comparison/overnight/control. No benchmark-derived repair entered training. Chrome review tab closed and GPU slot released before main start. CUA inspection complete; historical reference unchanged.
-
-An owned CPU monitor waits for first completed main segment, then writes this run's PAUSE for early checkpoint generation/review; no goal pause. Inspect live process/monitor handles before resuming or launching anything. Need evaluate first trained candidate and fixed probes, then continue bounded training based on evidence. Current hard deadline07:42:39EST; all source/data/model generation settings unchanged.
-
-
-## First main checkpoint under evaluation
-
-Main job00008 completed42steps in418.05s,peak46.43GB; immutable checkpoint job00008. Controller confirmedsteps65 includes23 qualification+42 main, separate from six isolated numerical-check branches. Early-review monitor requested run-local PAUSE after completion; controller is paused with no activejob and one completedsegment. Do not clear PAUSE until the independent early evaluation finishes and is inspected.
-
-Early candidate evaluation is live via exec session28648/gpu_slot label astra-first-checkpoint-evaluation, logs work/sprint-prep/first-checkpoint-evaluation.log, sidecar first-checkpoint-gpu.json, output run/evaluations/checkpoint-00008. Exact input.json (rendered IDs/messages/seed/thinking/sampler/limit) equals frozencontrol input byte-equivalent as parsed JSON. Current throughput~59tok/s,~8.8GBpeak at early check; model is real, no quality outcome yet. Continue monitoring this existing handle; do not launch a duplicate or anothermodel until it exits. Then inspect rawsource/export/reimport and fixed probes, retain failures/assistance, and decide whether to resume boundedtraining. Hardstop remains07:42:39EST. Historical nativeCCORE and fresh repairedcontrol are both retained; avoid declaring victory against only the rawfailedcontrol.
-
-
-## Initial approach stopped; direct-code variant prepared
-
-Checkpoint00008 failed primary exact-prompt test:49,152tokens/821.11s,finishlength,no completeHTML,no GLB. Diagnostic bellows pair:control19,423tokens complete syntaxvalid but staticgeometry/rotation defects; Astra32,768tokens cap, incompleteHTML. The bellows pair is not clean heldout evidence: audit found a Bellows component inside Blacksmith training code. SignalBeacon and observatory target-component overlaps also found; original split title hashes only proved normalized-title independence. These caveats supersede earlier broad family-isolation claims. No demonstrated quality improvement; all failures/checkpoints retained. Old variant astra-manual-20261116 cleanly STOPPED; no active models before transition.
-
-Evidence-led revision: thinking targets represented57.7% of full-program assistant chars, while repeated8repair families occupied50.3% update rows. Prepare fresh adapter from unchanged CCORE with direct-code targets (reasoning empty), no-thinking inference for BOTH freshcontrol and adapter, reduced helper repetition. New frozen data in work/sprint-prep/direct-code-proposal/data-v1:401/47 replay train/dev,64/16 repair,465/63 mixed rows; repairs13.76% training rows. Full original assistant code preserved, no truncation, max15,909tokens. Full-field title/request/code/reasoning exclusion removes121 rows; canonical-title and normalized-JS connected-component splits are algorithmically disjoint, not claimed semantically perfect.528 rows and all artifact/source hashes independently rechecked. Old42step adapter is not resumed.
-
-New config overnight-direct-code.json retains original experiment start20:42:39 and hardstop07:42:39 (no deadline extension), evaluation_thinking:false. New private auth owner-start-direct-20261116.json documents existing goal authority for controlled revisions. Worker-local tokenizer partial forces enable_thinking=False during both prompt/full training rendering; no tokenizer file edits. Runtime/worker mode propagation and data-root fingerprint binding updated; freshcontrol generation next, then short/reload/length/main gates. No public modelweights or paidservices. Source builder and sanitized adoption receipt in Git; raw datasets/provenance remain private. Need monitor new runIDastra-direct-20261116, do not resume stoppedoldvariant.
-
-
-## Direct-code live qualification passed and main resumed
-
-Run astra-direct-20261116: fresh unadapted no-thinking control hit49,152tokens/798.47s and only HTML skeleton with ellipses; raw syntaxfail frozen (complete_html marker alone is not scene completion). Historical repairedCCORE and initial BF16 repairedcontrol remain visual references; no claim against merely brokencontrol. New short job00002 completed10steps, ordinary reload job00003 passed (effect1.140625, repeat difference0), full-code length job00004 completed3steps for5327/9648/15909token sequences,slowest9.5749s,peak29.90GB. Qualification acknowledged; fresh mainadapter training active. No old42step weights resumed. Same overall deadline07:42:39.
-
-Owned CPU monitor waits for two completed direct-code main segments and then writes run-local PAUSE for early full-prompt evaluation. Monitor handle is recorded in the chat tool result; confirm it/actual controller workers before acting. Current source/config/input fingerprint frozen; do not edit worker/data files midjob. Earlier approach remains stopped. Next: inspect earlydirect-code output, compile/export/reimport genuineGLB and compare with both historical and matchedcontrol failure evidence. No usable AstraGLB or visualimprovement established yet.
-
-
-## Direct-code first segment saved; second segment live
-
-Direct-code job00005 completed100mainsteps; checkpoint job00005 retained. Controller confirmedsteps113 includes13new qualification +100main. Job00006 secondmainsegment now running (wrapper15545 verified live at22:37EST, step41latest). Owned early-review monitor execsession38668 will write run-local PAUSE after second completedsegment, then exits; verify handle and actualworker state before any manual evaluation. No usable AstraGLB or improvement claimed yet. Old approach42stepcheckpoint and failed49k/32k evaluations remain preserved. Next goal turn: monitor same directcontroller/monitor untiltwo segments finish, waitforclean paused/noactivejob boundary, generate exactsame Babylon prompt from latestsnapshot with --no-thinking, seed42, max49152 and identical system/runtime; compare realartifact with matched directcontrol failure AND historical repairedCCORE references. No extra owner permission needed. Global deadline07:42:39EST remains unchanged. Current source branchAstra pushed; worktree metadata only updates do not alter frozen inputs.
+See `docs/overnight-run-20261116.md` for the experiment narrative, `docs/overnight-controller.md` for operation, `docs/comparison-results.md` for historical comparisons, and earlier Git revisions for superseded preparation history.
