@@ -1,0 +1,18 @@
+{
+  "run_id": "astra-overnight-20261116",
+  "status": "authorized-waiting-until-21:00EST",
+  "start": "2026-11-16T21:00:00-05:00",
+  "hard_stop": "2026-11-17T08:00:00-05:00",
+  "controller_config_sha256": "456a25cf443e6c1d8c8e081e7d9d9cf7f8cf9d5a13e2a08a226c103dedb170c8",
+  "goal_instruction_sha256": "9348bfbd4c2d31e04ed089b27a2ee6776733786c95ca969e3eb912aa21088428",
+  "dry_tests": 59,
+  "training_started": false,
+  "model_jobs_launched": 0,
+  "milestone_hours": [
+    8,
+    11
+  ],
+  "main_training_end": "2026-11-17T06:45:00-05:00",
+  "historical_reference": "eval/baselines/babylon-20261116/ccore.glb",
+  "showcase_prompt_sha256": "71f6441c2768c2ba36369fd877b12b98c12454e9798d0dc8bc211ab8b4f244a3"
+}
