@@ -137,3 +137,10 @@ Authorized wait now active: headless tmux astra-overnight-20261116, pane PID4191
 
 
 Prelaunch safety correction: actual gpu_slot source launches the model in a separate session. Stopped only the owned idle controller41912 cleanly (no jobs existed) and extended memory/shutdown tracking to the verified descendant tree across sessions.61 dry checks pass, including detached-child signal/wait and memory accounting. Old prelaunch state retained separately when restarting; no training occurred. Schedule/config authorization unchanged. Do not infer shutdown safety from process-group membership alone.
+
+
+## Manual start supersedes timed goal — 2026-11-16
+
+Owner paused/cleared the timed goal; its controller stopped cleanly with zero jobs and authorization revoked. New attachment repeated stale9pm text, so asked concise conflict question; owner explicitly answered Start now as requested. This authorizes immediate execution and overrides old9pm restriction. Fresh run astra-manual-20261116 starts20:42:39EST and hard-stops07:42:39EST (11h, before08:00ceiling). Intermediate04:42:39. Config overnight-manual.json, private authorization owner-start-manual-20261116.json. Fresh controller85550, baseline wrapper85569/model85829 at first verification. Preserve other sessions; no source/main/model publication or spend.
+
+Fresh matched BF16 control is currently generating (~66tok/s,9GB peak); no training steps yet. Read-only reviewer identified stop identity drift (python3 resolves to executable path), deadline shutdown reserve and detached-child restart recovery gaps. Prospective supervision-only fixes tested in isolated work/sprint-prep/supervision-fix-test:65 checks pass. Do not change frozen live source until baseline exits and controller idles for review. Then stop only idle owner controller, apply verified fixes, preserve prior input fingerprint, update exact authorized config hash for120s deadline drain and resume at baseline review. Generation/training semantics and prompt stay unchanged. Verify model85829/wrapper85569 have exited before any restart.
