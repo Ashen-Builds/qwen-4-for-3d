@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "verified_at_utc": "2026-11-17T11:39:35.515Z",
+  "payload_objects": 16,
+  "payload_bytes": 425342249,
+  "status_text_readback_equal": true,
+  "new_backup_objects_including_index": 17,
+  "new_backup_bytes_including_index": 425362407,
+  "retained_bytes_including_updated_existing_status": 425374053,
+  "base_model_duplicated": false,
+  "remote_bytes_redownloaded": false,
+  "transfer": "Direct Google Drive connector",
+  "privacy": "All uploaded object names, sizes, expected parents and shared:false verified",
+  "verification_limit": "Metadata readback plus local SHA256 manifests and local multipart restoration. No complete remote-byte redownload. Remote JSON index text extraction was unavailable; status Markdown exact text readback passed.",
+  "archives": [
+    {
+      "name": "astra-thinking-clean-final-evidence-20261117.zip",
+      "bytes": 411055045,
+      "parts": 5
+    },
+    {
+      "name": "astra-paired-repair-final-negative-20261117.zip",
+      "bytes": 248555
+    },
+    {
+      "name": "astra-final-viewer-and-glbs-20261117.zip",
+      "bytes": 13956862
+    },
+    {
+      "name": "astra-final-operations-receipts-20261117.zip",
+      "bytes": 3292
+    }
+  ],
+  "selected_adapter": {
+    "main_updates_inherited": 48,
+    "bytes": 3835589,
+    "sha256": "553644f2a1d85c06642484f327b657eca0cf8e7516a874ca1182ed6b9720ab66",
+    "archived_member_hash_verified": true
+  }
+}
