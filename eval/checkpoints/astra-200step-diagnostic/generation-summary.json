@@ -1,0 +1,12 @@
+{
+  "generation_tokens": 12837,
+  "elapsed_seconds": 202.32346791599412,
+  "generation_tps": 63.95696579553164,
+  "finish_reason": "stop",
+  "complete_html": true,
+  "checkpoint": "job-00006",
+  "main_steps": 200,
+  "thinking": false,
+  "raw_export_pass": false,
+  "diagnostic_only": true
+}

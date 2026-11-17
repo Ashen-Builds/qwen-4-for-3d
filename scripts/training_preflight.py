@@ -16,7 +16,13 @@ def inspect(repo):
     checks['remote_code_disabled']=cfg['trust_remote_code'] is False
     checks['external_reporting_disabled']=cfg.get('report_to') is None
     checks['model_present']=(repo/cfg['model']/'config.json').is_file()
-    audit=json.loads((work/'adapter-setup-audit.json').read_text());checks['adapter_shape_check']=audit['trained_steps']==0 and audit['final_layer_full_attention'] and audit['adapted_last_layers']==cfg['num_layers'] and audit['trainable_parameters']>0
+    audit_path=(repo/cfg['adapter_setup_audit']).resolve() if cfg.get('adapter_setup_audit') else work/'adapter-setup-audit.json'
+    audit=json.loads(audit_path.read_text())
+    rank=cfg['lora_parameters']['rank']
+    tensors=audit['trainable_tensors']
+    rank_matches=bool(tensors) and all(t['shape'][1 if t['name'].endswith('lora_a') else 0]==rank for t in tensors)
+    checks['adapter_shape_check']=audit['trained_steps']==0 and audit['final_layer_full_attention'] and audit['adapted_last_layers']==cfg['num_layers'] and audit['trainable_parameters']==59904*rank and len(tensors)==14 and rank_matches
+    checks['all_phase_adapter_audits_match']=all(c.get('adapter_setup_audit')==cfg.get('adapter_setup_audit') for c in phase_configs)
     data=(repo/cfg['data']).resolve().parent;manifest=json.loads((data/'DATA_MANIFEST.json').read_text());checks['data_hashes']=all((data/f['path']).stat().st_size==f['bytes'] and hashlib.sha256((data/f['path']).read_bytes()).hexdigest()==f['sha256'] for f in manifest['files'])
     checks['complete_targets']=all(not row['truncation'] for row in manifest['datasets'].values())
     checks['masks_and_lengths']=manifest['datasets']['repairs']['exact_mask_prefix'] and manifest['datasets']['repairs']['max_tokens']<=cfg['max_seq_length']

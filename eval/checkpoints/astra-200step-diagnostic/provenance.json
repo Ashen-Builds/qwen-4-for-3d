@@ -1,0 +1,29 @@
+{
+  "kind": "static geometry diagnostic; raw generation failed",
+  "not_a_training_target": true,
+  "raw_export_success": false,
+  "new_geometry_or_motion_authored": false,
+  "limitations": [
+    "No exported animation",
+    "Invalid palms omitted",
+    "Missing texture artwork not supplied",
+    "No additional people, buildings, colors or motion invented",
+    "Not proof of successful model output or higher visual quality",
+    "Arch loop translated from supplied pseudocode formula; this is implementation assistance, not untouched generation"
+  ],
+  "runtime_checked": true,
+  "artistic_geometry_added": false,
+  "pseudocode_implementation_interpretation": true,
+  "assistance": [
+    "Translate authored arch pseudocode formula literally to JS/Vector3",
+    "Bypass missing texture artwork with null map",
+    "Omit invalid palm implementation rather than invent tuple interpretation",
+    "Fix receivers/helper names/loop variable declarations/braces/TDZ",
+    "Preserve authored string colors through existing material helper",
+    "Use static standard exporter; no exportable model clips existed"
+  ],
+  "runtime_checked_scope": "Only the repaired static diagnostic was exported and reopened; raw source remains a failure.",
+  "browser_glb_export_bytes": 1603028,
+  "exported_animation_clips": 0,
+  "observed_quality": "Worse diagnostic composition; not an improvement."
+}

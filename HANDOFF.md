@@ -1,6 +1,6 @@
 # Astra 3D overnight experiment
 
-Updated November16,2026 at23:45EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR#1. The overnight goal is active. No improved Astra asset has been demonstrated.
+Updated November17,2026 at00:00EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR#1. The overnight goal is active. No improved Astra asset has been demonstrated.
 
 ## Authority and fixed deadline
 
@@ -15,9 +15,9 @@ The workspace's sibling `work/` contains models, private data and run state; it 
 - Current controller: tmux `astra-direct-20261116`; config `configs/overnight-direct-code.json`; private authorization `work/sprint-prep/owner-start-direct-20261116.json`.
 - Run root: `work/sprint-prep/overnight/astra-direct-20261116`. At this update it is cleanly **paused locally**, with no active job, after three100-step main segments. This is an orchestration hold, not a paused user goal.
 - Confirmed controller updates:313=13qualification+300main. Latest immutable checkpoint `checkpoints/job-00007`; no visually accepted best checkpoint yet. Job00007 completed536.94s,reported peak29.56GB.
-- A bounded cached-prefix two-layer SHORT qualification is delegated to `capacity2_probe` with explicit temporary GPU ownership. Root must not launch inference/render/training until that agent verifies unload and returns the slot. No two-layer candidate is adopted yet.
+- Cached-prefix two-layer short qualification passed, but the5327-token length step breached the24GiB reclaimable-memory floor before any update. Owned processes were SIGTERMed and memory recovered; no two-layer adoption/retry. Root now owns the GPU for300-step primary evaluation (exec75778,labelastra-300step-evaluation,worker73552); inspect before any launch. `capacity2_probe` is CPU-only preparing a rank16 layer31 warm expansion, with NO GPU permission until explicit new handoff.
 - Earlier `astra-manual-20261116` controller is stopped; preserve its42-step checkpoint and failed outputs. Older scheduled `astra-overnight-20261116` never trained and must not be restarted.
-- Local server `http://localhost:8767/` serves only sibling `outputs/babylon-comparison`. Inspect its actual process before restarting. The last control-review Chrome tab was closed and its review slot released.
+- Local server `http://localhost:8767/` serves only sibling `outputs/babylon-comparison`. Inspect its actual process before restarting. Task-owned server was restarted after allowing localblob fetches required by embedded GLB textures; exec93118. The200-step diagnostic review tab was closed and its slot released.
 
 ## Model, data and training semantics
 
@@ -40,14 +40,14 @@ Use exact unchanged `eval/prompts/babylon-marketplace-v3.txt`,same system prompt
 - Old42-step adapter:49152-token showcase cap,no completeHTML/GLB; Bellows cap32768. Approach stopped.
 - Fresh no-thinking CCORE control:49152-token cap/798.47s,repetitive planning and skeletonHTML with ellipses; raw syntaxfail. Merely outperforming this failure is not a visual win.
 - Direct-code200-main-step checkpoint00006:primary no-thinking output finishes12837tokens/202.32s,fullHTML, but raw pseudocode/syntax/runtime/export failures; no rawGLB. About11villager assemblies plus2merchant assemblies; no exportable animation clips. Thinking-on crosscheck also finishes27121tokens/435.88s but fails syntax/export. No demonstrated visual improvement.
-- A static diagnostic of checkpoint00006 is CPU-prepared at `evaluations/checkpoint-00006-diagnostic` and sibling `outputs/babylon-comparison/astra-200step-diagnostic`; not rendered/exported yet. It explicitly interprets pseudocode, omits ambiguous palms and unimplemented sign art, and adds a standard static exporter. It must never count as a raw pass or train target.
+- Checkpoint00006 static diagnostic was actually exported/reopened:1603028bytes,628meshdefinitions,742nodes,0clips,Khronos0errors/0warnings. It looks worse: floating roofs/walls/reeds and detached parts, hugewaterplane,smallcentralmarket. It interprets pseudocode, omits ambiguous palms/signart, and adds a static exporter. No raw pass/trainingtarget. Screenshots0/4s under sibling `outputs/babylon-comparison/diagnostic-200`; CCORE motion changes whileAstra remainsstatic. Threecontrol embeddedtexture loaderrors were observed; serverblob-fetch policy fixed afterward but browserreverification is pending.
 
-The common render harness in `eval/render-harness` has syntax checks and shared0/2/4second seeks; actual browser validation of this revision remains outstanding. Visual/playback inspection, not a validator or clip count alone, establishes an artifact result.
+The common render harness in `eval/render-harness` has actual browser0/4second seek checks and reimportedGLBs. The firstpair has different generationmodes/repairassistance, explicitlylabeled; it cannotestablishmatchedcausality. Embeddedcontroltexture reload remains to be rechecked afterserverpolicyfix. Visual/playback inspection, not a validator or clip count alone, establishes an artifact result.
 
 ## Next actions
 
-1. Get the bounded cached-prefix short-qualification receipt and verified GPU release. If it passes, qualify representative complete lengths before considering adoption. Preserve all earlier failed probes and strict tolerances.
-2. At an owned safe GPU boundary, inspect an actual Astra diagnostic GLB and/or evaluate the300-step checkpoint. Keep failure/assistance labels and compare against both matched control and historical repaired CCORE.
+1. Monitor existing300step inference until exit; preserveexactinputmatch (alreadyverifiedagainstfreshno-thinkingcontrol). GetCPU rank16proposal, grantonlyoneboundedGPUqualificationatcleanhandoff. Two-layerlongpathisrejected; preserveallfailures.
+2. Inspect300steprawoutput and recheckviewertextures atsafeGPUboundary.200stepdiagnosticisobservedworse; keepfailure/assistancelabels. Adoptrank16onlyaftershort/full-length/save-reloadgates;retain300stepinputweights.
 3. Continue a justified bounded approach within the same deadline. Inspect review packets; routine continuation is Codex's responsibility. Preserve independent final tests and all raw failures. Do not call falling loss a quality win.
 4. Deliver intermediate/final comparisons at the fixed times. By hard stop, stop all owned heavy jobs, leave a labeled localhost GLB comparison in Chrome, save real screenshots/playback evidence, and report better/worse/mixed honestly.
 5. Push sanitized source/results and this rolling handoff; back up new data/checkpoints/results through the **direct Google Drive connector only**, then update the GitHub-backed wiki. Do not claim the old archive contains new live-run checkpoints.

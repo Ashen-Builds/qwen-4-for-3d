@@ -1,0 +1,18 @@
+{
+  "epoch": 1794891419.180105,
+  "raw_export_pass": false,
+  "diagnostic_exported_and_reopened": true,
+  "visual_verdict": "Worse diagnostic geometry/composition than fresh BF16 repaired CCORE; different inference modes and assistance prevent a matched causal quality claim. No improvement accepted.",
+  "observed": [
+    "Floating roofs/walls/reeds and other detached parts",
+    "Huge water plane dominates framing",
+    "Small central market has sparse coherent coverage",
+    "Static Astra at0/4s; CCORE clouds/water change",
+    "Three GLTFLoader blob-texture errors observed; capture not certified texture-complete"
+  ],
+  "common_viewer": "Identical lighting/pixel ratio and normalized-bound fit,0/4second controls",
+  "candidate_assistance": "Pseudocode interpretation, scope/helper repairs, omitted ambiguous palms/signart, standard static exporter",
+  "candidate_glb_bytes": 1603028,
+  "candidate_clips": 0,
+  "gpu_review_tab_closed": true
+}

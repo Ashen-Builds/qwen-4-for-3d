@@ -145,6 +145,9 @@ def inputs_fingerprint(repo):
     import yaml
     cfg=repo/'configs/lora-qualification.yaml'
     source=yaml.safe_load(cfg.read_text()) if cfg.exists() else {}
+    if source.get('adapter_setup_audit'):
+        audit=(repo/source['adapter_setup_audit']).resolve()
+        result['adapter_setup_audit']=hashlib.sha256(audit.read_bytes()).hexdigest()
     data=(repo/source['data']).resolve().parent if source.get('data') else repo.parent/'work/sprint-prep/training-ready'
     manifest=data/'DATA_MANIFEST.json'
     if manifest.exists():

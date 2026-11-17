@@ -1,0 +1,148 @@
+--- raw-astra.html
++++ diagnostic-static-astra.html
+@@ -186,7 +186,7 @@
+     asset.name = 'Vibrant_Babylonian_Marketplace';
+     scene.add(asset);
+ 
+-    function addMesh(parent, geometry, mat, pos, rot, scale, name) { const mesh = new THREE.Mesh(geometry, mat); if (pos) mesh.position.set(...pos); if (rot) mesh.rotation.set(...rot); if (scale) mesh.scale.set(...scale); if (name) mesh.name=name; mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh; }
++    function addMesh(parent, geometry, mat, pos, rot, scale, name) { const mesh = new THREE.Mesh(geometry, typeof mat === 'string' ? makeMat(mat) : mat); if (pos) mesh.position.set(...pos); if (rot) mesh.rotation.set(...rot); if (scale) mesh.scale.set(...scale); if (name) mesh.name=name; mesh.castShadow = true; mesh.receiveShadow = true; parent.add(mesh); return mesh; }
+ 
+     const unit = { m: 1, g: 1, y: 1 };
+ 
+@@ -198,9 +198,11 @@
+ 
+     function group(parent, pos, name) { const g = new THREE.Group(); if (pos) g.position.set(...pos); if (name) g.name=name; parent.add(g); return g; }
+ 
+-    function arch(parent, radius, length, segments, pos, mat) { const pts = []; for i 0..segments: t = i/segments; x = -length/2 + length * t; y = Math.sin(t * Math.PI) * radius + 0.16; pts.push([x,y,0]); const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), segments, 0.075, 5, false); return addMesh(parent, geo, mat, pos, null, null); }
+-
+-    function makeTextTexture(text) { const c = document.createElement('canvas'); c.width=512;c.height=128; ctx=...; draw sign-colored stylized text; return new THREE.CanvasTexture(c); }
++    function arch(parent, radius, length, segments, pos, mat) { const pts = []; for (let i = 0; i <= segments; i++) { const t = i/segments; const x = -length/2 + length*t; const y = Math.sin(t*Math.PI)*radius+0.16; pts.push(new THREE.Vector3(x,y,0)); } const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), segments, 0.075, 5, false); return addMesh(parent,geo,mat,pos,null,null); }
++
++    // Diagnostic omission: texture artwork was never implemented by the model.
++    function makeTextTexture() { return {texture:null}; }
++    const cylinder=cyl;
+ 
+     function addAwning(parent, pos, colorA, colorB, angle = -0.18, width = 2.4) {
+       const aw = group(parent, pos, 'Textile_Awning');
+@@ -229,8 +231,8 @@
+     // Winding turquoise river, visually continuous with animated surface strips.
+     const river = group(asset, [0, 0, 0], 'Turquoise_River');
+     const riverPoly = new THREE.Shape();
+-    riverPoly.moveTo(-21, -14); lineTo(19, -13); lineTo(20, 9); lineTo(12, 14); lineTo(-15, 13); lineTo(-20, 6); closePath();
+-    const riverGeo = new THREE.ShapeGeometry(riverPoly, 1); rotateX(-Math.PI / 2); addMesh(river, riverGeo, mats.water, [0, -0.02, 0], null, null, 'Water_Surface');
++    riverPoly.moveTo(-21, -14); riverPoly.lineTo(19, -13); riverPoly.lineTo(20, 9); riverPoly.lineTo(12, 14); riverPoly.lineTo(-15, 13); riverPoly.lineTo(-20, 6); riverPoly.closePath();
++    const riverGeo = new THREE.ShapeGeometry(riverPoly, 1); riverGeo.rotateX(-Math.PI / 2); addMesh(river, riverGeo, mats.water, [0, -0.02, 0], null, null, 'Water_Surface');
+ 
+     // River stones and shallow shoals.
+     for (let i = 0; i < 42; i++) { const a = i * 2.399; const r = 2.2 + (i % 6) * 0.82; const x = Math.cos(a) * r; const z = Math.sin(a) * r * 0.72 - 0.2; addMesh(river, new THREE.DodecahedronGeometry(0.12 + (i % 3) * 0.06, 0), mats.cream, [x, -0.16 + (i % 3) * 0.015, z], [a, a * 0.4, a * 0.2], null, `River_Stone_${i}`); }
+@@ -239,7 +241,7 @@
+     for (let i = 0; i < 30; i++) { const angle = i / 30 * Math.PI * 2; const r1 = 3.4 + (i % 4) * 0.55; const r2 = 7.5 + (i % 7) * 0.85; addMesh(river, new THREE.CircleGeometry(0.5 + (i % 3) * 0.11, 7), i % 2 ? mats.foam : mats.water, [Math.cos(angle) * (r1 + r2) / 2, -0.005, Math.sin(angle) * (r1 + r2) / 2], [angle, 0, 0], null, `Water_Fan_${i}`); }
+ 
+     // Shore reeds and mud clumps.
+-    for (let i = 0; i < 32; i++) { const angle = (i + 7) * 0.18; const r = 8.5 + (i % 5) * 0.8; x = Math.cos(angle) * r; z = Math.sin(angle) * r * 0.72; group(base, [x, -0.22, z], `Reed_Clamp_${i}`); for (let j = 0; j < 3; j++) { const blade = box(g, [0.045, 0.75 + j * 0.16, 0.045], [j * 0.06, 0.38, j * 0.04], mats.leaf); blade.rotation.z = (j - 1) * 0.22; } if (i % 2) cylinder(g, 0.025, 0.035, 0.32, 5, [0, 0.65, 0], mats.coconut); } }
++    for (let i = 0; i < 32; i++) { const angle = (i + 7) * 0.18; const r = 8.5 + (i % 5) * 0.8; const x = Math.cos(angle) * r; const z = Math.sin(angle) * r * 0.72; const g = group(base, [x, -0.22, z], `Reed_Clamp_${i}`); for (let j = 0; j < 3; j++) { const blade = box(g, [0.045, 0.75 + j * 0.16, 0.045], [j * 0.06, 0.38, j * 0.04], mats.leaf); blade.rotation.z = (j - 1) * 0.22; } if (i % 2) cylinder(g, 0.025, 0.035, 0.32, 5, [0, 0.65, 0], mats.coconut); }
+ 
+     // -------------------------------------------------------------------------
+     // Main town and architecture
+@@ -250,7 +252,7 @@
+     // Foundation.
+     addMesh(town, new THREE.CylinderGeometry(5.7, 6.1, 0.45, 10), mats.earthDark, [0, -0.18, 0], null, null, 'Town_Foundation');
+ 
+-    for (let i = 0; i < 38; i++) { const a = i * 2.399; const r = 1.8 + (i % 4) * 0.95; x = Math.cos(a) * r; z = Math.sin(a) * r; addMesh(town, new THREE.BoxGeometry(0.62, 0.08, 0.48 + (i % 2) * 0.1), mats.earthLight, [x, -0.02, z], [0, a, 0], null, `Masonry_Patch_${i}`); }
++    for (let i = 0; i < 38; i++) { const a = i * 2.399; const r = 1.8 + (i % 4) * 0.95; const x = Math.cos(a) * r; const z = Math.sin(a) * r; addMesh(town, new THREE.BoxGeometry(0.62, 0.08, 0.48 + (i % 2) * 0.1), mats.earthLight, [x, -0.02, z], [0, a, 0], null, `Masonry_Patch_${i}`); }
+ 
+     // North wall segment.
+     for (let i = 0; i < 6; i++) { addMesh(town, new THREE.BoxGeometry(1.05, 1.4, 0.5), i % 2 ? mats.warm : mats.ochre, [-3.6 + i, 0.98, 3.7], [0, 0, 0], null, `North_Wall_Block_${i}`); }
+@@ -269,7 +271,7 @@
+     addAwning(town, [-0.3, 2.88, 3.08], '#d9a13a', '#fff0bd', -0.24, 2.4);
+ 
+     // Market goods: baskets, pottery and sacks.
+-    function makeBasket(parent, pos, scale = 1) { const b = group(parent, pos, 'Woven_Basket'); b.scale.setScalar(scale); for (let i = 0; i < 5; i++) const a = i / 5 * Math.PI * 2; addMesh(b, new THREE.CylinderGeometry(0.25, 0.2, 0.22, 6), mats.woodLight, [Math.cos(a) * 0.15, 0.11, Math.sin(a) * 0.15], null, null, `Basket_Rim_${i}`); addMesh(b, new THREE.TorusGeometry(0.23, 0.035, 4, 8), mats.woodDark, [0, 0.23, 0], [Math.PI / 2, 0, 0], null, 'Basket_Lid'); return b; }
++    function makeBasket(parent, pos, scale = 1) { const b = group(parent, pos, 'Woven_Basket'); b.scale.setScalar(scale); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; addMesh(b, new THREE.CylinderGeometry(0.25, 0.2, 0.22, 6), mats.woodLight, [Math.cos(a) * 0.15, 0.11, Math.sin(a) * 0.15], null, null, `Basket_Rim_${i}`); } addMesh(b, new THREE.TorusGeometry(0.23, 0.035, 4, 8), mats.woodDark, [0, 0.23, 0], [Math.PI / 2, 0, 0], null, 'Basket_Lid'); return b; }
+     function makePot(parent, pos, scale = 1) { const p = group(parent, pos, 'Glazed_Pottery'); p.scale.setScalar(scale); addMesh(p, new THREE.LatheGeometry([new THREE.Vector2(0, 0), new THREE.Vector2(0.18, 0.02), new THREE.Vector2(0.28, 0.25), new THREE.Vector2(0.22, 0.42), new THREE.Vector2(0.11, 0.48), new THREE.Vector2(0.12, 0.55), new THREE.Vector2(0, 0.55)]), mats.blue); return p; }
+     function makeSack(parent, pos) { const s = group(parent, pos, 'Grain_Sack'); addMesh(s, new THREE.SphereGeometry(0.48, 7, 5), mats.cream, [0, 0.43, 0], [0, 0, 0], [0.8, 1.1, 0.8], 'Sack_Body'); addMesh(s, new THREE.CylinderGeometry(0.12, 0.22, 0.25, 6), mats.woodLight, [0, 0.88, 0], null, null, 'Sack_Tie'); addMesh(s, new THREE.SphereGeometry(0.11, 6, 4), mats.cream, [0, 1.02, 0], null, null, 'Sack_Seal'); return s; }
+ 
+@@ -290,7 +292,8 @@
+     const roof1 = makeSteppedRoof(town, [-2.95, 2.15, -2.1], 2.9, 2.6); roof1.rotation.y = 0.1;
+     const roof2 = makeSteppedRoof(town, [1.95, 2.2, -2.95], 2.75, 2.5); roof2.rotation.y = -0.18;
+ 
+-    function makeDatePalms(parent, positions, scale = 1) { const p = group(parent, positions[0], 'Date_Palms'); p.scale.setScalar(scale); for (const [x,z,lean] of positions) { const palm = group(p, [x, 0, z], 'Date_Palm'); const trunk = addMesh(palm, new THREE.CylinderGeometry(0.16, 0.28, 4.2, 7), mats.wood, [0, 2.1, 0], [0, 0, lean[0] * 0.08], null, 'Curved_Trunk'); trunk.rotation.z = lean[0]; trunk.rotation.x = lean[1]; for (let i = 0; i < 7; i++) { const y = 0.75 + i * 0.48; const angle = i * 2.399; addMesh(palm, new THREE.CylinderGeometry(0.045, 0.07, 0.72, 5), mats.wood, [Math.cos(angle) * 0.22, y, Math.sin(angle) * 0.22], [Math.sin(angle) * 0.45, 0, -Math.cos(angle) * 0.45], null, 'Coconut_Grain'); addMesh(palm, new THREE.ConeGeometry(0.25, 0.62, 7), mats.leaf, [Math.cos(angle) * 0.52, y + 0.72, Math.sin(angle) * 0.52], [0, angle, 0], null, 'Frond'); } addMesh(palm, new THREE.SphereGeometry(0.22, 7, 5), mats.coconut, [lean[0] * 0.8, 4.4 + lean[1], lean[2] * 0.8], null, null, 'Top_Cluster'); return p; }
++    // Diagnostic omission: inconsistent palm tuple/lean representation would create NaNs.
++    function makeDatePalms() { return null; }
+ 
+     makeDatePalms(asset, [[-6.2, 0.65, -3.2, 0.12], [-5.8, 0.65, -3.9, -0.1], [5.6, 0.65, 3.45, -0.12], [6.15, 0.65, 3.0, 0.1]], 0.9);
+     makeSteppedRoof(asset, [-5.35, 3.8, -3.45], 1.95, 1.6); makeSteppedRoof(asset, [5.35, 3.8, 3.15], 1.85, 1.55);
+@@ -307,7 +310,7 @@
+     for (const x of [-1.25, 1.25]) box(gateway, [0.1, 0.1, 0.42], [x, 0.1, 0], mats.copper);
+     addMesh(gateway, new THREE.BoxGeometry(0.11, 2.42, 0.11), mats.copper, [0, 1.35, 0.09], null, null, 'Gate_Clamp');
+     addMesh(gateway, new THREE.BoxGeometry(0.25, 0.25, 0.06), mats.copper, [0.73, 1.35, 0.11], null, null, 'Gate_Handle');
+-    makeAwning(asset, [-3.8, 3.3, 3.05], '#2c9eb1', '#fff0bd', -0.17, 2.15);
++    addAwning(asset, [-3.8, 3.3, 3.05], '#2c9eb1', '#fff0bd', -0.17, 2.15);
+ 
+     // -------------------------------------------------------------------------
+     // Arched canal bridge
+@@ -359,9 +362,10 @@
+     // Market activity: villagers walking, trading and gesturing
+     // -------------------------------------------------------------------------
+ 
++    let elapsed = 0;
+     const people = [];
+ 
+-    const makeVillage = (x, z, color, vest, scale = 1) => { const v = group(asset, [x, 0, z], 'Village_Invitor'); v.scale.setScalar(scale); const body = addMesh(v, new THREE.BoxGeometry(0.38, 0.75, 0.28), color, [0, 0.4, 0], null, null, 'Person_Body'); addMesh(v, new THREE.BoxGeometry(0.27, 0.5, 0.13), vest, [0, 0.48, 0.02], null, null, 'Vest'); addMesh(v, new THREE.BoxGeometry(0.3, 0.18, 0.28), mats.dark, [0, 0.02, 0], null, null, 'Shadow'); const head = addMesh(v, new THREE.SphereGeometry(0.22, 7, 5), mats.cream, [0, 0.91, 0], null, null, 'Head'); addMesh(v, new THREE.BoxGeometry(0.27, 0.08, 0.08), mats.dark, [0, 0.95, 0.2], null, null, 'Face'); const armMat = makeMat(vest + '#e8d4ad'); for (const side of [-1, 1]) addMesh(v, new THREE.BoxGeometry(0.09, 0.48, 0.09), armMat, [side * 0.25, 0.62, 0], [0, 0, side * 0.12], null, 'Arm'); addMesh(v, new THREE.BoxGeometry(0.13, 0.28, 0.12), mats.dark, [side * 0.27, 0.36, 0], null, null, 'Hand'); return v; }
++    const makeVillage = (x, z, color, vest, scale = 1) => { const v = group(asset, [x, 0, z], 'Village_Invitor'); v.scale.setScalar(scale); const body = addMesh(v, new THREE.BoxGeometry(0.38, 0.75, 0.28), color, [0, 0.4, 0], null, null, 'Person_Body'); addMesh(v, new THREE.BoxGeometry(0.27, 0.5, 0.13), vest, [0, 0.48, 0.02], null, null, 'Vest'); addMesh(v, new THREE.BoxGeometry(0.3, 0.18, 0.28), mats.dark, [0, 0.02, 0], null, null, 'Shadow'); const head = addMesh(v, new THREE.SphereGeometry(0.22, 7, 5), mats.cream, [0, 0.91, 0], null, null, 'Head'); addMesh(v, new THREE.BoxGeometry(0.27, 0.08, 0.08), mats.dark, [0, 0.95, 0.2], null, null, 'Face'); const armMat = makeMat(vest + '#e8d4ad'); for (const side of [-1, 1]) { addMesh(v, new THREE.BoxGeometry(0.09, 0.48, 0.09), armMat, [side * 0.25, 0.62, 0], [0, 0, side * 0.12], null, 'Arm'); addMesh(v, new THREE.BoxGeometry(0.13, 0.28, 0.12), mats.dark, [side * 0.27, 0.36, 0], null, null, 'Hand'); } return v; }
+ 
+     makeVillage(-4.65, 0.9, '#b9d2cf', '#6f4633', 0.92);
+     makeVillage(-4.25, 1.75, '#c9793f', '#476d8b', 0.82);
+@@ -403,7 +407,7 @@
+     addMesh(trade, new THREE.BoxGeometry(0.5, 0.78, 0.34), mats.redOchre, [0, 0.4, 0], null, null, 'Merchant');
+     addMesh(trade, new THREE.BoxGeometry(0.28, 0.035, 0.3), mats.blueLight, [0, 0.81, 0], null, null, 'Merchant_Goal');
+     const customer = makeVillage(2.3, 2.0, '#b87349', '#476b87', 0.72); customer.rotation.y = -1.15; customer.position.y = 0.08; trade.add(customer);
+-    addMesh(Trade, new THREE.BoxGeometry(0.48, 0.12, 0.07), mats.copper, [0.12, 0.72, 0], null, null, 'Traded_Cloth');
++    addMesh(trade, new THREE.BoxGeometry(0.48, 0.12, 0.07), mats.copper, [0.12, 0.72, 0], null, null, 'Traded_Cloth');
+     addMesh(trade, new THREE.BoxGeometry(0.29, 0.04, 0.26), mats.blueLight, [0, 0.82, 0], null, null, 'Other_Goal');
+ 
+     // A hand gesture at a stall.
+@@ -426,7 +430,7 @@
+     for (let i = 0; i < 7; i++) { const cloud = group(asset, [ -9 + i * 2.3, 7.5 + (i % 3) * 1.2, -5 - (i % 4) * 1.55], `Cloud_${i}`); for (let j = 0; j < 4; j++) addMesh(cloud, new THREE.IcosahedronGeometry(0.55 + (j % 2) * 0.22, 1), cloudMaterial, [(j - 1.5) * 0.58, (j % 2) * 0.18, 0], null, null, `Cloud_Puff_${i}_${j}`); cloud.userData.phase = i * 0.91; animatedObjects.push(cloud); }
+ 
+     const swayObjects = [];
+-    for (let i = 0; i < 15; i++) { const a = i / 15 * Math.PI * 2; const x = -7 + i * 1.72; const z = -4.5 + Math.sin(i * 1.8) * 2.6; group(asset, [x, 0, z], `Swaying_Cloth_${i}`); addMesh(group, new THREE.BoxGeometry(0.75, 1.5 + (i % 3) * 0.28, 0.035), i % 2 ? mats.teal : mats.paleBlue, [0, 0.75, 0], [0, a, 0], null, `Cloth_${i}`); const pivot = group(group, [0, 0.8, 0], `Cloth_Pivot_${i}`); addMesh(pivot, new THREE.BoxGeometry(0.025, 1.2, 0.055), mats.cream, [0, 0, 0], null, null, `Cloth_Stripe_${i}`); swayObjects.push(group); }
++    for (let i = 0; i < 15; i++) { const a = i / 15 * Math.PI * 2; const x = -7 + i * 1.72; const z = -4.5 + Math.sin(i * 1.8) * 2.6; const clothGroup = group(asset, [x, 0, z], `Swaying_Cloth_${i}`); addMesh(clothGroup, new THREE.BoxGeometry(0.75, 1.5 + (i % 3) * 0.28, 0.035), i % 2 ? mats.teal : mats.paleBlue, [0, 0.75, 0], [0, a, 0], null, `Cloth_${i}`); const pivot = group(clothGroup, [0, 0.8, 0], `Cloth_Pivot_${i}`); addMesh(pivot, new THREE.BoxGeometry(0.025, 1.2, 0.055), mats.cream, [0, 0, 0], null, null, `Cloth_Stripe_${i}`); swayObjects.push(clothGroup); }
+ 
+     for (let i = 0; i < 14; i++) { const mesh = asset.getObjectByName(`Frond_${i}`); if (mesh) { mesh.userData.phase = i * 0.61; animatedObjects.push(mesh); } }
+ 
+@@ -441,29 +445,15 @@
+ 
+     const clock = new THREE.Clock();
+     const duration = 8;
+-    let elapsed = 0;
+ 
+     function animate() { const dt = Math.min(clock.getDelta(), 0.05); elapsed += dt; requestAnimationFrame(animate); for (const o of animatedObjects) { const t = (elapsed + o.userData.phase) % duration; const wind = Math.sin(t / duration * Math.PI * 2); const flap = Math.sin(t / duration * Math.PI * 4 + o.userData.phase) * 0.012; if (o.userData.flap) o.rotation.z += wind * (o.userData.flap ?? 0.018) + flap; if (o.userData.spin) o.rotation.y += wind * 0.035; if (o.userData.phase && o.userData.base) o.position.x += Math.sin(t / duration * Math.PI * 2 + o.userData.phase) * 0.08; } controls.update(); renderer.render(scene, camera);}
+     requestAnimationFrame(animate);
+ 
+-    const exportBtn = document.getElementById('exportBtn'); const status = document.getElementById('status'); let exporting = false;
+-    exportBtn.addEventListener('click', () => { if (exporting) return; exporting = true; exportBtn.disabled = true; exportBtn.textContent = 'Exporting…'; showStatus('Packing geometry, materials and looping animation…'); });
+-    function showStatus(msg) { status.textContent = msg; status.classList.add('show'); clearTimeout(showStatus.timer); showStatus.timer = setTimeout(() => status.classList.remove('show'), 2400); }
+-    exporting = false; exportBtn.disabled = false; exportBtn.textContent = 'Export animated GLB';
+-
+-    exportBtn.addEventListener('click', async () => {
+-      if (exporting) return;
+-      exporting = true;
+-      exportBtn.disabled = true;
+-      exportBtn.textContent = 'Exporting…';
+-
+-      try {
+-        await new Promise(r => setTimeout(r, 30));
+-        const exporter = new GLTFExporter();
+-        const animations = exporter.parse(asset, (result) => { const blob = new Blob([result], { type: 'model/gltf-binary' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'vibrant_babylonian_marketplace.glb'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1500); status.textContent = 'Exported animated GLB'; status.classList.add('show'); setTimeout(() => status.classList.remove('show'), 1800); showStatus(new Date).replace(/\s/g, ' • ' + '•');
+-      } catch (e) { console.error(e); status.textContent = 'Export failed — see console for details'; showStatus(new Date).replace(/\s/g, ' • ' + '•'); }
+-      finally { exporting = false; exportBtn.disabled = false; exportBtn.textContent = 'Export animated GLB'; }
+-    });
++    // Diagnostic static exporter; model authored no exportable clips.
++    const exportBtn=document.getElementById('exportBtn');
++    const status=document.getElementById('status');
++    exportBtn.textContent='Export diagnostic static GLB';
++    exportBtn.addEventListener('click',async()=>{exportBtn.disabled=true;try{const bytes=await new GLTFExporter().parseAsync(asset,{binary:true,onlyVisible:true});const url=URL.createObjectURL(new Blob([bytes],{type:'model/gltf-binary'}));const a=document.createElement('a');a.href=url;a.download='astra-200step-diagnostic-static.glb';a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);status.textContent='Diagnostic static GLB exported; raw source failed';}catch(e){console.error(e);status.textContent='Diagnostic export failed';}finally{exportBtn.disabled=false;}});
+ 
+     window.addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); });
+   </script>

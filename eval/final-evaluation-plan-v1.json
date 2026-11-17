@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "status": "prospectively-frozen-before-final-probe-generation",
+  "selected_at": "2026-11-17T00:03:00-05:00",
+  "source_sha256": "504bf3ffd3adf36eb156ca1f08efb247f219c95ebba117b415c7810c0e97986f",
+  "scope": "Two prespecified final probes from the20-task suite; incomplete suite, not a broad generalization estimate.",
+  "selection_rule": "First two final entries in the existing frozen manifest, without seeing their generated outputs.",
+  "ids": [
+    "waterwheel",
+    "orrery"
+  ],
+  "seed": 42,
+  "max_tokens": 32768,
+  "enable_thinking": false,
+  "arms": [
+    "untouched CCORE BF16",
+    "candidate selected and frozen before either final probe is generated"
+  ],
+  "comparison_controls": "Same exact prompt/system/template/sampler/seed/runtime/export policy across arms for each task. No benchmark-derived training or scene corrections.",
+  "selection": "Prefer an accepted raw checkpoint under the frozen primary rubric; if none exists, label the chosen diagnostic candidate unaccepted and record why before final tests.",
+  "after_test": "No more training or checkpoint selection using final-test results. Retain all raw failures.",
+  "timing": "After training cutoff06:27:39EST; preserve07:40:39 shutdown reserve and07:42:39 hardstop.",
+  "remaining_suite": "The other18tasks and seed1234 remain unrun unless separately authorized after this experiment.",
+  "primary": "Unchanged Babylon marketplace same-prompt comparison remains the main objective; a probe win does not replace it."
+}

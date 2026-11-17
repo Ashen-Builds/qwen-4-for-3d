@@ -10,7 +10,7 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Security-Policy",
                          "default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; "
-                         "style-src 'self' 'unsafe-inline'; connect-src 'self'; "
+                         "style-src 'self' 'unsafe-inline'; connect-src 'self' blob:; "
                          "img-src 'self' data: blob:; object-src 'none'; base-uri 'none'")
         super().end_headers()
 
