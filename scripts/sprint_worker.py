@@ -42,7 +42,12 @@ def train(repo, job, directory):
     args=types.SimpleNamespace(**cfg);a,b,_=load_dataset(args,tokenizer)
     from overnight_controller import atomic_json
     atomic_json(directory/'train-start.json',{'training_api_entered':True,'confirmed_steps':0})
-    train_model(args,model,a,b,Recorder())
+    if cfg.get('frozen_prefix_inference'):
+        if cfg['grad_checkpoint']:raise ValueError('Whole-class gradient checkpointing is incompatible with frozen-prefix mode')
+        from frozen_prefix_training import frozen_prefix_training
+        with frozen_prefix_training(model):train_model(args,model,a,b,Recorder())
+    else:
+        train_model(args,model,a,b,Recorder())
 
 
 def reload_check(repo,job,directory):

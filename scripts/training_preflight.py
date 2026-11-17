@@ -11,6 +11,7 @@ def inspect(repo):
     cfg=yaml.safe_load((repo/'configs/lora-qualification.yaml').read_text());work=repo.parent/'work/sprint-prep';checks={}
     phase_configs=[yaml.safe_load((repo/'configs'/name).read_text()) for name in ['lora-qualification.yaml','lora-length-qualification.yaml','lora-main-draft.yaml']]
     checks['all_phase_configs_safe']=all(c['train'] is False and c['test'] is False and c['fine_tune_type']=='lora' and c['num_layers']==1 and c['trust_remote_code'] is False and c.get('report_to') is None and c['model']==cfg['model'] and c['lora_parameters']==cfg['lora_parameters'] for c in phase_configs)
+    checks['frozen_prefix_scope']=all(c.get('frozen_prefix_inference') is True and c['grad_checkpoint'] is False and c['num_layers']==1 for c in phase_configs)
     checks['training_disabled']=cfg['train'] is False and cfg['test'] is False
     checks['remote_code_disabled']=cfg['trust_remote_code'] is False
     checks['external_reporting_disabled']=cfg.get('report_to') is None

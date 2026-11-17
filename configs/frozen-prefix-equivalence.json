@@ -1,0 +1,130 @@
+{
+  "passed": true,
+  "reference_mode": "deployed-eval",
+  "all_sequence_logits_compared": true,
+  "tokens": 131,
+  "reference_loss": 2.289677858352661,
+  "optimized_loss": 2.289677858352661,
+  "loss_abs_difference": 0.0,
+  "max_logit_difference": 0.0,
+  "reference_seconds": 0.2613314999907743,
+  "optimized_seconds": 0.23372449999442324,
+  "gradient_comparison": [
+    {
+      "name": "language_model.model.layers.31.self_attn.q_proj.lora_a",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 1.047633171081543,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.q_proj.lora_b",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 2.9384701251983643,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.k_proj.lora_a",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 0.3097616136074066,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.k_proj.lora_b",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 1.9276511669158936,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.v_proj.lora_a",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 0.39347633719444275,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.v_proj.lora_b",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 2.410526752471924,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.o_proj.lora_a",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 1.3305282592773438,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.self_attn.o_proj.lora_b",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 2.9224793910980225,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.gate_proj.lora_a",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 0.9275677800178528,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.gate_proj.lora_b",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 2.9039885997772217,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.down_proj.lora_a",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 2.3561742305755615,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.down_proj.lora_b",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 5.44085693359375,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.up_proj.lora_a",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 1.510447382926941,
+      "finite": true,
+      "absolute_l2": 0.0
+    },
+    {
+      "name": "language_model.model.layers.31.mlp.up_proj.lora_b",
+      "relative_l2": 0.0,
+      "cosine": 1.0,
+      "reference_norm": 5.506189346313477,
+      "finite": true,
+      "absolute_l2": 0.0
+    }
+  ],
+  "one_update_max_adapter_difference": 0.0,
+  "ordinary_loader_max_logit_difference": 0.0,
+  "scope": "Trained nonzero adapter, short complete example. All-token logits and each LoRA gradient compared. Deployed-eval oracle uses original unmodified inference kernels with gradients enabled only on the same final-layer LoRA. This does not erase or pass prior training-ops equivalence failure. Two isolated one-step branches; not main training or long-length performance proof.",
+  "peak_memory_gb": 8.947523662
+}
