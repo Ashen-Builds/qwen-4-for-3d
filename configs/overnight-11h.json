@@ -1,0 +1,64 @@
+{
+  "schema": 1,
+  "status": "owner-authorized-awaiting-window",
+  "name": "Astra-3D overnight experiment",
+  "base": "ccore/Qwen3.5-4B-GLB-3D-Coder",
+  "base_revision": "8f32a199f8b22fe3157b9c5c8b42b052a0750dd3",
+  "start": "2026-11-16T21:00:00-05:00",
+  "hard_stop": "2026-11-17T08:00:00-05:00",
+  "timezone": "America/New_York",
+  "clock": "11 hours wall time, including qualification, evaluation and pauses; hard 08:00 EST stop",
+  "authorization": "Owner attached goal authorizes this exact overnight experiment; no weight updates before 21:00 EST.",
+  "milestones": [
+    {
+      "elapsed_hours": 8,
+      "time": "2026-11-17T05:00:00-05:00",
+      "deliverable": "Intermediate same-prompt CCORE/Astra GLB comparison if usable checkpoint exists"
+    },
+    {
+      "elapsed_hours": 11,
+      "time": "2026-11-17T08:00:00-05:00",
+      "deliverable": "Final best comparison, honest quality report, all owned heavy compute stopped"
+    }
+  ],
+  "gpu_policy": "Honor shared GPU slots and streaming guard; pause at safe boundaries. Keep wall-clock stop. Never remove guard or take over another job.",
+  "showcase_prompt": "eval/prompts/babylon-marketplace-v3.txt",
+  "showcase_seed": 42,
+  "evaluation": "Regenerate untouched CCORE on chosen common evaluation runtime/precision once before adapter comparisons. Historical repaired Q8 native GLB is a gallery reference, not a raw matched control for a different backend.",
+  "training_data_gate": "Pinned rights/provenance, code-family splits, complete assistant targets, no benchmark leakage, independently executed/rendered/export-validated new examples",
+  "remaining_unbuilt": [
+    "Live short and representative-length backward/gradient/throughput qualification",
+    "Live adapter save/reload and effect verification",
+    "Fresh matched-runtime raw CCORE control and adapter export/visual comparison",
+    "Observed supervised checkpoint loop through the 48-hour budget"
+  ],
+  "readiness": "preparation-ready; live qualification intentionally unrun",
+  "prepared": [
+    "Complete direct-connector source archive",
+    "BF16 text conversion and zero-update adapter module audit",
+    "Frozen replay and tested generic repair curriculum with exact masks/no truncation",
+    "Final/development probe families and before/after viewer template",
+    "Guarded, plan-only training entrypoint; no schedule or active trainer"
+  ],
+  "qualification_configs": [
+    "configs/lora-qualification.yaml",
+    "configs/lora-length-qualification.yaml",
+    "configs/lora-main-draft.yaml"
+  ],
+  "archive_receipt": "configs/archive-verification.json",
+  "controller": {
+    "entrypoint": "scripts/overnight_controller.py",
+    "mode": "plan-only until explicit live authorization",
+    "reviewer": "Current Codex supervisor; wait safely if unavailable",
+    "schedule_safety": "8:58 a.m. drain, night window, fixed hard deadline",
+    "resume_semantics": "Adapter-weight warm restart; optimizer/data iterator are not bit-exact resumed"
+  },
+  "authorization_scope": "overnight-sprint",
+  "compute_window": {
+    "start_hour": 21,
+    "stop_hour": 8,
+    "drain_minutes": 2
+  },
+  "evaluation_lead_seconds": 3600,
+  "final_training_stop_seconds_before_deadline": 4500
+}

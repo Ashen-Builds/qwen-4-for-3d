@@ -365,3 +365,30 @@ class PacketIdentityTests(unittest.TestCase):
         packet=e.s['milestones']['16'];self.assertEqual(packet['checkpoint'],'fixture-cp1');self.assertEqual(packet['latest_training_checkpoint'],'fixture-cp2');self.assertTrue(packet['sample']['reviewed'])
 
 if __name__=='__main__':unittest.main()
+
+class ElevenHourTests(unittest.TestCase):
+    def setUp(self):
+        self.cfg=json.loads((REPO/'configs/overnight-11h.json').read_text());self.e=Engine(new_state(self.cfg,'overnight-fixture'),self.cfg,True);self.t=self.e.s['start']
+
+    def test_exact_window(self):
+        self.assertEqual(self.e.s['deadline']-self.t,11*3600);self.assertEqual(self.e.tick(self.t)['kind'],'baseline')
+
+    def test_reports_only_five_and_eight(self):
+        from overnight_controller import milestone_hours
+        self.assertEqual(milestone_hours(self.cfg),[8,11]);self.e.tick(self.t+11*3600);self.assertEqual(set(self.e.s['milestones']),{'8','11'})
+
+    def test_no_model_before_nine(self):
+        self.assertIsNone(self.e.tick(self.t-1));self.assertIsNone(self.e.s['active_job'])
+
+    def test_generation_lead_times_and_final_training_cutoff(self):
+        qualify(self.e,self.t);self.e.s['latest_checkpoint']='fixture'
+        a=self.e.tick(self.t+7*3600);self.assertEqual(a['milestone'],8);self.e.finish(self.t+7*3600+1,{'simulated':True,'okay':True});ack(self.e,self.t+7*3600+2,export_and_visual_reviewed=True)
+        self.assertIsNone(self.e.tick(self.t+9.75*3600))
+        a=self.e.tick(self.t+10*3600);self.assertEqual(a['milestone'],11)
+
+    def test_drain_before_eight_and_no_extension(self):
+        self.e.tick(self.t);self.assertEqual(self.e.tick(self.t+10*3600+58*60)['reason'],'owner-computer-time');self.assertEqual(self.e.tick(self.t+11*3600)['reason'],'hard-deadline')
+
+    def test_out_of_window_milestone_rejected(self):
+        c=copy.deepcopy(self.cfg);c['milestones'].append({'elapsed_hours':24})
+        with self.assertRaises(ValueError):new_state(c,'bad')

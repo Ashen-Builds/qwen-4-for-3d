@@ -33,11 +33,29 @@ def atomic_json(path, value):
     os.replace(temporary, path)
 
 
+def milestone_hours(config):
+    duration=(datetime.fromisoformat(config['hard_stop'])-datetime.fromisoformat(config['start'])).total_seconds()/3600
+    hours=[x['elapsed_hours'] for x in config['milestones'] if x['elapsed_hours']>0]
+    if not hours or hours!=sorted(set(hours)) or any(h>duration for h in hours):
+        raise ValueError('Milestones must be ordered, unique and within run budget')
+    return hours
+
+
+def window_bounds(config, now):
+    local=datetime.fromtimestamp(now,ZoneInfo(config['timezone']))
+    window=config.get('compute_window',{'start_hour':23,'stop_hour':9,'drain_minutes':2})
+    start=window['start_hour']*60;end=window['stop_hour']*60;current=local.hour*60+local.minute
+    drain=end-window.get('drain_minutes',2)
+    allowed=current>=start or current<drain
+    return allowed,local.replace(hour=window['stop_hour'],minute=0,second=0,microsecond=0).timestamp()-window.get('drain_minutes',2)*60
+
+
 def new_state(config, run_id):
     start = datetime.fromisoformat(config['start']).timestamp()
     end = datetime.fromisoformat(config['hard_stop']).timestamp()
     if not 0 < end - start <= 48 * 3600:
         raise ValueError('Budget must be positive and at most 48 hours')
+    milestone_hours(config)
     return {'schema': 1, 'run_id': run_id, 'config_hash': digest(config),
             'start': start, 'deadline': end, 'phase': 'baseline', 'status': 'ready',
             'active_job': None, 'awaiting_review': None, 'packet_number': 0,
@@ -73,14 +91,14 @@ class Engine:
         if flags.get('manual'): return 'manual-pause'
         if flags.get('streaming'): return 'streaming'
         if flags.get('global_pause'): return 'global-gpu-pause'
-        local = datetime.fromtimestamp(now, ZoneInfo(self.config['timezone']))
-        if (9 <= local.hour < 23 or local.hour==8 and local.minute>=58) and not flags.get('daytime_approved'):
+        allowed,_=window_bounds(self.config,now)
+        if not allowed and not flags.get('daytime_approved'):
             return 'owner-computer-time'
         return None
 
     def milestone_reports(self, now, paused):
         # Metadata-only reports continue while compute or review is paused.
-        for h in [8, 16, 24, 32, 40, 48]:
+        for h in milestone_hours(self.config):
             key = str(h)
             if now >= self.s['start'] + h * 3600 and key not in self.s['milestones']:
                 self.s['milestones'][key] = {
@@ -130,19 +148,20 @@ class Engine:
         if phase != 'main': return None
         # Start generation one hour before each deadline. During daytime holds,
         # the due packet instead references the last actual completed sample.
-        for h in [8, 16, 24, 32, 40, 48]:
+        for h in milestone_hours(self.config):
             previous = self.s['milestones'].get(str(h), {})
-            if now >= self.s['start'] + h * 3600 - 3600 and not previous.get('sample_attempted'):
+            if now >= self.s['start'] + h * 3600 - self.config.get('evaluation_lead_seconds',3600) and not previous.get('sample_attempted'):
                 if self.s['latest_checkpoint']:
                     return self.launch(now, 'sample', milestone=h)
                 previous.update(sample_attempted=True, status='no-checkpoint')
                 self.s['milestones'][str(h)] = previous
-        next_due = min((self.s['start'] + h*3600 - 3600 for h in [8,16,24,32,40,48]
-                        if self.s['start'] + h*3600 - 3600 > now), default=self.s['deadline'])
-        local = datetime.fromtimestamp(now, ZoneInfo(self.config['timezone']))
-        morning = local.replace(hour=9, minute=0, second=0, microsecond=0).timestamp()
-        availability = morning - now if local.hour < 9 and not flags.get('daytime_approved') else 1800
-        budget = min(1500, next_due-now, self.s['deadline']-now, availability)
+        next_due = min((self.s['start'] + h*3600 - self.config.get('evaluation_lead_seconds',3600) for h in milestone_hours(self.config)
+                        if self.s['start'] + h*3600 - self.config.get('evaluation_lead_seconds',3600) > now), default=self.s['deadline'])
+        _,drain=window_bounds(self.config,now)
+        availability=drain-now if drain>now and not flags.get('daytime_approved') else 1800
+        training_end=self.s['deadline']-self.config.get('final_training_stop_seconds_before_deadline',0)
+        if now>=training_end:return None
+        budget=min(1500,next_due-now,training_end-now,availability)
         if budget < 90: return None
         sec = self.s['seconds_per_step']
         if not sec or not math.isfinite(sec) or sec <= 0:
@@ -319,9 +338,9 @@ def recover_after_restart(engine, now, lookup=process_identity):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--config',type=Path,default=Path('configs/sprint-48h.json'))
-    p.add_argument('--run-id',default='astra-sprint-01')
-    p.add_argument('--run',action='store_true');p.add_argument('--resume',action='store_true')
+    p.add_argument('--config',type=Path,default=Path('configs/overnight-11h.json'))
+    p.add_argument('--run-id',default='astra-overnight-20261116')
+    p.add_argument('--wait-until-start',action='store_true');p.add_argument('--run',action='store_true');p.add_argument('--resume',action='store_true')
     p.add_argument('--authorization-file',type=Path)
     p.add_argument('--ack-review',type=Path);p.add_argument('--status',action='store_true')
     args=p.parse_args();repo=Path(__file__).resolve().parents[1]
@@ -330,16 +349,17 @@ def main():
     root=repo.parent/'work/sprint-prep/overnight'/args.run_id
     if not(args.run or args.ack_review or args.status):
         print(json.dumps({'mode':'plan-only','training_started':False,'config_sha256':digest(config),'run_id':args.run_id,'start':config['start'],
-              'stop':config['hard_stop'],'phases':QUALIFICATION+['qualification-review','bounded-segments','eight-hour-samples'],
+              'stop':config['hard_stop'],'phases':QUALIFICATION+['qualification-review','bounded-segments','configured-milestone-samples'],
               'reviewer':'Current Codex session must inspect/acknowledge packets; no owner interaction is needed for routine authorized review.',
               'resume':'Adapters only; optimizer is restarted between bounded CLI segments, explicitly recorded.'},indent=2));return
     if args.status:
         print((root/'state.json').read_text() if (root/'state.json').exists() else json.dumps({'status':'not-created','training_started':False}));return
     if args.authorization_file is None:raise SystemExit('Owner start authorization required; no worker launched')
     auth=json.loads(args.authorization_file.read_text())
-    if not(auth.get('owner_authorized') is True and auth.get('scope')=='48-hour-sprint' and auth.get('run_id')==args.run_id and auth.get('config_sha256')==digest(config)):
+    if not(auth.get('owner_authorized') is True and auth.get('scope')==config.get('authorization_scope','48-hour-sprint') and auth.get('run_id')==args.run_id and auth.get('config_sha256')==digest(config)):
         raise SystemExit('Authorization does not match this exact run/config; no worker launched')
-    if args.run and time.time()<state['start']:raise SystemExit('Before planned start: nothing scheduled or launched')
+    if args.run and time.time()>=state['deadline']:raise SystemExit('Run deadline passed; no worker launched')
+    if args.run and time.time()<state['start'] and not args.wait_until_start:raise SystemExit('Before planned start: nothing scheduled or launched')
     if args.run and not args.resume:
         root.mkdir(parents=True,exist_ok=False)
     if not root.exists():raise SystemExit('Run does not exist')

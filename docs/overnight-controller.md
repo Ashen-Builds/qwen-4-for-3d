@@ -1,4 +1,12 @@
-# Overnight controller
+# Authorized overnight window — November 16–17
+
+The attached owner goal supersedes the earlier 48-hour proposal: **21:00 EST November 16 through 08:00 EST November 17**, maximum eleven hours including qualification and reviews. Current config: `configs/overnight-11h.json`. Main comparison at 05:00 (generation begins04:00); final comparison at08:00 (generation begins07:00). Main training ends no later than06:45; owned compute drains07:58 before the hard08:00stop.
+
+The submitted goal is the start authority. A private record captures its attachment hash and exact config hash; it grants no extra scope. A headless controller may wait before21:00 with `--wait-until-start`, but no model worker launches before the window. There is no recurring automation. Routine reviews are performed by Codex.
+
+The schedule now derives milestone hours and compute windows from config. The original48-hour config/tests remain as regression coverage. No 48-hour checkpoint assumptions apply to the eleven-hour job. The current run ID is `astra-overnight-20261116`, authorization scope `overnight-sprint`.
+
+## Controller operation
 
 Preparation only. The controller is implemented and dry-tested with fake CPU workers; no live trainer has been started. Use the current Codex session as the supervisor/reviewer. The controller does not claim that completed HTML or lower loss proves a good GLB.
 

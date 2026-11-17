@@ -126,3 +126,8 @@ The live controller remains Codex-supervised: it waits for baseline, qualificati
 
 
 Controller source pushed as1bd65b6;53 dry checks pass. Drive run-kit.zip updated in place through the connector, now10,369,199bytes, SHA256f8803e19b31f35a6ce9454f0813ba978c676fa224c78f9547e77849b7b4367a9; exact name/size read back. KIT_MANIFEST and completion index refreshed; source/data archives and training-data kit unchanged. Current local run-kit.zip now matches the updated remote. Public preparation receipt updated accordingly. No live controller root, authorization, tmux session, model worker or scheduled training was created.
+
+
+## Active owner goal — eleven-hour overnight experiment
+
+Owner submitted attached goal authorizing local training21:00EST Nov16 through08:00EST Nov17, no updates before21:00. Read attachment at task start. Controller updated to configs/overnight-11h.json; milestones are config-driven at8h/11h (05:00/08:00), sampling one hour beforehand, final training cutoff06:45 and drain07:58. Shared GPU/stream flags honored. No paid services/model publication/project-main merge authorized. Current goal active; performance/quality live gates remain to execute inside the window. Original repaired CCORE asset remains historical reference; fresh BF16 matched control and exact v3/system prompts required. No trained improvement is yet claimed.

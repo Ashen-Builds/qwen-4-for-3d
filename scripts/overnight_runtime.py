@@ -228,6 +228,8 @@ def run_loop(repo,root,engine,auth):
             if child:
                 job=state['active_job'];reason=action.get('reason') if action and action['action']=='stop' else None
                 if not reason and now-job['started']>=job['max_seconds']:reason='job-budget'
+                final_training_end=state['deadline']-engine.config.get('final_training_stop_seconds_before_deadline',0)
+                if not reason and job['kind']=='segment' and now>=final_training_end:reason='job-budget'
                 if not engine.simulated and (Path(job['directory'])/'train-start.json').exists():state['training_started']=True
                 metrics=read_metrics(Path(job['directory'])/'metrics.jsonl')
                 if not reason:
