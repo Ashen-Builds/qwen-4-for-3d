@@ -12,12 +12,13 @@
     },
     {
       "file": "run-kit.zip",
-      "bytes": 10341534,
-      "sha256": "f3e888de4c2f00e925d90b4ef78f818878a355704f6863e8ffeaab1dc244e267",
-      "source_commit": "7b8d1181e3a3faff052210f681cf53ea848857db"
+      "bytes": 10369199,
+      "sha256": "f8803e19b31f35a6ce9454f0813ba978c676fa224c78f9547e77849b7b4367a9",
+      "source_commit": "1bd65b69a2da4f06051cc56e450db49c7d2da9f6",
+      "controller_dry_tests": 53
     }
   ],
-  "canonical_source_and_kit_bytes": 21519890694,
+  "canonical_source_and_kit_bytes": 21519918359,
   "checks": [
     "All source package part names and byte sizes verified in Drive",
     "Both kit names, sizes and destination verified in Drive",
@@ -27,5 +28,11 @@
   ],
   "scope": "Local SHA256 manifests plus remote presence/size verification; not a full cloud-byte re-download",
   "training_started": false,
-  "scheduled_start": false
+  "scheduled_start": false,
+  "controller_refresh": {
+    "dry_checks": 53,
+    "real_training_steps": 0,
+    "source_commit": "1bd65b69a2da4f06051cc56e450db49c7d2da9f6",
+    "drive_run_kit_name_size_verified": true
+  }
 }
