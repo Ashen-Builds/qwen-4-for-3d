@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "frozen_before_live_generation": true,
+  "request": "Same exact Babylon prompt and system message for untouched CCORE and every Astra checkpoint",
+  "primary_comparisons": [
+    "Matched untreated BF16 CCORE versus adapter on same backend and seed",
+    "Astra appearance versus the preserved repaired CCORE visual reference, separately labeled"
+  ],
+  "rating_scale": {
+    "0": "absent or broken",
+    "1": "major gaps",
+    "2": "partial usable result",
+    "3": "strong with visible shortcomings",
+    "4": "complete and convincing for the request"
+  },
+  "dimensions": [
+    {
+      "id": "composition",
+      "weight": 25,
+      "criteria": "Readable coherent town layout, navigable-looking spaces, canal/stalls/buildings connected logically; uncluttered viewpoint"
+    },
+    {
+      "id": "voxel_detail",
+      "weight": 20,
+      "criteria": "Consistent voxel treatment, readable architectural silhouettes, material/color layering and small visible details"
+    },
+    {
+      "id": "prompt_coverage",
+      "weight": 20,
+      "criteria": "Homes/terraces/courtyards/gateway/bridge/palms/boats/temple, awnings/pottery/rugs/sacks/dates/copper/baskets, at least16 visually identifiable villagers"
+    },
+    {
+      "id": "exported_motion",
+      "weight": 25,
+      "criteria": "Visible actual GLB playback: walking or trading/carrying/gestures, moving water and clouds, palm or cloth movement; no clip-count-only credit"
+    },
+    {
+      "id": "technical_usability",
+      "weight": 10,
+      "criteria": "Finite geometry/transforms, intact materials/components, valid export and manageable complexity; shaders that do not survive GLB are counted as missing"
+    }
+  ],
+  "raw_pass_gate": "Actual unassisted generated code exports a nonempty GLB, zero validator errors, reimported visibly. Syntax-only/HTML-only/clip-count-only never passes. Fixed import-path localization and common frame-rate harness are disclosed. Other repairs scored in diagnostic lane only.",
+  "claim_rule": "Call a clear win only when matched raw comparison shows better visible composition/detail/coverage or requested exported motion without a material regression in another primary dimension. Also compare with historical CCORE reference; a weaker-looking scene cannot win solely because fresh control crashed. Use mixed/no demonstrated improvement when evidence conflicts or no valid raw artifact exists. Weighted scores organize observations, not proof of statistical/general superiority.",
+  "review_views": [
+    "Common viewer lights and normalized framing, overview plus detail angle",
+    "Same animation sample times0s/2s/4s and repeat-loop observation",
+    "Download/reimport each actual GLB; source preview motion scored separately if it differs"
+  ],
+  "sampling_policy": "Retain every generation, seed, finish reason and failed output. Prompt/settings never changed only for Astra. Historical reference stays immutable. If a diagnostic repair is made, retain exact patch and do not count it as training improvement.",
+  "non_goals": "No claim of engine-specific import readiness without testing; no statistically significant/general model win from a single showcase.",
+  "reviewer": "Current Codex visually inspects both models; optional authorized CLI critic supplies additional evidence only."
+}
