@@ -145,9 +145,13 @@ def main():
 
     def encode(row):
         image = Image.open(prep_image(Path(row["image"]), args.image_cache)).convert("RGB")
+        reasoning = row["reasoning"]
+        if row.get("caption"):
+            # Open the reasoning by describing the image, so the target is grounded in what was shown.
+            reasoning = f"Looking at the image: {row['caption']}\n\n{reasoning}"
         messages = [{"role": "system", "content": row["system"]},
                     {"role": "user", "content": [{"type": "image"}, {"type": "text", "text": INSTRUCTION}]},
-                    {"role": "assistant", "content": row["code"], "reasoning_content": row["reasoning"]}]
+                    {"role": "assistant", "content": row["code"], "reasoning_content": reasoning}]
         text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=False,
                                              enable_thinking=True)
         head = tokenizer.apply_chat_template(messages[:2], tokenize=False, add_generation_prompt=True,
@@ -267,8 +271,13 @@ def main():
         tmp.rename(final)
         previous = state["checkpoint"]
         state["checkpoint"] = name
+        if state.get("dev"):
+            last = state["dev"][-1]
+            best = state.get("best")
+            if best is None or last["loss"] < best["loss"]:
+                state["best"] = {"step": last["step"], "loss": last["loss"], "checkpoint": name}
         state_file.write_text(json.dumps(state, indent=2) + "\n")
-        keep = {name, previous}
+        keep = {name, previous, (state.get("best") or {}).get("checkpoint")}
         for old in args.run.glob("checkpoint-*"):
             if old.name not in keep:
                 shutil.rmtree(old, ignore_errors=True)

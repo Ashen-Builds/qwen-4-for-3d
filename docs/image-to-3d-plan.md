@@ -36,6 +36,27 @@ Expect about one minute per generation once a GPU slot opens. The third column, 
 
 Files: `scripts/generate_asset_llama_image.py`, `scripts/run_five_asset_image_test.sh`, `scripts/export_and_render.mjs`, `scripts/build_five_asset_gallery.py`, `eval/prompts/five-asset-20261117/`. Runs land in `~/work/runs/five-asset-image-20261117/`, outputs in `~/work/outputs/five-asset-image-20261117/`.
 
+## Stage 0 result (November 17, 17:17 EST)
+
+Same five images, same instruction, seed 42, Q8 GGUF with the vision projector, one try each.
+
+| Model | Programs completed | GLBs exported | Failures |
+| --- | --- | --- | --- |
+| Original Qwen 3.5 4B | 5 of 5 | 1 of 5 (skyscraper) | lamp, police officer, dragon, van crashed at run time |
+| CCORE GLB-3D-Coder | 5 of 5 | 4 of 5 | lamp: syntax error |
+
+Original Qwen takes about a minute per asset, CCORE about three. Gallery: `~/work/outputs/five-asset-image-20261117/index.html`.
+
+## Training run log (owner started it with a session goal, November 17)
+
+- Trainer: `scripts/train_image_to_asset.py`. MLX with the `mlx-vlm` Qwen3.5 model (vision tower, M-RoPE positions and a chunked, differentiable gated-delta scan). Every language-model weight trains in float32 with Adafactor (relative step 1e-4, warmup 20); the vision tower is frozen. Gradient checkpointing per decoder layer. Runs as 30-minute `gpu_slot` segments with resumable checkpoints (`scripts/run_training_segments.sh`).
+- Measured cost: about 7 s for a 2,200-token step and 80 to 130 s for a 16,000 to 20,000-token step; peak 96 GB at 20,000 tokens. bfloat16 compute was tried and was not faster.
+- Finding: CCORE has memorized its training split (loss 0.04 to 0.13 even with an image prompt) and has not seen its validation split (loss about 1.0). So the full-length training examples come from the 392 validation-split pairs not held out; 25 validation pairs are held out and never trained on. 600 training-split pairs are used only as short "grounding" rows (first 1,500 target tokens).
+- Memorize test: 20 unseen pairs (first 3,000 target tokens), five passes, mean loss 1.58, 1.30, 1.02, 0.68, 0.31. Passed.
+- Pilot 1 (30 minutes, 77 steps): held-out loss 0.846 to 0.734, but the behavior check failed. Given a held-out render of a robed innkeeper, the pilot model planned and built a pirate ship. The dataset's reasoning was written for text prompts and never refers to an image, so training taught the model to proceed as if a prompt had named the asset. Pilot 1 was discarded.
+- Fix: every training target now opens with "Looking at the image: <one-sentence description>", where the description comes from the base model's own vision (`scripts/caption_training_images.py`, no paid service). Pilot 2 must pass both the loss check and the behavior check before the long run starts.
+- Export: `scripts/export_trained_to_hf.py` writes trained weights back to the Hugging Face layout (self-test against the original: 426 tensors, max difference 2.4e-7), then `convert_hf_to_gguf.py --outtype q8_0` gives a file the same size as CCORE's published Q8.
+
 ## Stage 1: scoring panel
 
 - 30 to 50 reference images, at least half characters, in the concept-art style users will bring. Three seeds each. Hold them out of all training.

@@ -16,6 +16,14 @@ while true; do
   if [ -f "$RUN/state.json" ] && python3 -c "import json,sys; sys.exit(0 if json.load(open('$RUN/state.json')).get('finished') else 1)"; then
     echo "[$(date +%T)] run finished"; exit 0
   fi
+  # Regression stop: the last two dev losses are both clearly worse than the best one.
+  if [ -f "$RUN/state.json" ] && python3 -c "
+import json,sys
+d=json.load(open('$RUN/state.json')).get('dev',[])
+l=[x['loss'] for x in d]
+sys.exit(0 if len(l)>=4 and min(l[-2:])>min(l)+0.04 else 1)"; then
+    echo "[$(date +%T)] dev loss regressed for two segments; stopping (best checkpoint is kept)"; exit 0
+  fi
   n=$((n+1))
   echo "[$(date +%T)] segment launch $n"
   "$SLOT" capture --label a3d-train --json "$RUN/segment-gpu-$(date +%H%M%S).json" -- \
