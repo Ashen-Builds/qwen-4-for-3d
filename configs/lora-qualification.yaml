@@ -1,6 +1,6 @@
-# Qualified rank16 continuation from200 main steps; lower learning rate after rejected300-step branch.
+# Verified correction phase; complete assistant targets only, no padding labels.
 model: ../work/models-derived/ccore-bf16
-data: ../work/sprint-prep/direct-code-proposal/data-v1/repairs
+data: ../work/sprint-prep/qualified-correction-data-v1/repairs
 train: false
 test: false
 fine_tune_type: lora
@@ -28,3 +28,4 @@ report_to: null
 frozen_prefix_inference: true
 response_only_training: true
 adapter_setup_audit: ../work/sprint-prep/rank16-from200-proposal/adapter-setup-audit.json
+complete_target_mask: exclusive_end_v1

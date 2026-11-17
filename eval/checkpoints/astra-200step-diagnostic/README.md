@@ -6,7 +6,7 @@ The diagnostic GLB was actually exported and reopened in Chrome: 1,603,028 bytes
 
 The screenshots compare this no-thinking Astra diagnostic with the fresh thinking-on BF16 CCORE repair diagnostic. The exact user prompt is the same, but generation modes and assistance differ. This is not a matched causal comparison. Shared viewer lighting and normalized-bound framing expose the candidate's oversized water plane, floating parts, and small central market. Astra is static at both times; CCORE water/cloud placement changes. The candidate looks worse.
 
-Three embedded CCORE textures failed to load during these first captures. The server's blob-fetch policy was corrected afterward; these original captures remain labeled and are not claimed texture-complete. Reverification is pending. Neither this diagnostic nor its repairs enter training.
+Three embedded CCORE textures failed to load during these first captures. The server's blob-fetch policy was corrected afterward; these original captures remain labeled and are not claimed texture-complete. The files were reopened after that fix with no GLTFLoader texture errors; comparison-0s-textures-fixed.jpg records that recheck. Neither this diagnostic nor its repairs enter training.
 
 The 300-step follow-up was subsequently aborted after thousands of repeated function calls and has not been accepted either. Current experiment status remains in the rolling HANDOFF and overnight run record.
 

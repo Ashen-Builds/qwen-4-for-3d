@@ -56,6 +56,12 @@ def new_state(config, run_id):
     if not 0 < end - start <= 48 * 3600:
         raise ValueError('Budget must be positive and at most 48 hours')
     milestone_hours(config)
+    segment_cap=config.get('max_segment_iterations',200)
+    if type(segment_cap) is not int or not 1<=segment_cap<=200:
+        raise ValueError('Segment iteration cap must be an integer from1 through200')
+    phase_end=config.get('stop_after_segment_count')
+    if phase_end is not None and (type(phase_end) is not int or phase_end<1):
+        raise ValueError('Phase boundary must be a positive segment count')
     return {'schema': 1, 'run_id': run_id, 'config_hash': digest(config),
             'start': start, 'deadline': end, 'phase': 'baseline', 'status': 'ready',
             'active_job': None, 'awaiting_review': None, 'packet_number': 0,
@@ -149,6 +155,10 @@ class Engine:
         if phase in QUALIFICATION:
             return self.launch(now, phase)
         if phase != 'main': return None
+        phase_end=self.config.get('stop_after_segment_count')
+        if phase_end is not None and self.s['segment_number']>=phase_end:
+            self.s['status']='phase_complete'
+            return None
         # Start generation one hour before each deadline. During daytime holds,
         # the due packet instead references the last actual completed sample.
         for h in milestone_hours(self.config):
@@ -170,7 +180,7 @@ class Engine:
         if not sec or not math.isfinite(sec) or sec <= 0:
             self.review(now, 'recovery', {'reason': 'missing-qualified-step-time'})
             return None
-        iterations = max(1, min(200, int((budget-60)/(sec*1.5))))
+        iterations = max(1, min(self.config.get('max_segment_iterations',200), int((budget-60)/(sec*1.5))))
         return self.launch(now, 'segment', iterations=iterations, max_seconds=budget)
 
     def launch(self, now, kind, **extra):

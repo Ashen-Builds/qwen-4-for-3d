@@ -29,6 +29,10 @@ def inspect(repo):
     checks['family_split']=manifest['family_overlap']==0
     checks['all_phase_data_bound_to_manifest']=all((repo/c['data']).resolve().parent==data for c in phase_configs)
     checks['mode_matches_data']=bool(cfg.get('response_only_training'))==bool(manifest.get('response_only_training',False) or manifest.get('enable_thinking') is False)
+    checks['loss_mask_revision_consistent']=cfg.get('complete_target_mask') in {None,'exclusive_end_v1'} and all(c.get('complete_target_mask')==cfg.get('complete_target_mask') for c in phase_configs)
+    if cfg.get('complete_target_mask')=='exclusive_end_v1':
+        token_checks=json.loads((data/'TOKEN_CHECKS.json').read_text())['rows']
+        checks['real_assistant_targets_nonempty']=bool(token_checks) and all(row['target_tokens']>0 and 0<=row['masked_prefix_tokens']<row['tokens'] and row['target_tokens']==row['tokens']-row['masked_prefix_tokens'] for row in token_checks.values())
     tokenizer=json.loads((work/'tokenizer-equivalence.json').read_text())
     checks['actual_training_tokenizer_qualified']=all(tokenizer['checks'].values()) and tokenizer['actual_training_tokenizer_prefix_and_ids_match']
     probes=json.loads((repo/'eval/sprint-probes-v1.json').read_text());checks['frozen_probes']=len(probes['final'])==20 and len(probes['development'])==4 and probes['seeds']==[42,1234]

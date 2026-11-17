@@ -36,3 +36,14 @@ A CPUsource audit parsed all401train/47devreplaymodules without execution:448/44
 The300-step no-thinking generation degenerated into5950nested repeatedfunctioncalls. The supervisor stopped it after at least39936tokens and653.6seconds at the last progress report, before the49152cap. It is a censored rawfailure, not a completed generation. The branch is retained and rejected.
 
 A safer continuation expands only layer31 fromrank8to16, preserves the200-step contribution exactly, and lowers thelearningrate to3e-6. Short warmforward/gradient/reload checks match exactly. Three complete length steps pass with29.91GBpeak, and ordinary reload matches both the short probe and15909-token last-token output. The controller resumes from this200+3qualification lineage; it does not inherit the rejected300-step weights. The data, frozen control and evaluation remain unchanged.
+
+
+## Verified correction phase
+
+The first rank16 continuation completed99replay updates in561.67seconds at29.13GBpeak. Its showcase finished17745tokens in280.82seconds but still contained placeholders, broken animation/export code, no villagers and no valid export clips. No raw GLB was produced.
+
+Six source-derived full-program correction tasks were then executed, exported, reopened and checked at three animation times. Four corrupt outputs failed binary/content checks; a wrong animation constructor threw; malformed quaternion values caused a renderer hang that was closed without retry. Two known bad replay targets were excluded. The corrected corpus has399replay+64helpers+6corrections; the new examples teach program repair, not new asset or motion knowledge. A fixed10-row validation panel replaces changing four-row samples while retaining all63development rows separately.
+
+The installed native loss included one synthetic padding label after each row. A scoped supported loss hook corrects the upper bound without changing installed packages or model kernels. Independent short and14045-token manual/compiled/native gradient, update and reload checks pass exactly. Historical losses/counts retain their original labels; this bug is not established as the cause of the300-step collapse.
+
+The controller's12-update correction phase completed in179.94seconds with27.365GBpeak and stopped at an enforced phase boundary. Checkpoint00010 starts from00009; isolated numerical-check updates were not inherited. Its same-prompt evaluation is now running. No asset-quality win is claimed.

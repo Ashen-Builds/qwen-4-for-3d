@@ -1,8 +1,8 @@
 [
   {
     "file": "README.md",
-    "bytes": 1710,
-    "sha256": "5ad2876125a4c6514988a99ee4a49452c6504f4617dc308478715cb906ff4038"
+    "bytes": 1812,
+    "sha256": "31994192905e5ccdaa292f057991ad4f79e9214556cbb58ea6536b528f488e2b"
   },
   {
     "file": "artifact.json",
@@ -18,6 +18,11 @@
     "file": "asset.glb.validation.json",
     "bytes": 127881,
     "sha256": "e33cad4cde0045c1edc495bda2b142e3ff294fb030f0d12c86382416607f601c"
+  },
+  {
+    "file": "comparison-0s-textures-fixed.jpg",
+    "bytes": 115258,
+    "sha256": "16250be2b48791a5aef1e7261e31068f6af7017985dfea2add90c884bb07c756"
   },
   {
     "file": "comparison-0s.jpg",
@@ -56,7 +61,7 @@
   },
   {
     "file": "visual-review.json",
-    "bytes": 953,
-    "sha256": "cf4a1e0d117a8f9f27dbfefb5a441ec985f3b443565748577b9f6f1c6e8fd756"
+    "bytes": 1227,
+    "sha256": "e990bc9eae8e6f61d83d0eb4093f62584dbad2cb6105091539ef2d5597c464f5"
   }
 ]

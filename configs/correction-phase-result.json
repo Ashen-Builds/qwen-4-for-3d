@@ -1,0 +1,42 @@
+{
+  "status": "twelve-update-correction-phase-completed; no-quality-win-established",
+  "checkpoint": "job-00010",
+  "parent_checkpoint": "job-00009",
+  "steps": 12,
+  "distinct_correction_rows": 6,
+  "uses_per_row": 2,
+  "real_target_labels": 72262,
+  "learning_rate": 3e-06,
+  "rank": 16,
+  "trainable_parameters": 958464,
+  "elapsed_seconds": 179.94336485862732,
+  "peak_mlx_gb": 27.36496299,
+  "loss_mask": "exclusive_end_v1",
+  "padding_targets": 0,
+  "validation_rows": 10,
+  "full_dev_rows_retained": 63,
+  "validation_callback_iterations": [
+    0,
+    11
+  ],
+  "validation_caveat": "Second validation precedes update12; not a measured post-final-update score.",
+  "primary_generation": {
+    "thinking": false,
+    "tokens": 18073,
+    "seconds": 288.5188107499853,
+    "complete_html": true,
+    "raw_syntax_pass": false,
+    "raw_export_pass": false,
+    "authored_villager_rows": 18,
+    "valid_animation_clips": 0
+  },
+  "secondary_thinking_on": "In progress, matched against original thinking-on BF16 control; separately labeled.",
+  "data_manifest_sha256": "3ba516c774fe6f910724397aec9b55f5f35b21e1a025557cfeb25436e6d80c07",
+  "runtime_tests": {
+    "controller_and_loss_cpu": 86,
+    "portable_preparation_cpu": 12,
+    "portable_verifier_node": 8,
+    "live_short_and14045token_manual_compiled_native_gradient_update_reload": "exactmatch"
+  },
+  "data_novelty": "New controlled correction tasks over existing licensed CCORE assets; no new asset or motion knowledge claim."
+}

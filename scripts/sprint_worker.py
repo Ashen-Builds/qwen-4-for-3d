@@ -45,11 +45,17 @@ def train(repo, job, directory):
     args=types.SimpleNamespace(**cfg);a,b,_=load_dataset(args,tokenizer)
     from overnight_controller import atomic_json
     atomic_json(directory/'train-start.json',{'training_api_entered':True,'confirmed_steps':0})
-    if cfg.get('frozen_prefix_inference'):
-        if cfg['grad_checkpoint']:raise ValueError('Whole-class gradient checkpointing is incompatible with frozen-prefix mode')
-        from frozen_prefix_training import frozen_prefix_training
-        with frozen_prefix_training(model):train_model(args,model,a,b,Recorder())
-    else:
+    from contextlib import ExitStack
+    with ExitStack() as contexts:
+        if cfg.get('complete_target_mask') == 'exclusive_end_v1':
+            from complete_target_mask import native_complete_target_loss
+            contexts.enter_context(native_complete_target_loss())
+        elif cfg.get('complete_target_mask'):
+            raise ValueError('Unknown training loss mask revision')
+        if cfg.get('frozen_prefix_inference'):
+            if cfg['grad_checkpoint']:raise ValueError('Whole-class gradient checkpointing is incompatible with frozen-prefix mode')
+            from frozen_prefix_training import frozen_prefix_training
+            contexts.enter_context(frozen_prefix_training(model))
         train_model(args,model,a,b,Recorder())
 
 

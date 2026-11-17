@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "status": "authorized-qualified-targeted-correction-phase",
+  "name": "Astra verified full-program correction phase",
+  "base": "ccore/Qwen3.5-4B-GLB-3D-Coder",
+  "base_revision": "8f32a199f8b22fe3157b9c5c8b42b052a0750dd3",
+  "start": "2026-11-16T20:42:39-05:00",
+  "hard_stop": "2026-11-17T07:42:39-05:00",
+  "timezone": "America/New_York",
+  "clock": "Manual immediate start;11h maximum and08:00EST ceiling.",
+  "authorization": "Owner answered Start now as requested after stale attachment timing clarification; this overrides the old9pm prohibition.",
+  "milestones": [
+    {
+      "elapsed_hours": 8,
+      "time": "2026-11-17T04:42:39-05:00",
+      "deliverable": "Intermediate same-prompt comparison before05:00EST"
+    },
+    {
+      "elapsed_hours": 11,
+      "time": "2026-11-17T07:42:39-05:00",
+      "deliverable": "Final comparison/report and owned heavy compute stopped"
+    }
+  ],
+  "gpu_policy": "Honor shared GPU slots and streaming guard; pause at safe boundaries. Keep wall-clock stop. Never remove guard or take over another job.",
+  "showcase_prompt": "eval/prompts/babylon-marketplace-v3.txt",
+  "showcase_seed": 42,
+  "evaluation": "Regenerate untouched CCORE on chosen common evaluation runtime/precision once before adapter comparisons. Historical repaired Q8 native GLB is a gallery reference, not a raw matched control for a different backend.",
+  "training_data_gate": "Pinned rights/provenance, code-family splits, complete assistant targets, no benchmark leakage, independently executed/rendered/export-validated new examples",
+  "remaining_unbuilt": [
+    "Run the bounded12-update correction phase",
+    "Evaluate exact frozen Babylon prompt and actualGLB",
+    "Finish intermediate/final comparisons and backup"
+  ],
+  "readiness": "Six source/export/reimport/motion/negative checks passed; corrected short and14045-token objectives qualified; asset improvement unproven",
+  "prepared": [
+    "Complete direct-connector source archive",
+    "BF16 text conversion and zero-update adapter module audit",
+    "Frozen replay and tested generic repair curriculum with exact masks/no truncation",
+    "Final/development probe families and before/after viewer template",
+    "Guarded, plan-only training entrypoint; no schedule or active trainer"
+  ],
+  "qualification_configs": [
+    "configs/lora-qualification.yaml",
+    "configs/lora-length-qualification.yaml",
+    "configs/lora-main-draft.yaml"
+  ],
+  "archive_receipt": "configs/archive-verification.json",
+  "controller": {
+    "entrypoint": "scripts/overnight_controller.py",
+    "mode": "live-supervised",
+    "reviewer": "Current Codex supervisor; wait safely if unavailable",
+    "schedule_safety": "06:27:39 training cutoff;07:40:39 shutdown start;07:42:39 hard stop",
+    "resume_semantics": "Adapter-weight warm restart; optimizer/data iterator are not bit-exact resumed"
+  },
+  "authorization_scope": "manual-overnight-sprint",
+  "compute_window": {
+    "start_hour": 20,
+    "stop_hour": 8,
+    "drain_minutes": 2
+  },
+  "evaluation_lead_seconds": 3600,
+  "final_training_stop_seconds_before_deadline": 4500,
+  "shutdown_reserve_seconds": 120,
+  "evaluation_thinking": false,
+  "variant": "full-program-corrections-v1-exclusive-mask",
+  "data_manifest_sha256": "3ba516c774fe6f910724397aec9b55f5f35b21e1a025557cfeb25436e6d80c07",
+  "notes": "One planned12-update pass over6derived CCORE correctiontasks, startingcheckpoint00009. Allrealassistanttargets retained; syntheticpaddingexcluded. Fixed10-row validationpanel,full63devretained. Rawbenchmarkandscene-specificrepairs excluded. Samegoalclock/control/evaluation. No newassetknowledgeclaimed.",
+  "max_segment_iterations": 12,
+  "stop_after_segment_count": 5
+}

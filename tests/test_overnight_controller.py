@@ -437,6 +437,31 @@ class LiveReviewRegressionTests(unittest.TestCase):
         cfg=copy.deepcopy(CONFIG);cfg['shutdown_reserve_seconds']=120;e=Engine(new_state(cfg,'clamp'),cfg,True);a=e.tick(e.s['deadline']-180,{'daytime_approved':True});self.assertEqual(a['max_seconds'],60)
 
 class DirectCodeModeTests(unittest.TestCase):
+    def test_targeted_phase_caps_segment_at_twelve_updates(self):
+        cfg=copy.deepcopy(CONFIG);cfg['max_segment_iterations']=12
+        state=new_state(cfg,'targeted');state.update(phase='main',seconds_per_step=1.0)
+        job=Engine(state,cfg,True).tick(state['start']+1)
+        self.assertEqual(job['kind'],'segment');self.assertEqual(job['iterations'],12)
+
+    def test_invalid_segment_caps_are_rejected(self):
+        for cap in [0,-1,201,1.5,True]:
+            cfg=copy.deepcopy(CONFIG);cfg['max_segment_iterations']=cap
+            with self.subTest(cap=cap),self.assertRaises(ValueError):new_state(cfg,'invalid-cap')
+
+    def test_targeted_phase_cannot_repeat_without_reviewed_rebaseline(self):
+        cfg=copy.deepcopy(CONFIG);cfg.update(max_segment_iterations=12,stop_after_segment_count=5)
+        state=new_state(cfg,'targeted');state.update(phase='main',seconds_per_step=1.0,segment_number=4)
+        e=Engine(state,cfg,True);job=e.tick(state['start']+1)
+        self.assertEqual(job['iterations'],12)
+        e.finish(state['start']+20,{'simulated':True,'okay':True,'completed_steps':12,'seconds_per_step':1})
+        self.assertIsNone(e.tick(state['start']+21));self.assertEqual(state['status'],'phase_complete')
+        self.assertIsNone(e.tick(state['start']+100));self.assertIsNone(state['active_job'])
+
+    def test_invalid_phase_boundaries_are_rejected(self):
+        for boundary in [0,-1,1.5,True]:
+            cfg=copy.deepcopy(CONFIG);cfg['stop_after_segment_count']=boundary
+            with self.subTest(boundary=boundary),self.assertRaises(ValueError):new_state(cfg,'invalid-phase')
+
     def test_direct_control_and_candidate_share_no_thinking_flag(self):
         from unittest.mock import patch
         from overnight_runtime import command

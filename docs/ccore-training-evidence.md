@@ -24,4 +24,4 @@ Use the released checkpoint, expected interface, suitable licensed data and veri
 
 Community experience supports preserving the documented interface and checking exports, but individual runs are not a controlled benchmark. The author's response establishes supervised specialization, not all hyperparameters. Our ordinary LoRA is a new experiment, not a statement about the author's method.
 
-Devin/Gemini roles and a future bounded overnight goal are described in `PIPELINE.md`. No critic call, training job or automation is active.
+Devin/Gemini roles and a future bounded overnight goal are described in `PIPELINE.md`. Current live-run state and actual critic/training evidence are recorded in HANDOFF.md and the overnight experiment record.

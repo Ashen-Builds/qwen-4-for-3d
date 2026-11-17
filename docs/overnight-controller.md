@@ -2,7 +2,7 @@
 
 The active owner's **Start now** instruction overrides the stale 21:00 text in the attachment. The experiment began **20:42:39 EST November 16** and must stop by **07:42:39 EST November 17**, eleven hours including qualification, pauses and reviews. The direct-code revision retains this original clock; it does not extend the deadline.
 
-Current run: `astra-direct-20261116`; config: `configs/overnight-direct-rank16.json`; private authorization: `work/sprint-prep/owner-start-direct-rank16-20261117.json` under the workspace, outside this checkout. Its scope is `manual-overnight-sprint`. This record documents existing owner authority and the exact config hash; it grants no extra scope. The earlier timed and reasoning-heavy variants are stopped. There is no recurring automation. Codex supervises routine reviews.
+Current run: `astra-direct-20261116`; config: `configs/overnight-correction-phase.json`; private authorization: `work/sprint-prep/owner-start-correction-20261117.json` under the workspace, outside this checkout. Its scope is `manual-overnight-sprint`. This record documents existing owner authority and the exact config hash; it grants no extra scope. The earlier timed and reasoning-heavy variants are stopped. There is no recurring automation. Codex supervises routine reviews.
 
 The intermediate comparison is due **04:42:39 EST November 17**, with its generation window beginning 03:42:39. Main training drains by **06:27:39**; the final generation window begins 06:42:39. Owned compute shutdown begins **07:40:39**, preserving the configured **120-second shutdown reserve** before the **07:42:39** hard stop. These times derive from the active config's numeric schedule fields. Historical 48-hour fixtures are regression coverage only.
 
@@ -32,7 +32,7 @@ The owner has already authorized this run. Do not launch a second controller or 
 
 ```sh
 ../work/qwen-eval-env/bin/python scripts/overnight_controller.py \
-  --config configs/overnight-direct-rank16.json \
+  --config configs/overnight-correction-phase.json \
   --run-id astra-direct-20261116 --status
 ```
 
@@ -63,3 +63,7 @@ python3 scripts/dry_test_controller.py --out ../outputs/controller-dry-run
 ```
 
 This historical regression test advances a fake clock through the original 48-hour schedule and uses real CPU-only fixture subprocesses for lifecycle checks. Its simulated nightly windows and checkpoints do not describe the active eleven-hour run. No MLX import, model load, optimizer or training step occurs in the dry test. Its report and timeline explicitly label simulated checkpoints and reviews; they do not certify live training or GLB quality.
+
+## Bounded correction phase
+
+The current configuration caps each segment at12updates and holds at total segmentcount5 with `phase_complete`, preventing another automatic launch after the targeted pass. Codex must inspect checkpoint00010 and explicitly rebaseline the next phase; a missing reviewer cannot silently repeat the six correction examples. The original deadline and shutdown reserve still apply. The worker uses `exclusive_end_v1` for both training and validation so padding labels are excluded.
