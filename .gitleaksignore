@@ -1,0 +1,2 @@
+# Verified false positive: SHA256 of exact rendered prompt IDs; see docs/security-findings.md.
+2936edf3fe7a5017a49ed2c5a7f6630f560bc218:configs/overnight-live-qualification.json:generic-api-key:14
