@@ -1,0 +1,15 @@
+{
+  "job_id": "job-00005",
+  "simulated": false,
+  "exit_code": 0,
+  "stop_reason": null,
+  "elapsed_seconds": 573.2919342517853,
+  "okay": true,
+  "completed_steps": 100,
+  "finite_losses": true,
+  "seconds_per_step": 9.199844916001894,
+  "peak_memory_gb": 29.253580698,
+  "run_id": "astra-direct-20261116",
+  "checkpoint_id": "job-00005",
+  "quality_status": "Not yet evaluated; secondsegment running before earlycomparison"
+}
