@@ -1,0 +1,14 @@
+{
+  "job_id": "job-00008",
+  "simulated": false,
+  "exit_code": 0,
+  "stop_reason": null,
+  "elapsed_seconds": 418.0542941093445,
+  "okay": true,
+  "completed_steps": 42,
+  "finite_losses": true,
+  "seconds_per_step": 20.90947916699224,
+  "peak_memory_gb": 46.430238498,
+  "checkpoint_id": "job-00008",
+  "evaluation_status": "generating exact same prompt/settings; quality not yet judged"
+}
