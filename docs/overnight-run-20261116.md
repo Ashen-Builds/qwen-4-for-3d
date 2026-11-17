@@ -1,5 +1,8 @@
 # Overnight experiment — November16–17,2026
 
+**Historical progress log.** The experiment is now stopped. Read the [final report](overnight-final-20261117.md) and current [HANDOFF](../HANDOFF.md). Active/pending statements below describe their original observation times. Ordinary qualification updates were not inherited by the main Thinking48/72 checkpoints; see the final accounting erratum.
+
+
 Status: active; no demonstrated visual-quality improvement yet. Owner clarified immediate manual start after submitting stale9pm wording. Overall start20:42:39 EST, hard stop07:42:39 EST the next morning. The deadline remains fixed across variants.
 
 | Approach | Evidence so far | Decision |

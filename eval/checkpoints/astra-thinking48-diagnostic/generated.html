@@ -1,0 +1,1583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assisted animated diagnostic — Babylonian Marketplace — Three.js GLB Creator</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #17232c;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #ui {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      width: min(360px, calc(100vw - 40px));
+      padding: 18px 18px 16px;
+      color: #f6ead2;
+      background: rgba(19, 29, 35, 0.88);
+      border: 1px solid rgba(244, 222, 178, 0.22);
+      border-radius: 14px;
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(12px);
+      user-select: none;
+    }
+
+    #ui h1 {
+      margin: 0 0 5px;
+      font-size: 20px;
+      letter-spacing: 0.02em;
+    }
+
+    #ui p {
+      margin: 0 0 14px;
+      color: #bfd1d4;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    #export {
+      width: 100%;
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 9px;
+      color: #17232c;
+      background: linear-gradient(135deg, #ffd47b, #e9a84b);
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    #export:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    #export:active {
+      transform: translateY(0);
+    }
+
+    #export:disabled {
+      cursor: wait;
+      filter: grayscale(0.35);
+      opacity: 0.7;
+    }
+
+    #status {
+      display: block;
+      min-height: 18px;
+      margin-top: 9px;
+      color: #d2e1df;
+      font-size: 12px;
+    }
+
+    #hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 10;
+      padding: 8px 11px;
+      color: rgba(255, 255, 255, 0.72);
+      background: rgba(13, 22, 28, 0.55);
+      border-radius: 8px;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      #ui {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      #hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="ui">
+    <h1>Babylonian Marketplace</h1>
+    <p>
+      A colorful low-poly town beside a turquoise canal with animated traders,
+      swaying fabric, drifting clouds, flowing water, and a living eight-second loop.
+    </p>
+    <button id="export" type="button">Export assisted animated diagnostic</button>
+    <span id="status"></span>
+  </div>
+
+  <div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer, camera, and lighting
+    // -------------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x9eb8c0);
+    scene.fog = new THREE.Fog(0x9eb8c0, 25, 48);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      innerWidth / innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(15, 11.5, 17);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance",
+    });
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.25, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 10;
+    controls.maxDistance = 35;
+    controls.maxPolarAngle = Math.PI * 0.48;
+
+    const hemi = new THREE.HemisphereLight(0xc9e9f2, 0x6b5840, 2.1);
+    scene.add(hemi);
+
+    const sun = new THREE.DirectionalLight(0xffe0aa, 3.3);
+    sun.position.set(-8, 14, 9);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -13;
+    sun.shadow.camera.right = 13;
+    sun.shadow.camera.top = 13;
+    sun.shadow.camera.bottom = -13;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 35;
+    sun.shadow.bias = -0.00035;
+    scene.add(sun);
+
+    const coolFill = new THREE.DirectionalLight(0x77c8dc, 0.75);
+    coolFill.position.set(10, 7, -10);
+    scene.add(coolFill);
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "BabylonianMarketplace";
+    assetRoot.userData.description =
+      "An animated low-poly ancient Babylonian marketplace beside a turquoise canal.";
+    scene.add(assetRoot);
+
+    // -------------------------------------------------------------------------
+    // Materials and construction helpers
+    // -------------------------------------------------------------------------
+
+    function makeMaterial(color, options = {}) {
+      return new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.82,
+        metalness: 0,
+        flatShading: true,
+        ...options,
+      });
+    }
+
+    const M = {
+      sand: makeMaterial(0xc99a63),
+      sandLight: makeMaterial(0xdfb97d),
+      sandDark: makeMaterial(0x9d7049),
+      grass: makeMaterial(0x668653),
+      grassLight: makeMaterial(0x829c61),
+      brick: makeMaterial(0xb86f45),
+      brickLight: makeMaterial(0xd18b55),
+      brickDark: makeMaterial(0x825039),
+      mortar: makeMaterial(0x805039),
+      roofRed: makeMaterial(0x9e4938),
+      roofRedLight: makeMaterial(0xbd5b40),
+      roofBlue: makeMaterial(0x397b91),
+      roofBlueLight: makeMaterial(0x508fa0),
+      wood: makeMaterial(0x775039),
+      woodLight: makeMaterial(0xa77548),
+      woodDark: makeMaterial(0x49352a),
+      stone: makeMaterial(0xa9a08b),
+      stoneLight: makeMaterial(0xc5bca3),
+      stoneDark: makeMaterial(0x76766a),
+      copper: makeMaterial(0xb96836, { metalness: 0.38, roughness: 0.48 }),
+      copperLight: makeMaterial(0xd58a45, { metalness: 0.3, roughness: 0.45 }),
+      blue: makeMaterial(0x287d9b),
+      blueLight: makeMaterial(0x4ba7ba),
+      teal: makeMaterial(0x39a7a2),
+      fabricRed: makeMaterial(0xc95545),
+      fabricTeal: makeMaterial(0x36a5a3),
+      fabricBlue: makeMaterial(0x347f9d),
+      fabricYellow: makeMaterial(0xe1ad45),
+      wicker: makeMaterial(0xb8864f),
+      leafGreen: makeMaterial(0x3f7547),
+      leafGreenLight: makeMaterial(0x669653),
+      leafDark: makeMaterial(0x28563a),
+      date: makeMaterial(0x7d5130),
+      door: makeMaterial(0x5b382b),
+      window: makeMaterial(0x183f4b, { roughness: 0.25, metalness: 0.15 }),
+      skin: makeMaterial(0xc98f63),
+      hair: makeMaterial(0x382a24),
+      metal: makeMaterial(0x4d514c, { metalness: 0.65, roughness: 0.4 }),
+      lamp: makeMaterial(0xffd07a, {
+        emissive: 0xffa53d,
+        emissiveIntensity: 2.2,
+        roughness: 0.4,
+      }),
+      water: makeMaterial(0x23aebf, {
+        roughness: 0.24,
+        metalness: 0.08,
+        transparent: true,
+        opacity: 0.9,
+        emissive: 0x073f4c,
+        emissiveIntensity: 0.35,
+      }),
+      foam: makeMaterial(0xd9fbf3, {
+        roughness: 0.45,
+        emissive: 0x4aa6a7,
+        emissiveIntensity: 0.18,
+      }),
+      cloud: makeMaterial(0xf3f5ed),
+      cloudBlue: makeMaterial(0xc9e4e8),
+      puddle: makeMaterial(0x58aaa8, {
+        roughness: 0.2,
+        metalness: 0.08,
+        transparent: true,
+        opacity: 0.72,
+      }),
+    };
+
+    function put(geometry, material, parent = assetRoot, p = [0, 0, 0], r = [0, 0, 0], name = "") {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(p[0], p[1], p[2]);
+      mesh.rotation.set(r[0], r[1], r[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      if (name) mesh.name = name;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function box(w, h, d, material, parent = assetRoot, p = [0, 0, 0], r = [0, 0, 0], name = "") {
+      return put(new THREE.BoxGeometry(w, h, d), material, parent, p, r, name);
+    }
+
+    function cylinder(
+      topRadius,
+      bottomRadius,
+      height,
+      segments,
+      material,
+      parent = assetRoot,
+      p = [0, 0, 0],
+      r = [0, 0, 0],
+      name = ""
+    ) {
+      return put(
+        new THREE.CylinderGeometry(topRadius, bottomRadius, height, segments),
+        material,
+        parent,
+        p,
+        r,
+        name
+      );
+    }
+
+    function ico(radius, detail, material, parent = assetRoot, p = [0, 0, 0], scale = [1, 1, 1], name = "") {
+      const mesh = put(
+        new THREE.IcosahedronGeometry(radius, detail),
+        material,
+        parent,
+        p,
+        [0, 0, 0],
+        name
+      );
+      mesh.scale.set(scale[0], scale[1], scale[2]);
+      return mesh;
+    }
+
+    function segmentBetween(a, b, radius, material, parent = assetRoot, bottomRadius = radius, name = "") {
+      const start = new THREE.Vector3(...a);
+      const end = new THREE.Vector3(...b);
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+      const mesh = cylinder(
+        bottomRadius,
+        radius,
+        length,
+        6,
+        material,
+        parent,
+        [0, 0, 0],
+        [0, 0, 0],
+        name
+      );
+      mesh.position.copy(start).add(end).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    // -------------------------------------------------------------------------
+    // Terrain and winding turquoise canal
+    // -------------------------------------------------------------------------
+
+    put(
+      new THREE.CylinderGeometry(9.55, 10.35, 0.8, 12),
+      M.sand,
+      assetRoot,
+      [0, -0.45, 0],
+      [0, 0.08, 0],
+      "FacetedEarthPlinth"
+    );
+
+    put(
+      new THREE.CylinderGeometry(9.3, 9.3, 0.16, 12),
+      M.sandLight,
+      assetRoot,
+      [0, -0.01, 0],
+      [0, 0.08, 0],
+      "SandyGround"
+    );
+
+    const patchData = [
+      [-5.8, 2.7, 1.25],
+      [-3.7, 5.5, 0.9],
+      [4.7, 4.7, 1.15],
+      [6.2, 1.0, 1.4],
+      [2.0, 6.4, 0.85],
+      [-6.5, -1.7, 1.0],
+      [3.8, -5.8, 1.25],
+      [-2.0, -6.6, 1.0],
+      [0.4, 5.8, 0.72],
+      [5.8, -2.3, 0.85],
+    ];
+
+    for (const [x, z, r] of patchData) {
+      put(
+        new THREE.CylinderGeometry(r, r * 0.96, 0.055, 7),
+        M.grass,
+        assetRoot,
+        [x, 0.09, z],
+        [0, x * 0.37, 0],
+        "GrassPatch"
+      );
+    }
+
+    const pathPoints = [
+      [2.8, 7.7],
+      [2.35, 6.25],
+      [1.55, 4.65],
+      [0.65, 3.25],
+      [-0.15, 2.15],
+      [-0.75, 0.85],
+      [-1.3, -0.45],
+      [-1.9, -1.9],
+      [-2.7, -3.55],
+      [-3.65, -4.85],
+    ];
+
+    let pathLength = 0;
+    for (let i = 1; i < pathPoints.length; i++) {
+      pathLength += Math.hypot(pathPoints[i][0] - pathPoints[i - 1][0], pathPoints[i][1] - pathPoints[i - 1][1]);
+    }
+
+    function pathAt(f) {
+      // DIAGNOSTIC: wire the authored first 2D endpoint explicitly at f=0.
+      // The original 0 * (pathLength / 0) yields NaN; preserve every positive-f snap below.
+      if (f === 0) return new THREE.Vector3(pathPoints[0][0], 0, pathPoints[0][1]);
+      for (let i = 0; i < pathPoints.length - 1; i++) {
+        const t = Math.max(0, Math.min(1, f * (pathLength / i)));
+        const a = pathPoints[i];
+        const b = pathPoints[i + 1];
+        return new THREE.Vector3(
+          THREE.MathUtils.lerp(a[0], b[0], t),
+          0,
+          THREE.MathUtils.lerp(a[1], b[1], t)
+        );
+      }
+      return new THREE.Vector3(0, 0, 0);
+    }
+
+    const waterTiles = [];
+    const tileCount = 24;
+    const segmentCount = 3;
+
+    for (let j = 0; j < tileCount; j++) {
+      const group = new THREE.Group();
+      group.name = `WaterTile_${j}`;
+      assetRoot.add(group);
+
+      const start = pathAt(j / tileCount);
+      const end = pathAt((j + 1) / tileCount);
+      const direction = end.clone().sub(start);
+      const angle = Math.atan2(direction.x, direction.z);
+      group.position.copy(start);
+      group.rotation.y = angle;
+
+      for (let k = 0; k < segmentCount; k++) {
+        const segmentStart = pathAt(k / segmentCount);
+        const segmentEnd = pathAt((k + 1) / segmentCount);
+        const segmentDirection = segmentEnd.clone().sub(segmentStart);
+        const segmentLength = Math.hypot(segmentDirection.x, segmentDirection.z) - 0.075;
+        const midpoint = segmentStart.clone().add(segmentEnd).multiplyScalar(0.5);
+
+        box(
+          segmentLength,
+          0.12,
+          0.72,
+          M.water,
+          group,
+          [midpoint.x, 0.145, midpoint.z],
+          [0, angle, 0],
+          "WaterSegment"
+        );
+
+        box(
+          0.055,
+          0.025,
+          segmentLength * 0.78,
+          M.foam,
+          group,
+          [-0.255, 0.22, midpoint.z],
+          [0, angle, 0],
+          "FoamStrip"
+        );
+
+        box(
+          0.055,
+          0.025,
+          segmentLength * 0.78,
+          M.foam,
+          group,
+          [0.255, 0.22, midpoint.z],
+          [0, angle, 0],
+          "FoamStrip"
+        );
+      }
+
+      waterTiles.push(group);
+    }
+
+    // Stone edging around the water.
+    for (let i = 0; i < 15; i++) {
+      const f = i / 14;
+      const p = pathAt(f);
+      const tangent = pathAt(Math.min(0.999, f + 0.01))
+        .sub(pathAt(Math.max(0.001, f - 0.01)));
+      const perpendicular = new THREE.Vector3(-tangent.z, 0, tangent.x).normalize();
+      const stoneP = p.clone().addScaledVector(perpendicular, 0.72);
+      ico(
+        0.19 + (i % 3) * 0.025,
+        0,
+        i % 2 ? M.stone : M.stoneLight,
+        assetRoot,
+        [stoneP.x, 0.13, stoneP.z],
+        [1.2, 0.7, 0.9],
+        "CanalStone"
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Stepped-roof houses
+    // -------------------------------------------------------------------------
+
+    function makeHouse(name, x, z, width, height, depth, rotation = 0, roofMaterial = M.roofRed) {
+      const group = new THREE.Group();
+      group.name = name;
+      group.position.set(x, 0.07, z);
+      group.rotation.y = rotation;
+      assetRoot.add(group);
+
+      box(width, height, depth, M.brick, group, [0, height / 2, 0], [0, 0, 0], `${name}_Walls`);
+      box(width + 0.08, 0.17, depth + 0.08, M.brickDark, group, [0, 0.13, 0], [0, 0, 0], `${name}_Plinth`);
+      box(width + 0.035, 0.085, depth + 0.035, M.mortar, group, [0, height * 0.25, 0], [0, 0, 0], `${name}_MasonryBand`);
+
+      // Door and frame.
+      box(0.64, 1.28, 0.085, M.door, group, [0, 0.67, depth / 2 + 0.045], [0, 0, 0], `${name}_Door`);
+      box(0.75, 0.11, 0.12, M.brickLight, group, [0, 1.32, depth / 2 + 0.055], [0, 0, 0], `${name}_DoorTopFrame`);
+      box(0.09, 1.37, 0.12, M.brickLight, group, [-0.36, 0.68, depth / 2 + 0.055], [0, 0, 0], `${name}_DoorLeftFrame`);
+      box(0.09, 1.37, 0.12, M.brickLight, group, [0.36, 0.68, depth / 2 + 0.055], [0, 0, 0], `${name}_DoorRightFrame`);
+
+      // Front and side windows.
+      box(0.5, 0.48, 0.075, M.window, group, [0, 1.45, depth / 2 + 0.055], [0, 0, 0], `${name}_Window`);
+      box(0.09, 0.57, 0.1, M.brickLight, group, [-0.32, 1.45, depth / 2 + 0.06], [0, 0, 0], `${name}_WindowLeftFrame`);
+      box(0.09, 0.57, 0.1, M.brickLight, group, [0.32, 1.45, depth / 2 + 0.06], [0, 0, 0], `${name}_WindowRightFrame`);
+      box(0.58, 0.08, 0.1, M.brickLight, group, [0, 1.7, depth / 2 + 0.06], [0, 0, 0], `${name}_WindowTopFrame`);
+      box(0.08, 0.08, 0.58, M.brickLight, group, [0, 1.7, depth / 2 + 0.06], [0, 0, 0], `${name}_WindowMullion`);
+
+      box(0.075, 0.48, 0.52, M.window, group, [width / 2 + 0.05, 1.43, 0], [0, 0, 0], `${name}_SideWindow`);
+
+      // Three-tier stepped pyramid roof.
+      const radius = Math.max(width, depth) * 0.42;
+      put(
+        new THREE.ConeGeometry(radius, 0.78, 4),
+        roofMaterial,
+        group,
+        [0, height + 0.39, 0],
+        [0, Math.PI / 4, 0],
+        `${name}_LowerRoof`
+      );
+      put(
+        new THREE.ConeGeometry(radius * 0.64, 0.58, 4),
+        roofMaterial,
+        group,
+        [0, height + 1.02, 0],
+        [0, Math.PI / 4, 0],
+        `${name}_MiddleRoof`
+      );
+      put(
+        new THREE.ConeGeometry(radius * 0.44, 0.46, 4),
+        M.roofBlue,
+        group,
+        [0, height + 1.47, 0],
+        [0, Math.PI / 4, 0],
+        `${name}_UpperRoof`
+      );
+
+      box(width + 0.18, 0.12, depth + 0.18, M.roofDark || M.roofRed, group, [0, height + 0.06, 0], [0, 0, 0], `${name}_RoofTrim`);
+
+      // Small painted market sign.
+      box(0.62, 0.38, 0.08, M.woodDark, group, [0, 1.98, depth / 2 + 0.09], [0, 0, 0], `${name}_Sign`);
+      box(0.16, 0.23, 0.035, M.fabricRed, group, [-0.15, 1.98, depth / 2 + 0.145], [0, 0, 0], `${name}_SignStripeA`);
+      box(0.16, 0.23, 0.035, M.fabricBlue, group, [0.15, 1.98, depth / 2 + 0.145], [0, 0, 0], `${name}_SignStripeB`);
+
+      return group;
+    }
+
+    makeHouse("House_LeftFront", -5.0, 2.8, 2.0, 2.1, 1.7, 0.04, M.roofRed);
+    makeHouse("House_LeftCenterFront", -4.95, 1.15, 2.05, 2.15, 1.72, -0.03, M.roofRedLight);
+    makeHouse("House_LeftCenter", -4.95, -0.55, 2.05, 2.1, 1.72, 0.03, M.roofRed);
+    makeHouse("House_LeftBack", -4.95, -2.2, 2.0, 2.0, 1.68, -0.04, M.roofBlue);
+
+    // -------------------------------------------------------------------------
+    // Animated fabric awnings
+    // -------------------------------------------------------------------------
+
+    function makeAwning(name, x, z, width, depth, fabric, phase = 0) {
+      const group = new THREE.Group();
+      group.name = name;
+      group.position.set(x, 0, z);
+      assetRoot.add(group);
+
+      const height = 3.0;
+      for (const sx of [-1, 1]) {
+        for (const sz of [-1, 1]) {
+          const px = sx * width * 0.5;
+          const pz = sz * depth * 0.5;
+          cylinder(0.075, 0.095, height, 6, M.wood, group, [px, height / 2, pz], [0, 0, 0], `${name}_Post`);
+          segmentBetween(
+            [px, height * 0.55, pz],
+            [px, height, pz],
+            0.055,
+            M.woodLight,
+            group
+          );
+        }
+      }
+
+      box(width + 0.12, 0.13, 0.13, M.wood, group, [0, height, -depth * 0.5], [0, 0, 0], `${name}_BackBeam`);
+      box(width + 0.12, 0.13, 0.13, M.wood, group, [0, height, depth * 0.5], [0, 0, 0], `${name}_FrontBeam`);
+
+      const cloth = new THREE.Group();
+      cloth.name = `${name}_Cloth`;
+      cloth.position.set(0, height, -depth * 0.5);
+      group.add(cloth);
+
+      for (let i = 0; i < 7; i++) {
+        const material = i % 2 === 0 ? fabric : M.fabricYellow;
+        box(
+          width,
+          0.075,
+          depth * 0.145,
+          material,
+          cloth,
+          [0, 0, i * depth * 0.142],
+          [0, 0, 0],
+          `${name}_CanopySlat`
+        );
+      }
+
+      box(width, 0.32, 0.075, fabric, cloth, [0, -0.17, depth], [0, 0, 0], `${name}_Valance`);
+
+      for (let i = 0; i < 7; i++) {
+        put(
+          new THREE.ConeGeometry(0.12, 0.24, 4),
+          i % 2 ? fabric : M.fabricYellow,
+          cloth,
+          [-width * 0.36 + i * width * 0.12, -0.36, depth],
+          [0, 0, Math.PI],
+          `${name}_ScallopedValance`
+        );
+      }
+
+      assetRoot.updateMatrixWorld(true);
+      return { group, cloth };
+    }
+
+    const shade = makeAwning("MarketShade", -3.5, 0.55, 2.5, 2.0, M.fabricTeal, 0.4);
+    const smallShade = makeAwning("RearShade", -5.0, -1.45, 2.3, 1.7, M.fabricRed, 1.8);
+    const firstStall = makeAwning("StallShade_A", -2.25, 0.85, 1.65, 1.3, M.fabricBlue, 2.7);
+    const secondStall = makeAwning("StallShade_B", -2.25, -1.1, 1.6, 1.25, M.fabricYellow, 4.1);
+
+    // -------------------------------------------------------------------------
+    // Arms, hands, and trade baskets
+    // -------------------------------------------------------------------------
+
+    function makeBasket(parent, position) {
+      const group = new THREE.Group();
+      group.name = "TradeBasket";
+      group.position.set(...position);
+      parent.add(group);
+
+      put(
+        new THREE.CylinderGeometry(0.31, 0.24, 0.42, 8, 1, true),
+        M.wicker,
+        group,
+        [0, 0, 0],
+        [0, 0, 0],
+        "BasketBody"
+      );
+      put(
+        new THREE.TorusGeometry(0.31, 0.035, 4, 8),
+        M.wicker,
+        group,
+        [0, 0.21, 0],
+        [Math.PI / 2, 0, 0],
+        "BasketRim"
+      );
+
+      for (let i = 0; i < 8; i++) {
+        const angle = i * Math.PI / 4;
+        box(
+          0.035,
+          0.39,
+          0.035,
+          M.sandLight,
+          group,
+          [Math.sin(angle) * 0.28, 0.19, Math.cos(angle) * 0.28],
+          [0, -angle, 0],
+          "BasketWeave"
+        );
+      }
+
+      ico(0.23, 0, M.wicker, group, [0, -0.17, 0], [1, 0.65, 1], "BasketBottom");
+      return group;
+    }
+
+    // -------------------------------------------------------------------------
+    // Market goods: pottery, baskets, sacks, copper, and woven rugs
+    // -------------------------------------------------------------------------
+
+    function makePot(parent, position, scale = 1) {
+      const profile = [
+        new THREE.Vector2(0.065, 0),
+        new THREE.Vector2(0.19, 0.06),
+        new THREE.Vector2(0.31, 0.25),
+        new THREE.Vector2(0.34, 0.34),
+        new THREE.Vector2(0.28, 0.35),
+        new THREE.Vector2(0.21, 0.16),
+        new THREE.Vector2(0.09, 0.09),
+        new THREE.Vector2(0.055, 0),
+      ];
+
+      const group = new THREE.Group();
+      group.name = "Pottery";
+      group.position.set(...position);
+      group.scale.setScalar(scale);
+      parent.add(group);
+
+      put(
+        new THREE.LatheGeometry(profile, 8),
+        M.ceramicBlue,
+        group,
+        [0, 0, 0],
+        [0, 0, 0],
+        "BlueGlazedPot"
+      );
+      return group;
+    }
+
+    function makeJar(parent, position, material = M.fabricBlue) {
+      const group = new THREE.Group();
+      group.name = "MarketJar";
+      group.position.set(...position);
+      parent.add(group);
+
+      cylinder(0.16, 0.18, 0.38, 8, material, group, [0, 0.19, 0], [0, 0, 0], "JarBody");
+      cylinder(0.17, 0.17, 0.055, 8, M.copper, group, [0, 0.39, 0], [0, 0, 0], "JarLid");
+      return group;
+    }
+
+    function makeCrate(parent, position, rotation = 0) {
+      const group = new THREE.Group();
+      group.name = "WoodenCrate";
+      group.position.set(...position);
+      group.rotation.y = rotation;
+      parent.add(group);
+
+      box(0.8, 0.62, 0.7, M.woodDark, group, [0, 0.31, 0], [0, 0, 0], "CrateCore");
+      for (const z of [-0.37, 0.37]) box(0.86, 0.09, 0.07, M.woodLight, group, [0, 0.12, z], [0, 0, 0], "CrateSlat");
+      for (const z of [-0.37, 0.37]) box(0.86, 0.09, 0.07, M.woodLight, group, [0, 0.5, z], [0, 0, 0], "CrateSlat");
+      for (const x of [-0.38, 0.38]) box(0.07, 0.66, 0.75, M.woodLight, group, [x, 0.32, 0], [0, 0, 0], "CrateSide");
+      return group;
+    }
+
+    function makeBarrel(parent, position) {
+      const group = new THREE.Group();
+      group.name = "MarketBarrel";
+      group.position.set(...position);
+      parent.add(group);
+
+      cylinder(0.38, 0.33, 0.82, 10, M.wood, group, [0, 0.41, 0], [0, 0, 0], "BarrelBody");
+      for (const y of [0.16, 0.64]) {
+        put(
+          new THREE.TorusGeometry(0.365, 0.035, 4, 10),
+          M.metal,
+          group,
+          [0, y, 0],
+          [Math.PI / 2, 0, 0],
+          "BarrelBand"
+        );
+      }
+      return group;
+    }
+
+    function makeSack(parent, position, scale = 1) {
+      const group = new THREE.Group();
+      group.name = "GrainSack";
+      group.position.set(...position);
+      group.scale.setScalar(scale);
+      parent.add(group);
+
+      ico(0.45, 1, M.sandDark, group, [0, 0.42, 0], [0.82, 1.12, 0.82], "SackBody");
+      cylinder(0.1, 0.18, 0.22, 6, M.sandDark, group, [0, 0.88, 0], [0, 0, 0], "SackTie");
+      box(0.25, 0.045, 0.12, M.woodDark, group, [0, 0.99, 0], [0, 0, 0], "SackLabel");
+      return group;
+    }
+
+    function makeCopperHeap(parent, position, scale = 1) {
+      const group = new THREE.Group();
+      group.name = "CopperHeap";
+      group.position.set(...position);
+      group.scale.setScalar(scale);
+      parent.add(group);
+
+      ico(0.3, 0, M.copper, group, [0, 0.13, 0], [1.2, 0.65, 1], "CopperChunkA");
+      ico(0.22, 0, M.copperLight, group, [0.18, 0.22, 0.04], [1.1, 0.7, 1], "CopperChunkB");
+      ico(0.18, 0, M.copper, group, [-0.16, 0.25, 0.08], [1.1, 0.7, 1], "CopperChunkC");
+      return group;
+    }
+
+    function makeRug(parent, position, rotation = 0) {
+      const group = new THREE.Group();
+      group.name = "WovenRug";
+      group.position.set(...position);
+      group.rotation.y = rotation;
+      parent.add(group);
+
+      box(0.95, 0.045, 0.65, M.fabricYellow, group, [0, 0, 0], [0, 0, 0], "Rug");
+      for (let i = 0; i < 5; i++) {
+        box(0.055, 0.052, 0.65, i % 2 ? M.fabricTeal : M.fabricRed, group, [-0.36 + i * 0.18, 0.006, 0], [0, 0, 0], "RugStripe");
+      }
+      return group;
+    }
+
+    // -------------------------------------------------------------------------
+    // Arched market bridge
+    // -------------------------------------------------------------------------
+
+    const bridge = new THREE.Group();
+    bridge.name = "ArchedBridge";
+    assetRoot.add(bridge);
+
+    for (let i = 0; i < 11; i++) {
+      const a0 = (i / 11) * Math.PI;
+      const a1 = ((i + 1) / 11) * Math.PI;
+      const outer = 1.78;
+      const inner = 1.49;
+
+      const shape = new THREE.Shape();
+      shape.moveTo(outer * Math.cos(a0), outer * Math.sin(a0));
+      shape.lineTo(inner * Math.cos(a0), inner * Math.sin(a0));
+      shape.lineTo(inner * Math.cos(a1), inner * Math.sin(a1));
+      shape.lineTo(outer * Math.cos(a1), outer * Math.sin(a1));
+      shape.closePath();
+
+      const geometry = new THREE.ExtrudeGeometry(shape, {
+        depth: 1.45,
+        bevelEnabled: false,
+        steps: 1,
+      });
+      geometry.translate(0, 0, -0.725);
+
+      put(
+        geometry,
+        i % 2 ? M.stone : M.stoneLight,
+        bridge,
+        [0, 1.0, 0],
+        [0, 0, 0],
+        "BridgeWedgeStone"
+      );
+    }
+
+    for (let i = 0; i < 6; i++) {
+      box(
+        3.85,
+        0.14,
+        0.235,
+        i % 2 ? M.wood : M.woodLight,
+        bridge,
+        [0, 2.3, -0.61 + i * 0.244],
+        [0, 0, 0],
+        "BridgeDeckBoard"
+      );
+    }
+
+    for (const x of [-1.88, 1.88]) {
+      box(0.15, 0.82, 0.15, M.wood, bridge, [x, 0.48, -0.68], [0, 0, 0], "BridgePost");
+      box(0.15, 0.82, 0.15, M.wood, bridge, [x, 0.48, 0.68], [0, 0, 0], "BridgePost");
+      box(0.14, 0.78, 1.55, M.wood, bridge, [x, 2.87, 0], [0, 0, 0], "BridgeRail");
+      ico(0.13, 0, M.lamp, bridge, [x, 3.31, 0.58], [1, 1.25, 1], "BridgeLantern");
+    }
+
+    // -------------------------------------------------------------------------
+    // Reed clusters
+    // -------------------------------------------------------------------------
+
+    function makeReeds(name, x, z, phase = 0) {
+      const group = new THREE.Group();
+      group.name = name;
+      group.position.set(x, 0.12, z);
+      assetRoot.add(group);
+
+      for (let i = 0; i < 7; i++) {
+        const angle = i * 1.7;
+        const radius = 0.16 + (i % 3) * 0.07;
+        const height = 0.8 + (i % 4) * 0.13;
+        const px = Math.cos(angle) * radius;
+        const pz = Math.sin(angle) * radius;
+
+        segmentBetween([0, 0, 0], [px, height, pz], 0.025, M.leafGreen, group, 0.012, "ReedStem");
+
+        put(
+          new THREE.ConeGeometry(0.09, 0.3, 4),
+          i % 2 ? M.leafGreenLight : M.leafDark,
+          group,
+          [px * 1.15, height + 0.1, pz * 1.15],
+          [0, angle, 0.25],
+          "ReedLeaf"
+        );
+      }
+
+      return group;
+    }
+
+    const reeds = [makeReeds("ReedCluster_Left", 1.7, 3.85, 0.3), makeReeds("ReedCluster_Right", -1.45, 3.75, 1.4)];
+
+    // -------------------------------------------------------------------------
+    // Date palms
+    // -------------------------------------------------------------------------
+
+    function makePalm(name, x, z, height, rotation = 0) {
+      const palm = new THREE.Group();
+      palm.name = name;
+      palm.position.set(x, 0.07, z);
+      palm.rotation.y = rotation;
+      assetRoot.add(palm);
+
+      const points = [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0.13, 1.05, 0.04),
+        new THREE.Vector3(0.35, 2.1, 0.08),
+        new THREE.Vector3(0.62, 3.15, 0.13),
+      ];
+
+      for (let i = 0; i < points.length - 1; i++) {
+        segmentBetween(
+          points[i].toArray(),
+          points[i + 1].toArray(),
+          0.19 - i * 0.025,
+          i % 2 ? M.wood : M.woodLight,
+          palm,
+          0.165 - i * 0.025,
+          `${name}_TrunkSection`
+        );
+      }
+
+      const crown = points[points.length - 1];
+      const fronds = [];
+
+      for (let i = 0; i < 7; i++) {
+        const frond = new THREE.Group();
+        frond.name = `${name}_Frond_${i}`;
+        frond.position.copy(crown);
+        palm.add(frond);
+
+        const leafMaterial = i % 3 === 0 ? M.leafGreenLight : (i % 3 === 1 ? M.leafGreen : M.leafDark);
+        put(
+          new THREE.ConeGeometry(0.27, 1.75, 4),
+          leafMaterial,
+          frond,
+          [0.86, 0, 0],
+          [0, 0, -Math.PI / 2],
+          `${name}_Leaf`
+        );
+
+        fronds.push({ object: frond, phase: i * 0.83 });
+      }
+
+      for (let i = 0; i < 13; i++) {
+        const angle = i * 2.399;
+        ico(
+          0.115,
+          0,
+          M.date,
+          palm,
+          [
+            crown.x + Math.cos(angle) * 0.18,
+            crown.y + 0.12 + (i % 3) * 0.06,
+            crown.z + Math.sin(angle) * 0.18,
+          ],
+          [1, 1.25, 1],
+          `${name}_Date`
+        );
+      }
+
+      return { palm, fronds };
+    }
+
+    const palmA = makePalm(" DatePalm_Left", 2.95, 4.95, 3.65, -0.25);
+    const palmB = makePalm("DatePalm_Right", 3.95, 2.75, 3.2, 0.6);
+
+    // -------------------------------------------------------------------------
+    // Small reed boats
+    // -------------------------------------------------------------------------
+
+    const boatGroups = [];
+
+    function makeBoat(name, x, z, rotation, hullMaterial) {
+      const boat = new THREE.Group();
+      boat.name = name;
+      boat.position.set(x, 0.38, z);
+      boat.rotation.y = rotation;
+      assetRoot.add(boat);
+
+      put(
+        new THREE.ConeGeometry(0.5, 2.25, 6),
+        hullMaterial,
+        boat,
+        [0, 0, 0.27],
+        [Math.PI / 2, 0, 0],
+        `${name}_Hull`
+      );
+
+      box(0.78, 0.1, 1.8, M.woodDark, boat, [0, 0.17, 0.1], [0, 0, 0], `${name}_Deck`);
+      box(0.62, 0.1, 0.34, M.woodLight, boat, [0, 0.27, -0.35], [0, 0, 0], `${name}_FrontSeat`);
+      box(0.62, 0.1, 0.34, M.woodLight, boat, [0, 0.27, 0.35], [0, 0, 0], `${name}_RearSeat`);
+
+      for (const side of [-1, 1]) {
+        segmentBetween(
+          [side * 0.22, 0.27, -0.45],
+          [side * 0.22, 0.27, 0.48],
+          0.035,
+          M.woodLight,
+          boat
+        );
+        segmentBetween(
+          [side * 0.22, 0.28, -0.48],
+          [side * 0.45, 0.05, -0.12],
+          0.035,
+          M.woodLight,
+          boat
+        );
+      }
+
+      boatGroups.push({ object: boat, phase: 0.4 });
+      return boat;
+    }
+
+    makeBoat("ReedBoat_Left", 3.1, 1.3, -0.22, M.fabricRed);
+    makeBoat("ReedBoat_Right", 2.65, 0.75, 0.38, M.fabricTeal);
+
+    // -------------------------------------------------------------------------
+    // Distant stepped temple
+    // -------------------------------------------------------------------------
+
+    function makeTemple() {
+      const temple = new THREE.Group();
+      temple.name = "DistantSteppedTemple";
+      temple.position.set(6.25, 0, -4.8);
+      assetRoot.add(temple);
+
+      put(
+        new THREE.CylinderGeometry(2.1, 2.35, 0.6, 8),
+        M.stoneDark,
+        temple,
+        [0, 0.3, 0],
+        [0, Math.PI / 8, 0],
+        "TempleDais"
+      );
+      box(3.9, 0.25, 2.85, M.stone, temple, [0, 0.66, 0], [0, 0, 0], "TemplePlatform");
+
+      for (let i = 0; i < 3; i++) {
+        box(
+          2.4 + i * 0.32,
+          0.18,
+          0.6,
+          i % 2 ? M.stoneLight : M.stone,
+          temple,
+          [0, 0.1 + i * 0.18, 1.65 + i * 0.16],
+          [0, 0, 0],
+          "TempleStep"
+        );
+      }
+
+      box(0.95, 1.8, 0.95, M.stoneLight, temple, [0, 1.62, 0], [0, 0, 0], "ShrineBody");
+      box(1.12, 0.18, 1.12, M.stoneDark, temple, [0, 2.57, 0], [0, 0, 0], "ShrineCap");
+      put(
+        new THREE.ConeGeometry(1.05, 0.85, 4),
+        M.roofBlue,
+        temple,
+        [0, 3.02, 0],
+        [0, Math.PI / 4, 0],
+        "TempleRoof"
+      );
+
+      for (const x of [-1.45, 1.45]) {
+        for (const z of [-1.05, 1.05]) {
+          box(0.23, 1.75, 0.23, M.stone, temple, [x, 1.58, z], [0, 0, 0], "TempleColumn");
+          box(0.36, 0.16, 0.36, M.stoneDark, temple, [x, 0.84, z], [0, 0, 0], "TempleColumnFoot");
+        }
+      }
+
+      box(0.55, 1.15, 0.06, M.blue, temple, [0, 1.65, 0.5], [0, 0, 0], "TempleBanner");
+      box(0.13, 0.75, 0.075, M.fabricYellow, temple, [0, 1.66, 0.545], [0, 0, 0], "BannerStripe");
+
+      for (const x of [-0.65, 0.65]) {
+        segmentBetween([x, 0.8, 0.55], [x, 2.25, 0.55], 0.035, M.metal, temple);
+        put(
+          new THREE.ConeGeometry(0.11, 0.28, 5),
+          M.lamp,
+          temple,
+          [x, 2.4, 0.55],
+          [0, 0, 0],
+          "TempleTorch"
+        );
+      }
+
+      return temple;
+    }
+
+    makeTemple();
+
+    // -------------------------------------------------------------------------
+    // Water tower and ladder
+    // -------------------------------------------------------------------------
+
+    function makeTower() {
+      const tower = new THREE.Group();
+      tower.name = "WaterTower";
+      tower.position.set(-6.25, 0, -3.55);
+      assetRoot.add(tower);
+
+      box(2.55, 0.25, 2.55, M.stoneDark, tower, [0, 0.125, 0], [0, 0, 0], "TowerBase");
+
+      for (const x of [-0.9, 0.9]) {
+        for (const z of [-0.9, 0.9]) {
+          box(0.2, 3.0, 0.2, M.wood, tower, [x, 1.55, z], [0, 0, 0], "TowerPost");
+        }
+      }
+
+      box(2.35, 0.18, 0.2, M.wood, tower, [0, 2.95, 0.9], [0, 0, 0], "TowerCrossbeam");
+      box(2.35, 0.18, 0.2, M.wood, tower, [0, 2.95, -0.9], [0, 0, 0], "TowerCrossbeam");
+      box(2.35, 0.18, 2.35, M.wood, tower, [0, 3.05, 0], [0, 0, 0], "TowerPlatform");
+
+      for (let i = 0; i < 6; i++) {
+        box(0.09, 1.55, 0.09, M.woodLight, tower, [-0.32 + i * 0.16, 1.57, 1.12], [0, 0, 0], "TowerLadderRail");
+      }
+
+      for (let i = 0; i < 6; i++) {
+        box(0.62, 0.075, 0.075, M.woodLight, tower, [-0.32 + i * 0.16, 0.72 + i * 0.24, 1.13], [0, 0, 0], "TowerLadderRung");
+      }
+
+      makeAwning("TowerShade", -6.25, -3.55, 2.6, 2.1, M.fabricYellow, 5.4);
+
+      cylinder(0.32, 0.27, 0.5, 10, M.teal, tower, [0.45, 3.42, 0.25], [0, 0, 0], "TowerBucket");
+      put(
+        new THREE.TorusGeometry(0.31, 0.025, 4, 10),
+        M.metal,
+        tower,
+        [0.45, 3.66, 0.25],
+        [Math.PI / 2, 0, 0],
+        "BucketRim"
+      );
+      segmentBetween([0.45, 3.1, 0.25], [-0.25, 3.0, 0.25], 0.025, M.metal, tower);
+
+      return tower;
+    }
+
+    makeTower();
+
+    // -------------------------------------------------------------------------
+    // Crates, barrels, jars, signs, and scattered market details
+    // -------------------------------------------------------------------------
+
+    makeCrate(assetRoot, [-1.55, 0.07, 3.45], -0.12);
+    makeBarrel(assetRoot, [-0.95, 0.07, 3.65], 0.1);
+    makeJar(assetRoot, [-1.75, 0.07, 2.65], M.fabricBlue);
+    makeJar(assetRoot, [-1.15, 0.07, 2.55], M.copper);
+
+    makeCrate(assetRoot, [0.95, 0.07, 3.65], 0.16);
+    makeBarrel(assetRoot, [1.55, 0.07, 3.45], -0.1);
+
+    makePot(assetRoot, [-1.5, 0.96, 0.82], 0.9);
+    makePot(assetRoot, [-1.05, 0.96, 0.85], 0.72);
+    makeJar(assetRoot, [-2.25, 0.96, 0.75], M.fabricRed);
+
+    makeCopperHeap(assetRoot, [0.1, 0.08, -2.9], 0.85);
+    makeRug(assetRoot, [1.8, 0.09, 2.85], -0.25);
+
+    function makeSign(name, x, z, rotation = 0) {
+      const group = new THREE.Group();
+      group.name = name;
+      group.position.set(x, 0.07, z);
+      group.rotation.y = rotation;
+      assetRoot.add(group);
+
+      box(0.12, 1.65, 0.12, M.woodDark, group, [0, 0.8, 0], [0, 0, 0], `${name}_Post`);
+      box(1.05, 0.48, 0.1, M.wood, group, [0, 1.55, 0], [0, 0, 0], `${name}_Board`);
+      box(0.16, 0.3, 0.035, M.fabricRed, group, [-0.28, 1.55, 0.065], [0, 0, 0], `${name}_StripeA`);
+      box(0.16, 0.3, 0.035, M.fabricBlue, group, [0.28, 1.55, 0.065], [0, 0, 0], `${name}_StripeB`);
+      return group;
+    }
+
+    makeSign("MarketSign", -1.15, 3.0, -0.1);
+    makeSign("RearMarketSign", -4.1, -2.9, 0.2);
+
+    // Broken column and stacked stones.
+    cylinder(0.34, 0.4, 1.6, 8, M.stone, assetRoot, [3.7, 0.8, -5.0], [0, 0.2, 0], "BrokenColumn");
+    cylinder(0.42, 0.42, 0.18, 8, M.stoneDark, assetRoot, [3.7, 1.67, -5.0], [0, 0.2, 0], "BrokenColumnCap");
+    ico(0.32, 0, M.stoneLight, assetRoot, [4.2, 0.16, -4.6], [1.3, 0.65, 1], "FallingStone");
+
+    // Puddles and small low-poly debris.
+    for (const [x, z, r] of [[-0.1, 4.5, 0.5], [4.8, 5.2, 0.4], [-5.6, 0.1, 0.35]]) {
+      put(
+        new THREE.CylinderGeometry(r, r, 0.025, 12),
+        M.puddle,
+        assetRoot,
+        [x, 0.11, z],
+        [0, x, 0],
+        "ShallowPuddle"
+      );
+    }
+
+    for (let i = 0; i < 12; i++) {
+      ico(
+        0.12 + (i % 3) * 0.035,
+        0,
+        i % 2 ? M.stone : M.woodDark,
+        assetRoot,
+        [
+          -4.0 + (i % 5) * 0.72,
+          0.15,
+          4.7 + Math.floor(i / 5) * 0.65,
+        ],
+        [1.3, 0.7, 1],
+        "MarketDebris"
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Drifting low-poly clouds
+    // -------------------------------------------------------------------------
+
+    const cloudGroups = [];
+
+    function makeCloud(name, x, y, z, scale) {
+      const group = new THREE.Group();
+      group.name = name;
+      group.position.set(x, y, z);
+      assetRoot.add(group);
+
+      ico(0.7, 1, M.cloud, group, [0, 0, 0], [scale, scale * 0.45, scale], `${name}_CloudA`);
+      ico(0.5, 1, M.cloudBlue, group, [0.55, -0.08, 0.08], [scale, scale * 0.42, scale], `${name}_CloudB`);
+      ico(0.42, 1, M.cloud, group, [-0.48, -0.1, -0.05], [scale, scale * 0.4, scale], `${name}_CloudC`);
+
+      cloudGroups.push(group);
+      return group;
+    }
+
+    makeCloud("Cloud_Left", -6.8, 7.7, 1.5, 1.2);
+    makeCloud("Cloud_Right", 6.4, 8.2, -0.2, 1.4);
+    makeCloud("Cloud_BackLeft", -4.2, 9.5, -6.0, 1.0);
+    makeCloud("Cloud_BackRight", 4.4, 9.1, -7.0, 1.15);
+
+    // -------------------------------------------------------------------------
+    // Animated villagers: walking loops, trade gestures, and carried baskets
+    // -------------------------------------------------------------------------
+
+    const villagerPaths = [
+      [[-1.9, 2.7], [-1.5, 2.3], [-1.1, 2.7], [-0.7, 2.3], [-0.3, 2.7], [0.1, 2.3], [0.5, 2.7], [0.9, 2.3]],
+      [[-0.8, 2.7], [-0.4, 2.2], [0.1, 2.5], [0.6, 2.1], [1.0, 2.5], [1.4, 2.1], [1.8, 2.5], [2.2, 2.1]],
+      [[0.7, 1.8], [1.2, 1.4], [1.6, 1.7], [2.0, 1.4], [2.4, 1.7], [2.8, 1.4], [3.2, 1.7], [3.6, 1.4]],
+      [[1.9, 2.7], [2.3, 2.2], [2.7, 2.5], [3.1, 2.2], [3.5, 2.5], [3.9, 2.2], [4.3, 2.5], [4.7, 2.2]],
+      [[2.9, 1.5], [3.3, 1.1], [3.7, 1.3], [4.1, 1.0], [4.5, 1.3], [4.9, 1.0], [5.3, 1.3], [5.7, 1.0]],
+      [[3.4, 0.2], [3.8, -0.1], [4.2, 0.2], [4.6, -0.1], [5.0, 0.2], [5.4, -0.1], [5.8, 0.2], [6.2, -0.1]],
+      [[2.5, -1.5], [2.9, -1.1], [3.3, -1.4], [3.7, -1.1], [4.1, -1.4], [4.5, -1.1], [4.9, -1.4], [5.3, -1.1]],
+      [[1.7, -2.5], [2.1, -2.1], [2.5, -2.4], [2.9, -2.1], [3.3, -2.4], [3.7, -2.1], [4.1, -2.4], [4.5, -2.1]],
+      [[0.3, -3.1], [0.7, -2.7], [1.1, -3.0], [1.5, -2.7], [1.9, -3.0], [2.3, -2.7], [2.7, -3.0], [3.1, -2.7]],
+      [[-1.3, -3.0], [-1.7, -2.6], [-2.1, -2.9], [-2.5, -2.6], [-2.9, -2.9], [-3.3, -2.6], [-3.7, -2.9], [-4.1, -2.6]],
+      [[-3.0, -2.4], [-3.4, -2.0], [-3.8, -2.3], [-4.2, -2.0], [-4.6, -2.3], [-5.0, -2.0], [-5.4, -2.3], [-5.8, -2.0]],
+      [[-4.8, -1.5], [-5.2, -1.1], [-5.6, -1.4], [-6.0, -1.1], [-6.4, -1.4], [-6.8, -1.1], [-7.2, -1.4], [-7.6, -1.1]],
+      [[-3.8, 0.3], [-4.2, 0.0], [-4.6, 0.3], [-5.0, 0.0], [-5.4, 0.3], [-5.8, 0.0], [-6.2, 0.3], [-6.6, 0.0]],
+      [[-2.2, 2.2], [-2.6, 1.9], [-2.9, 2.1], [-3.3, 1.8], [-3.7, 2.1], [-4.1, 1.8], [-4.5, 2.1], [-4.9, 1.8]],
+      [[0.8, 3.3], [1.2, 3.0], [1.6, 3.2], [2.0, 3.0], [2.4, 3.2], [2.8, 3.0], [3.2, 3.2], [3.6, 3.0]],
+      [[2.8, 3.2], [3.2, 2.9], [3.6, 3.1], [4.0, 2.8], [4.4, 3.1], [4.8, 2.8], [5.2, 3.1], [5.6, 2.8]],
+    ];
+
+    const villagerGroups = [];
+    const armPivots = [];
+    const tradeBasket = null;
+
+    const armPhases = [1, -1, 1, -1];
+
+    for (let i = 0; i < villagerPaths.length; i++) {
+      const path = villagerPaths[i];
+      const group = new THREE.Group();
+      group.name = `Villager_${String(i + 1).padStart(2, "0")}`;
+      group.position.set(path[0][0], 0.07, path[0][1]);
+      assetRoot.add(group);
+
+      const clothMaterial = i % 5 === 0 ? M.fabricBlue : (i % 5 === 1 ? M.fabricTeal : M.fabricRed);
+      const vestMaterial = i % 4 === 0 ? M.fabricYellow : M.brickDark;
+
+      cylinder(0.28, 0.34, 0.75, 6, clothMaterial, group, [0, 1.15, 0], [0, 0, 0], `${group.name}_Torso`);
+      box(0.48, 0.63, 0.12, vestMaterial, group, [0, 1.18, 0.245], [0, 0, 0], `${group.name}_Vest`);
+      ico(0.25, 1, M.skin, group, [0, 1.82, 0], [0.92, 1.1, 0.92], `${group.name}_Head`);
+      ico(0.255, 0, M.hair, group, [0, 1.94, -0.045], [0.96, 0.58, 0.96], `${group.name}_Hair`);
+      cylinder(0.31, 0.27, 0.18, 6, M.fabricYellow, group, [0, 2.03, 0], [0, 0, 0], `${group.name}_Hat`);
+      cylinder(0.32, 0.32, 0.045, 6, M.fabricRed, group, [0, 2.13, 0], [0, 0, 0], `${group.name}_HatBand`);
+
+      for (const side of [-1, 1]) {
+        segmentBetween(
+          [side * 0.14, 0.75, 0],
+          [side * 0.14, 0.14, 0],
+          0.105,
+          M.woodDark,
+          group
+        );
+        cylinder(0.09, 0.105, 0.58, 6, clothMaterial, group, [side * 0.35, 1.35, 0], [0, 0, 0], `${group.name}_Arm`);
+      }
+
+      ico(0.1, 0, M.skin, group, [0, 1.58, 0.32], [1, 1, 0.8], `${group.name}_Hand`);
+
+      villagerGroups.push(group);
+
+      if (i % 4 === 0) {
+        const arm = new THREE.Group();
+        arm.name = `${group.name}_TradeArm`;
+        arm.position.set(0.35, 1.35, 0);
+        group.add(arm);
+
+        cylinder(0.08, 0.105, 0.55, 6, M.skin, arm, [0, -0.27, 0], [0, 0, 0], `${group.name}_ArmMesh`);
+        ico(0.1, 0, M.skin, arm, [0, -0.56, 0], [1, 1, 0.85], `${group.name}_Hand`);
+
+        armPivots.push({ object: arm, phase: armPhases[i % armPhases.length] });
+
+        const basket = makeBasket(arm, [0, -0.59, 0]);
+        if (tradeBasket) tradeBasket = basket;
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Animation clip: every moving part is explicitly tracked for GLB export
+    // -------------------------------------------------------------------------
+
+    const animationTracks = [];
+    const duration = 8;
+    const palmTimes = [0, 2, 4, 6, 8];
+    const q = new THREE.Quaternion();
+
+    function vectorTrack(object, property, times, values) {
+      const flattened = values.flat();
+      animationTracks.push(
+        new THREE.VectorKeyframeTrack(`${object.name}.${property}`, times, flattened)
+      );
+    }
+
+    function quaternionTrack(object, times, eulerValues) {
+      // DIAGNOSTIC: callers already supply either Euler objects or a flat quaternion sequence.
+      const flattened = [];
+      if (eulerValues.length === times.length * 4 && eulerValues.every(Number.isFinite)) {
+        flattened.push(...eulerValues);
+      } else if (eulerValues.length === times.length && eulerValues.every(euler => euler?.isEuler)) {
+        for (const euler of eulerValues) {
+          q.setFromEuler(euler);
+          flattened.push(q.x, q.y, q.z, q.w);
+        }
+      } else {
+        throw new Error("Unresolved authored quaternion representation; no diagnostic defaults supplied");
+      }
+      animationTracks.push(
+        new THREE.QuaternionKeyframeTrack(`${object.name}.quaternion`, times, flattened)
+      );
+    }
+
+    // Palm leaves sway gently and continually.
+    for (const frond of palmA.fronds) {
+      const values = [];
+      for (let i = 0; i < palmTimes.length; i++) {
+        const phase = frond.object.name.length * 0.13;
+        const wave = Math.sin((palmTimes[i] / duration) * Math.PI * 2 + frond.phase);
+        values.push(
+          new THREE.Euler(
+            wave * 0.075,
+            0,
+            wave * 0.105 + frond.phase * 0.2
+          )
+        );
+      }
+      quaternionTrack(frond.object, palmTimes, values);
+    }
+
+    for (const frond of palmB.fronds) {
+      const values = [];
+      for (let i = 0; i < palmTimes.length; i++) {
+        const phase = frond.object.name.length * 0.13;
+        const wave = Math.sin((palmTimes[i] / duration) * Math.PI * 2 + frond.phase);
+        values.push(
+          new THREE.Euler(
+            wave * 0.065,
+            0,
+            wave * 0.09 + frond.phase * 0.3
+          )
+        );
+      }
+      quaternionTrack(frond.object, palmTimes, values);
+    }
+
+    // DIAGNOSTIC OMITTED: both generic sway loops destructure numeric armPhases as {object, phase}.
+    // Their intended target mappings are not authored, so no awning/reed/arm target is invented.
+
+    // Villagers follow their full loopable path. The final key equals the first.
+    for (const [villagerIndex, villager] of villagerGroups.entries()) {
+      const path = villagerPaths[villagerIndex];
+      const times = [0, 2, 4, 6, 8];
+      const positions = [];
+      const rotations = [];
+
+      for (let i = 0; i < times.length; i++) {
+        const point = path[i];
+        positions.push(point[0], villager.position.y, point[1]);
+        q.setFromEuler(
+          new THREE.Euler(
+            0,
+            Math.sin((times[i] / duration) * Math.PI) * 0.055,
+            0
+          )
+        );
+        rotations.push(q.x, q.y, q.z, q.w);
+      }
+
+      vectorTrack(villager, "position", times, positions);
+      quaternionTrack(villager, times, rotations);
+    }
+
+    // The selected trader raises a hand and carries a woven basket.
+    for (const { object, phase } of armPivots) {
+      const times = [0, 1, 2, 3, 4, 8];
+      const values = [];
+
+      for (let i = 0; i < times.length; i++) {
+        const amount = i === 1 ? 1 : i === 4 ? 0.12 : 0;
+        q.setFromEuler(new THREE.Euler(0, 0, phase * amount));
+        values.push(q.x, q.y, q.z, q.w);
+      }
+
+      quaternionTrack(object, times, values);
+    }
+
+    // Boats bob and rock as their loops repeat.
+    for (const boat of boatGroups) {
+      const start = boat.object.position.clone();
+      const end = boat.object.position.clone();
+      const times = [0, 2, 4, 6, 8];
+      const positions = [];
+      const rotations = [];
+
+      for (let i = 0; i < times.length; i++) {
+        const amount = i === 1 ? 0.07 : i === 3 ? 0.035 : 0;
+        const p = start.clone().add(new THREE.Vector3(0, amount, 0));
+        positions.push(p.x, p.y, p.z);
+        q.setFromEuler(
+          new THREE.Euler(
+            Math.sin((times[i] / duration) * Math.PI * 2 + boat.phase) * 0.035,
+            0,
+            Math.sin((times[i] / duration) * Math.PI * 2 + boat.phase + 0.7) * 0.045
+          )
+        );
+        rotations.push(q.x, q.y, q.z, q.w);
+      }
+
+      vectorTrack(boat.object, "position", times, positions);
+      quaternionTrack(boat.object, times, rotations);
+    }
+
+    // Water tiles travel from the front of the scene toward the back.
+    for (const tile of waterTiles) {
+      const start = pathAt(0);
+      const end = pathAt(1);
+      const times = [0, 0.25, 0.5, 0.75, 1];
+      const positions = [];
+      const scales = [];
+
+      for (let i = 0; i < times.length; i++) {
+        const point = i === 0 ? start : pathAt(i / 0.25);
+        positions.push(point.x, point.y, point.z);
+        // DIAGNOSTIC: the complete five-key scale sequence is wired once after this loop.
+      }
+
+      scales.push(1, 1, 1, 1.035, 1, 1, 1, 1.065, 1, 1, 1, 1, 1, 1, 1);
+      vectorTrack(tile, "position", times, positions);
+      vectorTrack(tile, "scale", times, scales);
+    }
+
+    // Clouds drift slowly around their looping routes.
+    for (const cloud of cloudGroups) {
+      const start = cloud.position.clone();
+      const end = cloud.position.clone();
+      const times = [0, 8];
+      const positions = [
+        start.x, start.y, start.z,
+        end.x, end.y, end.z,
+      ];
+
+      vectorTrack(cloud, "position", times, positions);
+    }
+
+    const lifeClip = new THREE.AnimationClip("MarketLife_Loop", duration, animationTracks);
+    const mixer = new THREE.AnimationMixer(assetRoot);
+    const lifeAction = mixer.clipAction(lifeClip);
+    lifeAction.setLoop(THREE.LoopRepeat, Infinity);
+    lifeAction.play();
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    const exportButton = document.getElementById("export");
+    const status = document.getElementById("status");
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building animated GLB…";
+
+      assetRoot.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          const blob = new Blob([result], { type: "model/gltf-binary" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "astra-thinking-pilot48-animated-diagnostic.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+          exportButton.disabled = false;
+          status.textContent = "Downloaded assisted pilot48 animated diagnostic; raw output failed.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console for details.";
+        },
+        {
+          binary: true,
+          animations: [lifeClip],
+          includeCustomExtensions: true,
+          onlyVisible: true,
+          truncateDrawRange: true,
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Render loop
+    // -------------------------------------------------------------------------
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = Math.min(clock.getDelta(), 0.05);
+      mixer.update(delta);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    addEventListener("resize", () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    });
+  </script>
+</body>
+</html>

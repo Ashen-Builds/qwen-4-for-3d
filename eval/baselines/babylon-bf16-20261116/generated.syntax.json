@@ -1,0 +1,13 @@
+{
+  "file": "generated.html",
+  "modules": [
+    {
+      "module": 0,
+      "characters": 53951,
+      "syntax_valid": true,
+      "error": null
+    }
+  ],
+  "all_module_syntax_valid": true,
+  "qualification": "Syntax only; runtime, asset quality and export remain unverified."
+}

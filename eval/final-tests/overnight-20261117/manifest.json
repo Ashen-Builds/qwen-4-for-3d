@@ -1,0 +1,182 @@
+[
+  {
+    "file": "README.md",
+    "bytes": 2508,
+    "sha256": "64459c3d63f76ade764b43bb4dbb4795a6aba76d57476b9d85d7337eb1717525"
+  },
+  {
+    "file": "orrery-0s.jpg",
+    "bytes": 33659,
+    "sha256": "6515426f2b192d5b031f3ba75c6d5094c0ecdc9e247c872185caaed24e6371c8"
+  },
+  {
+    "file": "orrery-117s.jpg",
+    "bytes": 31812,
+    "sha256": "bf083ccfe480695780184cb82e1decf0537d935b305f889b5d3bb9c0cad170a7"
+  },
+  {
+    "file": "orrery-astra/generation-summary.json",
+    "bytes": 472,
+    "sha256": "c60959377c9762f1c677410debf4d002bee3de6f85efd540e58a8fa8f18ee09d"
+  },
+  {
+    "file": "orrery-astra/original.html",
+    "bytes": 17880,
+    "sha256": "19f4ba96460388436124609f82d742ecf8331806b6f5ac0e377b93266784ea76"
+  },
+  {
+    "file": "orrery-astra/result.json",
+    "bytes": 821,
+    "sha256": "188eb7e4c19fa5f5c04eeba6399d226551299b27cc34fa664edfb112c84b0496"
+  },
+  {
+    "file": "orrery-astra/runtime-failure.jpg",
+    "bytes": 27563,
+    "sha256": "dec786655efe2560dc29438a32d2f1859dc05ac6064c88b829d573c9597fb8eb"
+  },
+  {
+    "file": "orrery-astra/runtime-failure.json",
+    "bytes": 219,
+    "sha256": "3e358ff562a7d2e02d58ea4848d3217156ee9f43048f742f2f961a2b719cbe06"
+  },
+  {
+    "file": "orrery-astra/syntax.json",
+    "bytes": 280,
+    "sha256": "d2ca64dcca1968565283e286badf55f0312b6599c95e0f12a765432c46eeab2c"
+  },
+  {
+    "file": "orrery-control/asset.glb",
+    "bytes": 248472,
+    "sha256": "efd541810fcd45bce9a608b0decef529ab7c59685095b96791c9efee42e2c3b4"
+  },
+  {
+    "file": "orrery-control/asset.glb.validation.json",
+    "bytes": 15387,
+    "sha256": "c749eb879c1719efdfa4fb2552a8acef3b2b8bd2feb4b92e36123c320855000d"
+  },
+  {
+    "file": "orrery-control/export-receipt.json",
+    "bytes": 245,
+    "sha256": "ece2795e060d64304384aabc3f75676710680a096ebd296710772c4148322a94"
+  },
+  {
+    "file": "orrery-control/generation-summary.json",
+    "bytes": 473,
+    "sha256": "f78a29eabc6b380cceb2102e969062a97cf91dab81defdd138bc89bb897b3087"
+  },
+  {
+    "file": "orrery-control/original.html",
+    "bytes": 18229,
+    "sha256": "26730a6fe13af2ce821c6a626b79c29423a552079b45af7c32aa622a40647e7f"
+  },
+  {
+    "file": "orrery-control/result.json",
+    "bytes": 1130,
+    "sha256": "3e8e2a0fd39d0ac991c99dfcde832a9d08ff6b82db7604158701198e01a25f6a"
+  },
+  {
+    "file": "orrery-control/syntax.json",
+    "bytes": 280,
+    "sha256": "974c78093decfaa089e980889df4fe83e48f7f64fd5ad3c8178ebf3f235ea374"
+  },
+  {
+    "file": "orrery-prompt.txt",
+    "bytes": 271,
+    "sha256": "b1152b9a28013aa7e31ab438c614c1592e93ac2c32c6a5dc3e14972691b066d4"
+  },
+  {
+    "file": "waterwheel-037s.jpg",
+    "bytes": 68687,
+    "sha256": "101b4b3569f0d69b114cf8868d4a3895a9b298b072851420276d343a0cbd668f"
+  },
+  {
+    "file": "waterwheel-0s.jpg",
+    "bytes": 67706,
+    "sha256": "7c0340ff55821943961a8c84a5a863a507cf026b4e87bc2d7d7683741fa508e8"
+  },
+  {
+    "file": "waterwheel-117s.jpg",
+    "bytes": 68975,
+    "sha256": "e1f3afd8d1dd10342252fa2c49160c6c0ce9d4b409a8ff430b8caa17a17a1ef1"
+  },
+  {
+    "file": "waterwheel-astra/asset.glb",
+    "bytes": 272388,
+    "sha256": "c965e587e0248470d686296b435a19415641b5a6f6cfb37e8d6a20a4376a84e4"
+  },
+  {
+    "file": "waterwheel-astra/asset.glb.validation.json",
+    "bytes": 25342,
+    "sha256": "49f028af22d55ca44bfa0aac9b99e4db47425dad027f6654f981d499f6a1f0d3"
+  },
+  {
+    "file": "waterwheel-astra/export-receipt.json",
+    "bytes": 246,
+    "sha256": "2db7ca39b73781c10337e4890f1a38f22966917b38e86f071b88515fcfcb18f4"
+  },
+  {
+    "file": "waterwheel-astra/generation-summary.json",
+    "bytes": 473,
+    "sha256": "78fa044497f833a13c429055f1c2e1a06e38b66818af42b3d3e5886bea1eeb02"
+  },
+  {
+    "file": "waterwheel-astra/original.html",
+    "bytes": 20346,
+    "sha256": "292c98df486739f7a246819d16b88299ed7ab4f29a5c935e30eb63e9eaba9e42"
+  },
+  {
+    "file": "waterwheel-astra/result.json",
+    "bytes": 1207,
+    "sha256": "6ea95631d20c58974bbdd028367de432695fdf2177d5e6f7fa55f323ddfa7b16"
+  },
+  {
+    "file": "waterwheel-astra/syntax.json",
+    "bytes": 280,
+    "sha256": "dce524a1464a7ac651e2f22ebfc22e2cac1092237b90d0b88301b8ac714c3a73"
+  },
+  {
+    "file": "waterwheel-axis-audit.json",
+    "bytes": 1561,
+    "sha256": "575797cb31e1da919f7aa86b870e3482c6faa7d0d14870a4f5e7d2e8d5890ae9"
+  },
+  {
+    "file": "waterwheel-control/asset.glb",
+    "bytes": 389484,
+    "sha256": "824e48b70c7812e7ab065add59f39c6b4785f83dec5becea083396170e84001d"
+  },
+  {
+    "file": "waterwheel-control/asset.glb.validation.json",
+    "bytes": 38877,
+    "sha256": "6e9952a865224685c260de0b4447af942723027733d0480e07cf1d12b219f962"
+  },
+  {
+    "file": "waterwheel-control/export-receipt.json",
+    "bytes": 242,
+    "sha256": "b2156775c60d247fcdc092533ebf882b565d14c2fe712815834e13e4c3c107e2"
+  },
+  {
+    "file": "waterwheel-control/generation-summary.json",
+    "bytes": 473,
+    "sha256": "987663f4483e60835a8b259b193cc6987e077e363b126d76ed78144577d333cf"
+  },
+  {
+    "file": "waterwheel-control/original.html",
+    "bytes": 23437,
+    "sha256": "e6c0f3ecb035b110be21e3fad57c1e5fa9069bac72fbe9e94ab15b570d8b4044"
+  },
+  {
+    "file": "waterwheel-control/result.json",
+    "bytes": 1247,
+    "sha256": "5ac72fdf3c652d16c457c4765a67449f3e960c8253f3d58189432aac0015d004"
+  },
+  {
+    "file": "waterwheel-control/syntax.json",
+    "bytes": 280,
+    "sha256": "e92ee4b453d09e437a4a82a81403a0d6a48b4b3f0496c093d3dbeab9cc246b82"
+  },
+  {
+    "file": "waterwheel-prompt.txt",
+    "bytes": 310,
+    "sha256": "74d11c21865bd7575ed0cae5081a1afef1a63510d34c38df2671448f748b7c21"
+  }
+]

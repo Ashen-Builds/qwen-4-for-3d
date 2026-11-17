@@ -1,0 +1,92 @@
+{
+  "classification": "mechanically-assisted-diagnostic-not-raw-success",
+  "original_html": "original.html",
+  "original_html_sha256": "850cd05cb5b59861f58576f6e05c3af120ff20f103f8d96ad751cf89ea7779af",
+  "assisted_html": "generated.html",
+  "assisted_html_sha256": "e0c91ca3fbf34aa2d361fc6c82b3611bd4286432f3455bde255c10e22c7b95db",
+  "preparation_record": {
+    "status": "cpu-prepared-animated-diagnostic-not-runtime-tested",
+    "raw_sha256": "850cd05cb5b59861f58576f6e05c3af120ff20f103f8d96ad751cf89ea7779af",
+    "diagnostic_sha256": "e0c91ca3fbf34aa2d361fc6c82b3611bd4286432f3455bde255c10e22c7b95db",
+    "raw_unchanged": true,
+    "assistance": "object-field-array-index-tuple-wiring-and-unresolved-track-omission",
+    "edits": [
+      "At f===0, map the existing first [x,z] path tuple to the existing zero-Y plane. Preserve the original positive-f algorithm and snaps; no new path or interpolation.",
+      "Use the existing local clothMaterial variable for arm meshes; no new material/color.",
+      "Preserve caller-authored flat quaternion values verbatim; read Euler object fields through setFromEuler instead of numeric indexing. No new rotations or timing.",
+      "Omit two unresolvable generic sway blocks (eight intended tracks over numeric armPhases); geometry untouched and no target mapping invented.",
+      "Use array index for the paired villagerGroups/villagerPaths arrays instead of Three.js object ID.",
+      "Map the existing [x,z] path tuples with the villager existing authored Y. Keep original first-five-of-eight point selection, times and end/start snap.",
+      "Selected-trader gesture uses the already-authored {object, phase} records in armPivots; preserve exact gesture values/times.",
+      "Remove repeated insertion of identical complete scale sequence on every position key.",
+      "Use exact existing fifteen scale values once for five authored key times (24 water tiles); no added/deleted key-time values.",
+      "Label assisted diagnostic download.",
+      "Use separate diagnostic filename.",
+      "Keep export status honest about raw failure and assistance.",
+      "Label browser title as assisted animated diagnostic."
+    ],
+    "omitted_tracks": [
+      "Two generic sway loops over four numeric armPhases entries each; intended target objects are absent. No awning/reed/arm mapping invented."
+    ],
+    "preserved_motion": [
+      "8-second MarketLife_Loop and all retained authored time arrays",
+      "16 existing villager paths, using original first five points and unchanged timing/yaw; end/start path snaps retained",
+      "14 authored palm-frond quaternion tracks",
+      "4 authored trader-arm gesture quaternion tracks",
+      "2 authored boat position and quaternion pairs",
+      "24 authored water-tile position/scale pairs; positive-f collapse and one-second tracks inside eight-second clip retained",
+      "4 authored cloud position tracks with identical start/end positions (stationary)"
+    ],
+    "preserved_defects": [
+      "Static villager legs; no gait, collision avoidance or route smoothing",
+      "Incomplete path sampling returns the first segment endpoint for every positive f",
+      "Water segment degeneracy/negative lengths and local/world placement behavior retained",
+      "Villager final position differs from initial; loop snap retained",
+      "Clouds remain stationary because their authored endpoints match",
+      "Missing M.ceramicBlue and M.roofDark references unchanged; no replacement palette colors added",
+      "Boats retain authored quaternion values that overwrite their initial yaw"
+    ],
+    "authored_counts_static_expected": {
+      "villagers": 16,
+      "clip_count": 1,
+      "retained_tracks": 106,
+      "omitted_unresolvable_tracks": 8
+    },
+    "geometry_constructs_changed": false,
+    "existing_endpoint_tuple_wiring_changed": true,
+    "rendered": false,
+    "exported": false,
+    "glb_validated": false,
+    "model_or_gpu_launched": false,
+    "training_data_modified": false,
+    "runtime_export_reimport_observed": true,
+    "visual_review": "visual-review.json"
+  },
+  "subsequent_actual_browser_review": {
+    "epoch": 1794904396.9018712,
+    "raw_syntax_pass": true,
+    "raw_runtime_pass": false,
+    "raw_failure": "undefined object.name inquaternionTrack",
+    "diagnostic_exported_and_reopened": true,
+    "bytes": 2198120,
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "mesh_definitions": 911,
+    "nodes": 1014,
+    "materials": 42,
+    "clip_count": 1,
+    "channels": 106,
+    "villagers": 16,
+    "leg_gait": false,
+    "observed": [
+      "Actors translate between0and4seconds withstaticlegs",
+      "Sparser andlesscoherentlayoutthanmatchedrepairedCCORE",
+      "Canalgeometrycollapsed/missing; straywaterpieceoutsideplinth",
+      "More visiblepeopleandpalmdetail thanearlierAstra outputs"
+    ],
+    "verdict": "Mixedchanges,butoverallnotbetter; rawruntimefailure preventsacceptance.",
+    "repair_assistance": "Mechanicalwiring/tuple/type/endpoint/trackdimensionfixes;8unresolvablesways omitted;sourcepaths/snaps/staticlegspreserved.",
+    "comparison": "Boththinking-onBF16sameinputsettings;bothGLBsrepair-assisted,notrawpasses. Samecamera/lighting/normalization andresponsivepanes."
+  },
+  "benchmark_repairs_used_for_training": false
+}

@@ -1,0 +1,1 @@
+A compact brass orrery with four planet arms, a stationary base and independently turning arms. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts.

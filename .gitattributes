@@ -5,3 +5,6 @@ eval/baselines/*/*.html -whitespace
 
 # Unified-diff evidence contains required single-space blank context lines.
 eval/checkpoints/astra-200step-diagnostic/repair.patch -whitespace
+eval/baselines/babylon-bf16-20261116/repair.patch -whitespace
+eval/checkpoints/astra-thinking48-diagnostic/repair.patch -whitespace
+eval/checkpoints/astra-thinking72-diagnostic/repair.patch -whitespace

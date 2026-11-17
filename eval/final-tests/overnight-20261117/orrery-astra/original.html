@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compact Brass Orrery</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #090d16;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(350px, calc(100vw - 44px));
+      padding: 20px;
+      color: #edf2ff;
+      background: rgba(13, 18, 31, 0.82);
+      border: 1px solid rgba(218, 182, 101, 0.32);
+      border-radius: 16px;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(14px);
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: #d5a851;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.15;
+    }
+
+    .description {
+      margin: 10px 0 17px;
+      color: #aeb9ce;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 17px;
+    }
+
+    .chip {
+      padding: 5px 8px;
+      color: #d8c491;
+      background: rgba(213, 168, 81, 0.08);
+      border: 1px solid rgba(213, 168, 81, 0.18);
+      border-radius: 999px;
+      font-size: 11px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px 16px;
+      color: #211708;
+      background: linear-gradient(180deg, #e4bd68, #bd8432);
+      border: 0;
+      border-radius: 10px;
+      box-shadow: 0 7px 20px rgba(190, 132, 45, 0.24);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: transform 150ms ease, filter 150ms ease, opacity 150ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    #status {
+      min-height: 18px;
+      margin: 10px 0 0;
+      color: #91a0bb;
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 10;
+      color: rgba(220, 229, 244, 0.58);
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .description {
+        margin-bottom: 12px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <p class="eyebrow">Procedural Game Asset</p>
+    <h1>Compact Brass Orrery</h1>
+    <p class="description">
+      A low-poly celestial instrument with a stationary stepped base,
+      four independently turning planet arms, and faceted brass detailing.
+    </p>
+
+    <div class="details">
+      <span class="chip">GLB</span>
+      <span class="chip">4 animations</span>
+      <span class="chip">Y-up</span>
+      <span class="chip">Low-poly</span>
+    </div>
+
+    <button id="exportButton" type="button">Export GLB</button>
+    <p id="status" aria-live="polite">
+      Drag to orbit · Scroll to zoom
+    </p>
+  </section>
+
+  <div class="hint">Procedurally built with Three.js</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x090d16);
+    scene.fog = new THREE.Fog(0x090d16, 9, 18);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.05,
+      100
+    );
+    camera.position.set(5.6, 4.35, 6.5);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.2, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 4.2;
+    controls.maxDistance = 12;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const roomEnvironment = new RoomEnvironment();
+    scene.environment = pmrem.fromScene(roomEnvironment, 0.04).texture;
+
+    const hemisphere = new THREE.HemisphereLight(0xc7ddff, 0x30200e, 1.5);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffe0a6, 3.2);
+    keyLight.position.set(5, 8, 4);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 5;
+    keyLight.shadow.camera.bottom = -5;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.bias = -0.0003;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x7ea8ff, 2.1);
+    rimLight.position.set(-5, 4, -5);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.PointLight(0xffb45d, 13, 10, 2);
+    fillLight.position.set(-3, 2.8, 3);
+    scene.add(fillLight);
+
+    // Stage geometry is deliberately kept outside the exported asset.
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0x111827,
+        metalness: 0.08,
+        roughness: 0.9
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.012;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // -------------------------------------------------------------------------
+    // Exportable orrery
+    // -------------------------------------------------------------------------
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "CompactBrassOrrery";
+    assetRoot.userData = {
+      assetType: "Compact brass orrery",
+      units: "meters",
+      animationCount: 4,
+      description:
+        "Low-poly brass orrery with a stationary base and four independently turning planet arms."
+    };
+    scene.add(assetRoot);
+
+    const brass = new THREE.MeshStandardMaterial({
+      name: "Brushed Brass",
+      color: 0xb98636,
+      metalness: 0.78,
+      roughness: 0.3,
+      flatShading: true
+    });
+
+    const paleBrass = new THREE.MeshStandardMaterial({
+      name: "Polished Brass",
+      color: 0xd4a64c,
+      metalness: 0.82,
+      roughness: 0.24,
+      flatShading: true
+    });
+
+    const darkBrass = new THREE.MeshStandardMaterial({
+      name: "Dark Bronze",
+      color: 0x68451d,
+      metalness: 0.72,
+      roughness: 0.43,
+      flatShading: true
+    });
+
+    const insetBrass = new THREE.MeshStandardMaterial({
+      name: "Recessed Bronze",
+      color: 0x3f2b16,
+      metalness: 0.66,
+      roughness: 0.48,
+      flatShading: true
+    });
+
+    function addMesh(geometry, material, name, parent = assetRoot) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function verticalCylinder(
+      radiusTop,
+      radiusBottom,
+      height,
+      segments,
+      material,
+      name,
+      parent = assetRoot
+    ) {
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments,
+          1,
+          false
+        ),
+        material,
+        name,
+        parent
+      );
+      return mesh;
+    }
+
+    function cylinderAlongX(
+      radiusTop,
+      radiusBottom,
+      length,
+      segments,
+      material,
+      name,
+      parent
+    ) {
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          length,
+          segments,
+          1,
+          false
+        ),
+        material,
+        name,
+        parent
+      );
+      mesh.rotation.z = -Math.PI / 2;
+      return mesh;
+    }
+
+    // Stationary, stepped brass base.
+    const foot = verticalCylinder(
+      1.36, 1.52, 0.20, 12, darkBrass, "Base_Foot"
+    );
+    foot.position.y = 0.10;
+
+    const lowerPlinth = verticalCylinder(
+      1.18, 1.34, 0.28, 12, brass, "Base_LowerPlinth"
+    );
+    lowerPlinth.position.y = 0.32;
+
+    const baseBand = verticalCylinder(
+      1.13, 1.17, 0.10, 16, paleBrass, "Base_Band"
+    );
+    baseBand.position.y = 0.50;
+
+    const column = verticalCylinder(
+      0.43, 0.56, 0.76, 10, brass, "Base_Column"
+    );
+    column.position.y = 0.92;
+
+    const columnInset = verticalCylinder(
+      0.455, 0.485, 0.13, 10, insetBrass, "Base_ColumnInset"
+    );
+    columnInset.position.y = 0.91;
+
+    const upperCollar = verticalCylinder(
+      0.58, 0.58, 0.14, 12, paleBrass, "Base_UpperCollar"
+    );
+    upperCollar.position.y = 1.34;
+
+    const upperShoulder = verticalCylinder(
+      0.38, 0.52, 0.24, 10, brass, "Base_UpperShoulder"
+    );
+    upperShoulder.position.y = 1.52;
+
+    const topHub = verticalCylinder(
+      0.31, 0.39, 0.28, 12, paleBrass, "Top_Hub"
+    );
+    topHub.position.y = 1.76;
+
+    const finialBase = addMesh(
+      new THREE.ConeGeometry(0.22, 0.18, 10),
+      brass,
+      "Top_FinialBase"
+    );
+    finialBase.position.y = 2.08;
+
+    const finial = addMesh(
+      new THREE.IcosahedronGeometry(0.10, 1),
+      paleBrass,
+      "Top_Finial"
+    );
+    finial.position.y = 2.21;
+
+    const hubRing = addMesh(
+      new THREE.TorusGeometry(0.285, 0.032, 6, 16),
+      darkBrass,
+      "Hub_Ring"
+    );
+    hubRing.rotation.x = Math.PI / 2;
+    hubRing.position.y = 1.94;
+
+    // Small decorative rivets around the stationary plinth.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const rivet = addMesh(
+        new THREE.IcosahedronGeometry(0.052, 0),
+        paleBrass,
+        `Base_Rivet_${i + 1}`
+      );
+      rivet.position.set(
+        Math.cos(angle) * 1.13,
+        0.515,
+        Math.sin(angle) * 1.13
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Four independently animated planet arms
+    // -------------------------------------------------------------------------
+
+    const armPivots = [];
+    const armClips = [];
+    const yAxis = new THREE.Vector3(0, 1, 0);
+
+    function createPlanetArm(index) {
+      const pivot = new THREE.Group();
+      pivot.name = `PlanetArm_${index + 1}_Pivot`;
+      pivot.position.y = 2.03;
+      assetRoot.add(pivot);
+
+      // Root collar remains vertical while the arm rotates beneath it.
+      const rootCollar = addMesh(
+        new THREE.CylinderGeometry(0.17, 0.19, 0.22, 10),
+        insetBrass,
+        `Arm_${index + 1}_RootCollar`,
+        pivot
+      );
+      rootCollar.position.x = 0.12;
+
+      // Main tapered arm extends along local positive X.
+      const shaft = cylinderAlongX(
+        0.075,
+        0.095,
+        1.12,
+        8,
+        brass,
+        `Arm_${index + 1}_Shaft`,
+        pivot
+      );
+      shaft.position.x = 0.74;
+
+      // A darker inset band gives the low-poly shaft a manufactured detail.
+      const shaftInset = cylinderAlongX(
+        0.103,
+        0.103,
+        0.12,
+        8,
+        insetBrass,
+        `Arm_${index + 1}_ShaftInset`,
+        pivot
+      );
+      shaftInset.position.x = 0.55;
+
+      // Pale decorative collar near the planet.
+      const planetCollar = cylinderAlongX(
+        0.13,
+        0.13,
+        0.16,
+        10,
+        paleBrass,
+        `Arm_${index + 1}_PlanetCollar`,
+        pivot
+      );
+      planetCollar.position.x = 1.29;
+
+      const sleeve = cylinderAlongX(
+        0.105,
+        0.068,
+        0.18,
+        8,
+        darkBrass,
+        `Arm_${index + 1}_Sleeve`,
+        pivot
+      );
+      sleeve.position.x = 1.43;
+
+      // Faceted planet at the end of each arm.
+      const planet = addMesh(
+        new THREE.IcosahedronGeometry(0.19, 1),
+        brass,
+        `Arm_${index + 1}_Planet`,
+        pivot
+      );
+      planet.position.x = 1.66;
+
+      // Small ring surrounding the planet.
+      const planetRing = addMesh(
+        new THREE.TorusGeometry(0.215, 0.024, 6, 16),
+        paleBrass,
+        `Arm_${index + 1}_PlanetRing`,
+        pivot
+      );
+      planetRing.rotation.y = Math.PI / 2;
+      planetRing.position.x = 1.65;
+
+      armPivots.push(pivot);
+    }
+
+    for (let i = 0; i < 4; i++) {
+      createPlanetArm(i);
+    }
+
+    // Independent one-revolution cycles. The exported GLB contains all four.
+    const speeds = [1.0, 1.22, 0.9, 1.08];
+    const durations = [8.8, 10.56, 8.0, 9.55];
+
+    armPivots.forEach((pivot, index) => {
+      const phase = index * Math.PI * 0.5;
+      const angle = Math.PI * 2;
+      const times = [
+        0,
+        duration * 0.25,
+        duration * 0.5,
+        duration * 0.75,
+        duration
+      ];
+
+      const values = [];
+      const quaternion = new THREE.Quaternion();
+
+      times.forEach((time, keyIndex) => {
+        const localAngle =
+          phase + angle * (time / duration);
+
+        quaternion.setFromAxisAngle(yAxis, localAngle);
+        values.push(
+          quaternion.x,
+          quaternion.y,
+          quaternion.z,
+          quaternion.w
+        );
+      });
+
+      const clip = new THREE.AnimationClip(
+        `PlanetArm_${index + 1}_Turn`,
+        duration,
+        [
+          new THREE.QuaternionKeyframeTrack(
+            `${pivot.name}.quaternion`,
+            times,
+            values
+          )
+        ]
+      );
+
+      armClips.push(clip);
+
+      pivot.quaternion.setFromAxisAngle(yAxis, phase);
+
+      const action = new THREE.AnimationAction(clip, assetRoot);
+      action.setLoop(THREE.LoopRepeat, Infinity);
+      action.play();
+    });
+
+    const mixer = new THREE.AnimationMixer(assetRoot);
+
+    armPivots.forEach((_, index) => {
+      const action = mixer.clipAction(armClips[index]);
+      action.play();
+    });
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building binary GLB…";
+
+      assetRoot.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "compact_brass_orrery.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          exportButton.disabled = false;
+          status.textContent =
+            "Exported compact_brass_orrery.glb with four arm-turn animations.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent =
+            "Export failed. See the browser console for details.";
+        },
+        {
+          binary: true,
+          animations: armClips,
+          onlyVisible: true,
+          trs: false,
+          includeCustomExtensions: false
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Animation and render loop
+    // -------------------------------------------------------------------------
+
+    const clock = new THREE.Clock();
+
+    renderer.setAnimationLoop(() => {
+      const delta = Math.min(clock.getDelta(), 0.05);
+
+      mixer.update(delta);
+      controls.update();
+      renderer.render(scene, camera);
+    });
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>

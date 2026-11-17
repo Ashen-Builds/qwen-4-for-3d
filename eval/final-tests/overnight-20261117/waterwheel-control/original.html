@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Water Wheel</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #dce4df;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 10;
+      width: min(360px, calc(100vw - 36px));
+      padding: 18px;
+      color: #f7f4eb;
+      background: rgba(38, 45, 42, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      margin: 0 0 7px;
+      font-size: 21px;
+      letter-spacing: 0.01em;
+    }
+
+    .description {
+      margin: 0 0 15px;
+      color: #cdd5d0;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .details {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 15px;
+    }
+
+    .chip {
+      padding: 5px 8px;
+      color: #dce4de;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 5px;
+      font-size: 11px;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px 14px;
+      color: #202723;
+      background: #e3a65d;
+      border: 0;
+      border-radius: 7px;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      transition: background 150ms ease, transform 150ms ease;
+    }
+
+    button:hover {
+      background: #f1b873;
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #status {
+      min-height: 17px;
+      margin-top: 9px;
+      color: #bfc9c3;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 5;
+      padding: 8px 11px;
+      color: rgba(38, 45, 42, 0.72);
+      background: rgba(255, 255, 255, 0.62);
+      border-radius: 6px;
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 10px;
+        left: 10px;
+        width: calc(100vw - 20px);
+        padding: 14px;
+      }
+
+      .description {
+        margin-bottom: 10px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <h1>Canal Water Wheel</h1>
+    <p class="description">
+      A low-poly wooden water wheel with sixteen catch buckets, a supported
+      axle, heavy timber standards, and a block-built stone trough.
+    </p>
+
+    <div class="details">
+      <span class="chip">GLB export</span>
+      <span class="chip">8-second rotation loop</span>
+      <span class="chip">Animated GLB</span>
+    </div>
+
+    <button id="exportButton" type="button">Export GLB</button>
+    <div id="status">Previewing the water-wheel rotation.</div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Scene and renderer
+    // -------------------------------------------------------------------------
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdce4df);
+    scene.fog = new THREE.Fog(0xdce4df, 15, 32);
+
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(7.7, 5.25, 8.4);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.05, 0.2);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 5;
+    controls.maxDistance = 18;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // -------------------------------------------------------------------------
+    // Lighting and presentation ground
+    // -------------------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(0xf1f7ff, 0x66513b, 2.0);
+    scene.add(hemisphere);
+
+    const sun = new THREE.DirectionalLight(0xfff0d1, 3.4);
+    sun.position.set(6, 10, 5);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -8;
+    sun.shadow.camera.right = 8;
+    sun.shadow.camera.top = 9;
+    sun.shadow.camera.bottom = -4;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 25;
+    sun.shadow.bias = -0.00035;
+    scene.add(sun);
+
+    const fill = new THREE.DirectionalLight(0xb8d7e8, 0.8);
+    fill.position.set(-6, 4, -5);
+    scene.add(fill);
+
+    const groundMaterial = new THREE.MeshStandardMaterial({
+      color: 0x919b94,
+      roughness: 0.98,
+      metalness: 0,
+      flatShading: true
+    });
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      groundMaterial
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.035;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // A subtle construction pad makes the asset read clearly in the preview.
+    const pad = new THREE.Mesh(
+      new THREE.CylinderGeometry(4.7, 4.9, 0.09, 32),
+      new THREE.MeshStandardMaterial({
+        color: 0xa3aaa2,
+        roughness: 1,
+        flatShading: true
+      })
+    );
+    pad.position.y = -0.01;
+    pad.receiveShadow = true;
+    scene.add(pad);
+
+    // -------------------------------------------------------------------------
+    // Exported asset root
+    // -------------------------------------------------------------------------
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "CanalWaterWheelAsset";
+    scene.add(assetRoot);
+
+    // -------------------------------------------------------------------------
+    // Materials
+    // -------------------------------------------------------------------------
+
+    const materials = {
+      wood: new THREE.MeshStandardMaterial({
+        color: 0x995b30,
+        roughness: 0.82,
+        metalness: 0,
+        flatShading: true
+      }),
+      woodLight: new THREE.MeshStandardMaterial({
+        color: 0xb77942,
+        roughness: 0.78,
+        metalness: 0,
+        flatShading: true
+      }),
+      woodDark: new THREE.MeshStandardMaterial({
+        color: 0x59321f,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+      woodEnd: new THREE.MeshStandardMaterial({
+        color: 0x754326,
+        roughness: 0.88,
+        flatShading: true
+      }),
+      iron: new THREE.MeshStandardMaterial({
+        color: 0x374148,
+        roughness: 0.55,
+        metalness: 0.72,
+        flatShading: true
+      }),
+      ironLight: new THREE.MeshStandardMaterial({
+        color: 0x596369,
+        roughness: 0.48,
+        metalness: 0.68,
+        flatShading: true
+      }),
+      stone: new THREE.MeshStandardMaterial({
+        color: 0x7d847b,
+        roughness: 0.98,
+        metalness: 0,
+        flatShading: true
+      }),
+      stoneLight: new THREE.MeshStandardMaterial({
+        color: 0x96998d,
+        roughness: 0.98,
+        metalness: 0,
+        flatShading: true
+      }),
+      stoneDark: new THREE.MeshStandardMaterial({
+        color: 0x686e68,
+        roughness: 1,
+        metalness: 0,
+        flatShading: true
+      }),
+      stoneEdge: new THREE.MeshStandardMaterial({
+        color: 0x898d82,
+        roughness: 0.96,
+        metalness: 0,
+        flatShading: true
+      }),
+      interior: new THREE.MeshStandardMaterial({
+        color: 0x4d2d1b,
+        roughness: 0.96,
+        metalness: 0,
+        flatShading: true
+      })
+    };
+
+    // -------------------------------------------------------------------------
+    // Geometry helpers
+    // -------------------------------------------------------------------------
+
+    function addBox(parent, name, size, position, material, rotation = null) {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        material
+      );
+      mesh.name = name;
+      mesh.position.set(position[0], position[1], position[2]);
+
+      if (rotation) {
+        mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      }
+
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addCylinderX(
+      parent,
+      name,
+      radius,
+      length,
+      position,
+      material,
+      radialSegments = 12
+    ) {
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          radius,
+          radius,
+          length,
+          radialSegments,
+          1,
+          false
+        ),
+        material
+      );
+      mesh.name = name;
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.rotation.z = Math.PI / 2;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    const up = new THREE.Vector3(0, 1, 0);
+
+    function addBeamBetween(
+      parent,
+      name,
+      start,
+      end,
+      width,
+      depth,
+      material
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(width, length, depth),
+        material
+      );
+      mesh.name = name;
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(up, direction.normalize());
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addTorusX(
+      parent,
+      name,
+      majorRadius,
+      tubeRadius,
+      position,
+      material,
+      tubularSegments = 32
+    ) {
+      const mesh = new THREE.Mesh(
+        new THREE.TorusGeometry(
+          majorRadius,
+          tubeRadius,
+          6,
+          tubularSegments
+        ),
+        material
+      );
+      mesh.name = name;
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.rotation.y = Math.PI / 2;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    // -------------------------------------------------------------------------
+    // Main wheel dimensions
+    // -------------------------------------------------------------------------
+
+    const WHEEL_CENTER_Y = 3.35;
+    const WHEEL_RADIUS = 2.2;
+    const BUCKET_COUNT = 16;
+    const BUCKET_SPACING = (Math.PI * 2) / BUCKET_COUNT;
+
+    // The animated pivot is positioned exactly at the wheel's axle center.
+    const waterWheel = new THREE.Group();
+    waterWheel.name = "WaterWheel";
+    waterWheel.position.set(0, WHEEL_CENTER_Y, 0);
+    assetRoot.add(waterWheel);
+
+    // Heavy wooden outer rim.
+    addTorusX(
+      waterWheel,
+      "OuterWoodenRim",
+      2.17,
+      0.145,
+      [0, 0, 0],
+      materials.woodDark,
+      40
+    );
+
+    // Secondary reinforcing ring.
+    addTorusX(
+      waterWheel,
+      "InnerWoodenRim",
+      1.04,
+      0.095,
+      [0, 0, 0],
+      materials.wood,
+      32
+    );
+
+    // Central wooden hub.
+    addCylinderX(
+      waterWheel,
+      "WoodenHub",
+      0.34,
+      1.02,
+      [0, 0, 0],
+      materials.woodLight,
+      12
+    );
+
+    // Dark circular hub collars.
+    for (const side of [-1, 1]) {
+      addCylinderX(
+        waterWheel,
+        side < 0 ? "LeftHubCollar" : "RightHubCollar",
+        0.385,
+        0.12,
+        [side * 0.49, 0, 0],
+        materials.woodEnd,
+        12
+      );
+    }
+
+    // Eight radial wooden spokes.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const innerY = Math.cos(angle) * 0.31;
+      const innerZ = Math.sin(angle) * 0.31;
+      const outerY = Math.cos(angle) * 1.96;
+      const outerZ = Math.sin(angle) * 1.96;
+
+      addBeamBetween(
+        waterWheel,
+        `Spoke_${String(i).padStart(2, "0")}`,
+        [0, innerY, innerZ],
+        [0, outerY, outerZ],
+        0.14,
+        0.17,
+        i % 2 === 0 ? materials.woodLight : materials.wood
+      );
+    }
+
+    // Sixteen wooden catch buckets.
+    for (let i = 0; i < BUCKET_COUNT; i++) {
+      const angle = i * BUCKET_SPACING;
+      const bucket = new THREE.Group();
+      bucket.name = `Bucket_${String(i).padStart(2, "0")}`;
+      bucket.position.set(
+        0,
+        Math.cos(angle) * 2.33,
+        Math.sin(angle) * 2.33
+      );
+      bucket.rotation.x = angle;
+      waterWheel.add(bucket);
+
+      // Bucket floor.
+      addBox(
+        bucket,
+        `${bucket.name}_Floor`,
+        [0.69, 0.085, 0.56],
+        [0, -0.235, 0],
+        materials.woodDark
+      );
+
+      // Slightly darker interior lining.
+      addBox(
+        bucket,
+        `${bucket.name}_InteriorFloor`,
+        [0.61, 0.035, 0.48],
+        [0, -0.265, 0],
+        materials.interior
+      );
+
+      // Long side boards.
+      for (const side of [-1, 1]) {
+        addBox(
+          bucket,
+          `${bucket.name}_Side_${side}`,
+          [0.085, 0.43, 0.56],
+          [side * 0.345, -0.015, 0],
+          materials.wood
+        );
+
+        // Top rail along the bucket length.
+        addBox(
+          bucket,
+          `${bucket.name}_TopRail_${side}`,
+          [0.77, 0.075, 0.085],
+          [0, 0.205, side * 0.285],
+          materials.woodLight
+        );
+      }
+
+      // End boards.
+      for (const end of [-1, 1]) {
+        addBox(
+          bucket,
+          `${bucket.name}_End_${end}`,
+          [0.68, 0.43, 0.085],
+          [0, -0.015, end * 0.285],
+          materials.wood
+        );
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Static supported axle and timber standards
+    // -------------------------------------------------------------------------
+
+    addCylinderX(
+      assetRoot,
+      "MainAxle",
+      0.115,
+      4.65,
+      [0, WHEEL_CENTER_Y, 0],
+      materials.iron,
+      12
+    );
+
+    // Wooden bearing standards on both sides of the wheel.
+    for (const side of [-1, 1]) {
+      const supportX = side * 1.67;
+      const label = side < 0 ? "Left" : "Right";
+
+      addBox(
+        assetRoot,
+        `${label}StandardFoot`,
+        [0.64, 0.24, 1.58],
+        [supportX, 0.12, 0],
+        materials.woodDark
+      );
+
+      // Two sloping legs form each standard.
+      for (const legSide of [-1, 1]) {
+        addBeamBetween(
+          assetRoot,
+          `${label}Leg_${legSide}`,
+          [supportX, 0.24, legSide * 0.72],
+          [supportX, 3.25, legSide * 0.24],
+          0.28,
+          0.34,
+          materials.wood
+        );
+      }
+
+      // Horizontal wooden bearing block.
+      addBox(
+        assetRoot,
+        `${label}BearingBlock`,
+        [0.49, 0.63, 0.66],
+        [supportX, 3.35, 0],
+        materials.woodDark
+      );
+
+      // Bearing collar surrounding the axle.
+      addCylinderX(
+        assetRoot,
+        `${label}BearingCollar`,
+        0.285,
+        0.17,
+        [supportX + side * 0.12, WHEEL_CENTER_Y, 0],
+        materials.ironLight,
+        12
+      );
+
+      // Small iron cap at the outside of each standard.
+      addCylinderX(
+        assetRoot,
+        `${label}AxleCap`,
+        0.19,
+        0.13,
+        [supportX + side * 0.38, WHEEL_CENTER_Y, 0],
+        materials.iron,
+        10
+      );
+
+      // Lower cross brace for a sturdy, readable A-frame.
+      addBeamBetween(
+        assetRoot,
+        `${label}LowerBrace`,
+        [supportX, 0.38, -0.59],
+        [supportX, 2.77, 0.43],
+        0.16,
+        0.19,
+        materials.woodEnd
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Block-built stone trough
+    // Positioned beneath the lower-front section of the rotating wheel.
+    // -------------------------------------------------------------------------
+
+    const trough = new THREE.Group();
+    trough.name = "StoneTrough";
+    assetRoot.add(trough);
+
+    const troughZ = 1.76;
+
+    addBox(
+      trough,
+      "TroughBase",
+      [4.8, 0.18, 1.16],
+      [0, 0.12, troughZ],
+      materials.stoneDark
+    );
+
+    // Three courses of separate side stones.
+    for (let row = 0; row < 3; row++) {
+      const y = 0.31 + row * 0.225;
+
+      for (let blockIndex = 0; blockIndex < 4; blockIndex++) {
+        const x = -1.845 + blockIndex * 1.23;
+        const material =
+          row % 2 === 0
+            ? materials.stone
+            : materials.stoneLight;
+
+        const block = addBox(
+          trough,
+          `TroughSideBlock_${row}_${blockIndex}`,
+          [1.18, 0.18, 0.17],
+          [x, y, troughZ - 0.57],
+          material
+        );
+
+        block.rotation.y = (row + blockIndex) % 2 === 0 ? 0.008 : -0.006;
+      }
+    }
+
+    // Opposite side course.
+    for (let row = 0; row < 3; row++) {
+      for (let blockIndex = 0; blockIndex < 4; blockIndex++) {
+        const x = -1.845 + blockIndex * 1.23;
+        const material =
+          row % 2 === 0
+            ? materials.stoneLight
+            : materials.stone;
+
+        const block = addBox(
+          trough,
+          `TroughOppositeBlock_${row}_${blockIndex}`,
+          [1.18, 0.18, 0.17],
+          [x, 0.31 + row * 0.225, troughZ + 0.57],
+          material
+        );
+
+        block.rotation.y = (row + blockIndex) % 2 === 0 ? -0.005 : 0.008;
+      }
+    }
+
+    // End walls give the trough a clearly manufactured enclosure.
+    for (const end of [-1, 1]) {
+      addBox(
+        trough,
+        `TroughEndWall_${end}`,
+        [0.17, 0.49, 1.15],
+        [end * 2.35, 0.445, troughZ],
+        materials.stoneDark
+      );
+
+      addBox(
+        trough,
+        `TroughEndCap_${end}`,
+        [0.22, 0.10, 1.22],
+        [end * 2.36, 0.72, troughZ],
+        materials.stoneEdge
+      );
+    }
+
+    // Slightly projecting coping stones.
+    for (const side of [-1, 1]) {
+      addBox(
+        trough,
+        `TroughTopCap_${side}`,
+        [4.87, 0.10, 0.23],
+        [0, 0.765, troughZ + side * 0.59],
+        materials.stoneEdge
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Animation: one complete wheel revolution every eight seconds
+    // -------------------------------------------------------------------------
+
+    const animationDuration = 8;
+    const sampleRate = 60;
+    const sampleCount = Math.round(animationDuration * sampleRate);
+    const times = [];
+    const quaternionValues = [];
+
+    const rotationAxis = new THREE.Vector3(1, 0, 0);
+    const sampleQuaternion = new THREE.Quaternion();
+
+    for (let i = 0; i <= sampleCount; i++) {
+      const time = i / sampleRate;
+      const progress = time / animationDuration;
+      const angle = progress * Math.PI * 2;
+      const halfAngle = angle * 0.5;
+
+      // Keep neighboring quaternion values on the same interpolation hemisphere.
+      if (Math.cos(halfAngle) < 0) {
+        sampleQuaternion.set(
+          -Math.cos(halfAngle),
+          0,
+          Math.sin(halfAngle),
+          0
+        );
+      } else {
+        sampleQuaternion.set(
+          Math.cos(halfAngle),
+          0,
+          Math.sin(halfAngle),
+          0
+        );
+      }
+
+      times.push(time);
+      quaternionValues.push(
+        sampleQuaternion.x,
+        sampleQuaternion.y,
+        sampleQuaternion.z,
+        sampleQuaternion.w
+      );
+    }
+
+    const rotationTrack = new THREE.QuaternionKeyframeTrack(
+      "WaterWheel.quaternion",
+      times,
+      quaternionValues
+    );
+
+    const wheelAnimation = new THREE.AnimationClip(
+      "WaterWheelRotation",
+      animationDuration,
+      [rotationTrack]
+    );
+
+    // Preview the exact clip that gets included in the exported GLB.
+    const mixer = new THREE.AnimationMixer(assetRoot);
+    const wheelAction = mixer.clipAction(wheelAnimation);
+    wheelAction.setLoop(THREE.LoopRepeat, Infinity);
+    wheelAction.play();
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building binary GLB and embedding animation…";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "canal-water-wheel.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "Downloaded: canal-water-wheel.glb";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console for details.";
+        },
+        {
+          binary: true,
+          animations: [wheelAnimation],
+          trs: true,
+          onlyVisible: true
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Render loop and responsive resizing
+    // -------------------------------------------------------------------------
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      mixer.update(clock.getDelta());
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+  </script>
+</body>
+</html>

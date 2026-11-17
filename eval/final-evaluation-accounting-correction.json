@@ -1,0 +1,10 @@
+{
+  "scope": "Accounting metadata correction only; frozen candidate bytes/prompts/mode/sampler/order unchanged",
+  "candidate": "astra-thinking-clean-20261117/checkpoints/job-00005",
+  "candidate_sha256": "553644f2a1d85c06642484f327b657eca0cf8e7516a874ca1182ed6b9720ab66",
+  "correct_main_updates_inherited": 48,
+  "correct_length_qualification_updates_inherited": 0,
+  "correct_short_qualification_updates_inherited": 0,
+  "supersedes_field": "candidate_length_updates:3 in frozenplanv2",
+  "basis": "Firstmainjob00004 savedresume_adapter_file:null; job00005 inherits job00004 only. Qualifications were separate work. Frozenplanretainedforaudit."
+}

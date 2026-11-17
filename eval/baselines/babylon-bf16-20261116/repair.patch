@@ -1,0 +1,96 @@
+--- raw-control.html
++++ diagnostic-control.html
+@@ -678,7 +678,7 @@
+       return bridge;
+     }
+ 
+-    function createSign(name, x, y, z, width, height, background, foreground) {
++    function createSign(name, x, y, z, width, height, background, foreground, text = "") {
+       const sign = group(assetRoot, name, [x, y, z]);
+ 
+       box(
+@@ -1756,11 +1756,11 @@
+       villager.add(nose);
+ 
+       const leftArm = group(
+-        villager, `Left_Arm_Pivot`,
++        villager, `${villager.name}_Left_Arm_Pivot`,
+         [-0.31, 1.52, 0]
+       );
+       const rightArm = group(
+-        villager, `Right_Arm_Pivot`,
++        villager, `${villager.name}_Right_Arm_Pivot`,
+         [0.31, 1.52, 0]
+       );
+ 
+@@ -1862,7 +1862,7 @@
+       [-4.85, 2.5, 1]
+     ];
+ 
+-    const animatedVillagers = villagerData.map(createVillager);
++    const animatedVillagers = villagerData.map((row, index) => createVillager(index, ...row));
+ 
+     // ---------------------------------------------------------------------
+     // Floating clouds
+@@ -1899,7 +1899,7 @@
+       [-5.4, 7.3, 1.0, 0.88]
+     ];
+ 
+-    const clouds = cloudData.map(createCloud);
++    const clouds = cloudData.map((row, index) => createCloud(`Cloud_${index + 1}`, ...row));
+ 
+     // ---------------------------------------------------------------------
+     // Exportable animation clips
+@@ -1913,12 +1913,12 @@
+       );
+     }
+ 
+-    function createVillagerAnimation(villager) {
+-      const { villager, leftArm, rightArm, phase } = villager;
++    function createVillagerAnimation(villager, index) {
++      const { phase } = villager;
+       const duration = 6;
+       const offset = phase;
+       const times = [0, offset, offset + 1.0, offset + 2.1, duration];
+-      const uniqueTimes = [...new Set(times.map((value) => Number(value).toFixed(3))))].sort(
++      const uniqueTimes = [...new Set(times.map((value) => Number(value).toFixed(3)))].sort(
+         (a, b) => a - b
+       );
+ 
+@@ -2064,9 +2064,9 @@
+         const progress = time / 6;
+         const angle = phase + progress * Math.PI * 2;
+         values.push(
+-          cloud.villager.position.x + Math.cos(angle) * 0.95,
+-          cloud.villager.position.y + Math.sin(progress * Math.PI * 2 + phase) * 0.16,
+-          cloud.villager.position.z + Math.sin(angle) * 0.68
++          cloud.position.x + Math.cos(angle) * 0.95,
++          cloud.position.y + Math.sin(progress * Math.PI * 2 + phase) * 0.16,
++          cloud.position.z + Math.sin(angle) * 0.68
+         );
+       });
+ 
+@@ -2109,15 +2109,21 @@
+       animationClips.push(new THREE.AnimationClip(
+         "Water_Flow_Loop",
+         6,
+-        flowGroups.map((flow) =>
++        flowGroups.map((flow, index) =>
+           new THREE.VectorKeyframeTrack(
+             `${flow.name}.position`,
+             times,
+-            values.slice((flow.index * 3), flow.index * 3 + 3)
++            values.slice(index * times.length * 3, (index + 1) * times.length * 3)
+           )
+         ))
+       );
+     }
++
++    // Diagnostic wiring: invoke the existing authored builders; no new curves.
++    animatedVillagers.forEach(createVillagerAnimation);
++    palmNames.forEach(name => createPalmSway(assetRoot.getObjectByName(name)));
++    clouds.forEach(createCloudDrift);
++    createWaterFlow();
+ 
+     // Play all clips in the browser preview.
+     const mixer = new THREE.AnimationMixer(assetRoot);

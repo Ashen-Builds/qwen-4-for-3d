@@ -1,0 +1,198 @@
+{
+  "schema": 1,
+  "scope": "Three controller roots; external numeric work is a separate nonexhaustive lower bound.",
+  "source_ledger_sha256": "27e52bdcf713dccbad71fd335038d4a98529823827a52ec23b764ae777ebe582",
+  "totals": {
+    "completed_optimizer_updates": 574,
+    "reported_target_exposures": 5354035,
+    "corrected_real_target_exposures": 5353558,
+    "excluded_padding_labels": 477,
+    "successful_training_job_wall_seconds": 4479.215096473694,
+    "aborted_training_job_wall_seconds": 371.485347032547,
+    "reported_optimizer_timer_seconds": 3249.5428612251417,
+    "validation_timer_seconds": 954.3529256230395,
+    "peak_reported_mlx_gb": 51.26897329
+  },
+  "runs": [
+    {
+      "run": "astra-manual-20261116",
+      "totals": {
+        "completed_optimizer_updates": 65,
+        "reported_target_exposures": 517753,
+        "corrected_real_target_exposures": 517688,
+        "excluded_padding_labels": 65,
+        "successful_training_job_wall_seconds": 549.7027363777161,
+        "aborted_training_job_wall_seconds": 370.3484790325165,
+        "reported_optimizer_timer_seconds": 351.56179083680036,
+        "validation_timer_seconds": 132.30404666796676,
+        "peak_reported_mlx_gb": 51.254833898
+      },
+      "phases": {
+        "short": {
+          "completed_optimizer_updates": 20,
+          "reported_target_exposures": 1252,
+          "corrected_real_target_exposures": 1232,
+          "excluded_padding_labels": 20,
+          "successful_training_job_wall_seconds": 44.07150316238403,
+          "aborted_training_job_wall_seconds": 0,
+          "reported_optimizer_timer_seconds": 12.953759335854556,
+          "validation_timer_seconds": 1.463826748979045,
+          "peak_reported_mlx_gb": 9.249456602
+        },
+        "length": {
+          "completed_optimizer_updates": 3,
+          "reported_target_exposures": 62656,
+          "corrected_real_target_exposures": 62653,
+          "excluded_padding_labels": 3,
+          "successful_training_job_wall_seconds": 87.57693910598755,
+          "aborted_training_job_wall_seconds": 369.1929831504822,
+          "reported_optimizer_timer_seconds": 41.22653708400321,
+          "validation_timer_seconds": 37.61287245899439,
+          "peak_reported_mlx_gb": 51.254833898
+        },
+        "segment": {
+          "completed_optimizer_updates": 42,
+          "reported_target_exposures": 453845,
+          "corrected_real_target_exposures": 453803,
+          "excluded_padding_labels": 42,
+          "successful_training_job_wall_seconds": 418.0542941093445,
+          "aborted_training_job_wall_seconds": 1.1554958820343018,
+          "reported_optimizer_timer_seconds": 297.3814944169426,
+          "validation_timer_seconds": 93.22734745999333,
+          "peak_reported_mlx_gb": 46.430238498
+        }
+      }
+    },
+    {
+      "run": "astra-direct-20261116",
+      "totals": {
+        "completed_optimizer_updates": 424,
+        "reported_target_exposures": 3314259,
+        "corrected_real_target_exposures": 3313847,
+        "excluded_padding_labels": 412,
+        "successful_training_job_wall_seconds": 2469.977804660797,
+        "aborted_training_job_wall_seconds": 1.1368680000305176,
+        "reported_optimizer_timer_seconds": 1970.2882985961915,
+        "validation_timer_seconds": 378.4338042070449,
+        "peak_reported_mlx_gb": 29.900698346
+      },
+      "phases": {
+        "short": {
+          "completed_optimizer_updates": 10,
+          "reported_target_exposures": 486,
+          "corrected_real_target_exposures": 476,
+          "excluded_padding_labels": 10,
+          "successful_training_job_wall_seconds": 15.871875762939453,
+          "aborted_training_job_wall_seconds": 0,
+          "reported_optimizer_timer_seconds": 0.9276229990646243,
+          "validation_timer_seconds": 0.6306709169584792,
+          "peak_reported_mlx_gb": 8.897995958
+        },
+        "length": {
+          "completed_optimizer_updates": 3,
+          "reported_target_exposures": 30503,
+          "corrected_real_target_exposures": 30500,
+          "excluded_padding_labels": 3,
+          "successful_training_job_wall_seconds": 49.03964591026306,
+          "aborted_training_job_wall_seconds": 0,
+          "reported_optimizer_timer_seconds": 18.017813332990045,
+          "validation_timer_seconds": 9.41606299902196,
+          "peak_reported_mlx_gb": 29.900698346
+        },
+        "segment": {
+          "completed_optimizer_updates": 411,
+          "reported_target_exposures": 3283270,
+          "corrected_real_target_exposures": 3282871,
+          "excluded_padding_labels": 399,
+          "successful_training_job_wall_seconds": 2405.0662829875946,
+          "aborted_training_job_wall_seconds": 1.1368680000305176,
+          "reported_optimizer_timer_seconds": 1951.3428622641368,
+          "validation_timer_seconds": 368.38707029106445,
+          "peak_reported_mlx_gb": 29.555490706
+        }
+      }
+    },
+    {
+      "run": "astra-thinking-clean-20261117",
+      "totals": {
+        "completed_optimizer_updates": 85,
+        "reported_target_exposures": 1522023,
+        "corrected_real_target_exposures": 1522023,
+        "excluded_padding_labels": 0,
+        "successful_training_job_wall_seconds": 1459.5345554351807,
+        "aborted_training_job_wall_seconds": 0,
+        "reported_optimizer_timer_seconds": 927.6927717921499,
+        "validation_timer_seconds": 443.61507474802784,
+        "peak_reported_mlx_gb": 51.26897329
+      },
+      "phases": {
+        "short": {
+          "completed_optimizer_updates": 10,
+          "reported_target_exposures": 616,
+          "corrected_real_target_exposures": 616,
+          "excluded_padding_labels": 0,
+          "successful_training_job_wall_seconds": 15.820533037185669,
+          "aborted_training_job_wall_seconds": 0,
+          "reported_optimizer_timer_seconds": 1.0362214170454536,
+          "validation_timer_seconds": 0.5782989159633871,
+          "peak_reported_mlx_gb": 8.92992263
+        },
+        "length": {
+          "completed_optimizer_updates": 3,
+          "reported_target_exposures": 61711,
+          "corrected_real_target_exposures": 61711,
+          "excluded_padding_labels": 0,
+          "successful_training_job_wall_seconds": 80.66177320480347,
+          "aborted_training_job_wall_seconds": 0,
+          "reported_optimizer_timer_seconds": 39.09922312499839,
+          "validation_timer_seconds": 19.387684582034126,
+          "peak_reported_mlx_gb": 51.26897329
+        },
+        "segment": {
+          "completed_optimizer_updates": 72,
+          "reported_target_exposures": 1459696,
+          "corrected_real_target_exposures": 1459696,
+          "excluded_padding_labels": 0,
+          "successful_training_job_wall_seconds": 1363.0522491931915,
+          "aborted_training_job_wall_seconds": 0,
+          "reported_optimizer_timer_seconds": 887.557327250106,
+          "validation_timer_seconds": 423.6490912500303,
+          "peak_reported_mlx_gb": 47.57634737
+        }
+      }
+    }
+  ],
+  "selected_lineage": {
+    "actual_inherited_updates": 48,
+    "main_updates": 48,
+    "chain": [
+      "job-00004:24 fresh main",
+      "job-00005:24 main"
+    ],
+    "real_target_exposures_in_inherited_main_chain": 987295,
+    "separate_not_inherited": [
+      "job-00001:10 short qualification",
+      "job-00003:3 length qualification"
+    ],
+    "discarded_later_branch": [
+      "job-00007:24 additional main updates (72-main-update checkpoint)"
+    ],
+    "selected_for_final_evaluation_by_root": true,
+    "accepted_best_in_controller": false
+  },
+  "external_explicit_updates_lower_bound": 19,
+  "external_inventory_exhaustive": false,
+  "limits": [
+    "Completed controller updates are reconciled independently against contiguous train-metric rows and state totals. Every completed job used batch_size=1 and grad_accumulation_steps=1.",
+    "trained_tokens is a cumulative target-exposure counter within each job, not unique dataset tokens or raw input tokens. Never sum every cumulative metric row.",
+    "Legacy native loss uses offset<=position<=real_token_count, and padded batches add one pad label per batch in these complete nontruncated runs. Corrected real targets=reported targets-completed updates. exclusive_end_v1 already excludes padding. Total removed:477.",
+    "reported_optimizer_timer_seconds sums inverse per-report iterations_per_second (one report per update). Installed trainer excludes validation from that timer. Whole job wall time includes setup/queue/validation/checkpoint/runtime overhead and must not be labeled pure optimizer time.",
+    "result.seconds_per_step is the maximum inverse per-step rate (slowest reported step), not an average; do not multiply it by steps as actual elapsed duration.",
+    "Validation timers are included inside training-job wall time; do not add them again to that wall total. Aborted-attempt time is separate, with zero confirmed optimizer updates.",
+    "Peak MLX values are decimal GB as reported by MLX, not RSS or GiB. Aborted attempts lacking a returned peak remain unknown; zero is not proof of zero memory use.",
+    "GPU capture telemetry is nonexclusive/contaminated in these receipts; times are observed accounting telemetry, not an exclusive hardware throughput benchmark.",
+    "Controller best_checkpoint is null in all three roots. Root-selected job5 for final evaluation is not a controller acceptance or quality claim. Loss values do not establish exported-asset quality.",
+    "Ordinary qualification resets main latest_checkpoint to null. Actual saved resume_adapter_file and explicit adoption receipts override inaccurate operator prose. Existing historical notes and controllers were not modified.",
+    "External numeric probes are isolated diagnostic forks unless explicit adoption says otherwise. Final held-out generation outside the three controller roots is out of scope."
+  ]
+}

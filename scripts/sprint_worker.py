@@ -39,9 +39,10 @@ def train(repo, job, directory):
     np.random.seed(cfg['seed']);model,tokenizer=load(cfg['model'],tokenizer_config={'trust_remote_code':False},trust_remote_code=False)
     assert not model.layers[-1].is_linear and cfg['num_layers']==1
     assert cfg['fine_tune_type']=='lora' and cfg['trust_remote_code'] is False and cfg['report_to'] is None
-    if cfg.get('response_only_training'):
-        import functools
-        tokenizer.apply_chat_template=functools.partial(tokenizer.apply_chat_template,enable_thinking=False)
+    import functools
+    thinking=cfg.get('enable_thinking',not bool(cfg.get('response_only_training')))
+    if type(thinking) is not bool:raise ValueError('Thinking mode must be explicit boolean')
+    tokenizer.apply_chat_template=functools.partial(tokenizer.apply_chat_template,enable_thinking=thinking)
     args=types.SimpleNamespace(**cfg);a,b,_=load_dataset(args,tokenizer)
     from overnight_controller import atomic_json
     atomic_json(directory/'train-start.json',{'training_api_entered':True,'confirmed_steps':0})

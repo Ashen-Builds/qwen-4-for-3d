@@ -29,6 +29,8 @@ def inspect(repo):
     checks['family_split']=manifest['family_overlap']==0
     checks['all_phase_data_bound_to_manifest']=all((repo/c['data']).resolve().parent==data for c in phase_configs)
     checks['mode_matches_data']=bool(cfg.get('response_only_training'))==bool(manifest.get('response_only_training',False) or manifest.get('enable_thinking') is False)
+    thinking=cfg.get('enable_thinking',not bool(cfg.get('response_only_training')))
+    checks['explicit_template_mode_matches_data']=type(thinking) is bool and thinking==manifest.get('enable_thinking',True) and all(c.get('enable_thinking',not bool(c.get('response_only_training')))==thinking for c in phase_configs)
     checks['loss_mask_revision_consistent']=cfg.get('complete_target_mask') in {None,'exclusive_end_v1'} and all(c.get('complete_target_mask')==cfg.get('complete_target_mask') for c in phase_configs)
     if cfg.get('complete_target_mask')=='exclusive_end_v1':
         token_checks=json.loads((data/'TOKEN_CHECKS.json').read_text())['rows']

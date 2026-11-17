@@ -1,0 +1,33 @@
+{
+  "status": "diagnostic-mechanical-repairs-not-raw-success",
+  "geometry_authored_by_agent": false,
+  "new_motion_curves": false,
+  "repairs": [
+    "duplicate binding and parenthesis",
+    "map argument wiring",
+    "stable arm node names",
+    "wrong cloud object path",
+    "water track array sizes",
+    "invoke existing animation builders",
+    "Default absent sign text to empty string; do not invent label"
+  ],
+  "limitations": [
+    "Six villagers only, not sixteen",
+    "No walking paths/leg animation authored",
+    "Authored water/arm/cloud loop formulas not improved",
+    "Not training data; benchmark-derived repair retained only for diagnostics"
+  ],
+  "visual_or_runtime_verified": true,
+  "glb_bytes": 2040220,
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "clips": 13,
+  "channels": 35,
+  "observations": [
+    "Coherent multi-building market/canal composition with blue roofs and striped stalls",
+    "Six villagers; bobbing/gesturing but no authored leg walking",
+    "Cloud drift and moving water highlights survive export",
+    "Palm fronds visibly disconnected from trunk; preserved defect",
+    "Low-poly rather than strict voxel; fewer requested villagers and missing detail remain"
+  ]
+}

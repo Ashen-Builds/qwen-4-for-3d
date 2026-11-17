@@ -1,0 +1,105 @@
+{
+  "classification": "mechanically-assisted-diagnostic-not-raw-success",
+  "original_html": "original.html",
+  "original_html_sha256": "98a5ed9a504e2b7d13d150eb93a35f7effa44db1a1ee3a091d8ca161264b90df",
+  "assisted_html": "generated.html",
+  "assisted_html_sha256": "7db9587284ea977d18780c98da4ae508417979ee31fe7b572efc0381c1f7d4a1",
+  "preparation_record": {
+    "status": "cpu-prepared-animated-diagnostic-not-runtime-tested",
+    "raw_sha256": "98a5ed9a504e2b7d13d150eb93a35f7effa44db1a1ee3a091d8ca161264b90df",
+    "diagnostic_sha256": "7db9587284ea977d18780c98da4ae508417979ee31fe7b572efc0381c1f7d4a1",
+    "raw_unchanged": true,
+    "actual_syntax_defect": {
+      "raw_line": 1432,
+      "text": "function\u80fd\u5f97\u5230Path(index) {",
+      "repair": "function getPath(index) {",
+      "reason": "Malformed token is an identifier, not a function declaration. Caller already expects getPath."
+    },
+    "assistance": "function-token-and-actor-reference-wiring-with-unresolved-track-omission",
+    "edits": [
+      "Repair malformed function token to exact getPath name used by caller; path formulas unchanged.",
+      "Store references to existing actors in creation order.",
+      "Pair authored actors with their existing paths; add no actors.",
+      "Bind existing villager tracks to matching actor instead of undefined group.",
+      "Omit seven awning quaternion tracks with four values for five times; preserve all preceding range calls.",
+      "Omit three misbound palm-labelled cloud tracks; preserve all preceding range calls.",
+      "Use separate diagnostic filename.",
+      "Label success as assisted diagnostic, retaining raw failure.",
+      "Label diagnostic export button.",
+      "Correct source UI six-second claim to authored eight-second clip; mark assistance."
+    ],
+    "omitted_tracks": {
+      "awning": 7,
+      "palm_labelled_cloud_targets": 3
+    },
+    "rng_preservation": "All 30 range() draws in omitted-track loops remain in original order, preserving subsequent villager rotation generation.",
+    "preserved_defects": [
+      "Static leg/arm meshes; no leg/gait/gesture tracks",
+      "Original index-based sampler selects path indices0,0,1,1,2 across0,2,4,6,8s despite five closed route points",
+      "17 actor loops retain initial stalls and end/start path snaps",
+      "Water end reached at6s, holds until8s then resets",
+      "Cloud translations have identical start/end values; scale pulsing retained",
+      "No collision avoidance, curves, smoothing, missing keyframes or palm/awning motion invented"
+    ],
+    "counts_static_expected": {
+      "villagers": 17,
+      "leg_meshes": 34,
+      "leg_animation_tracks": 0,
+      "clip_count": 1,
+      "duration_seconds": 8,
+      "retained_tracks": 66,
+      "water_position_tracks": 22,
+      "cloud_position_and_scale_tracks": 10,
+      "villager_position_and_quaternion_tracks": 34,
+      "omitted_tracks": 10
+    },
+    "comparison_to_48_static_only": {
+      "villagers_48": 16,
+      "villagers_72": 17,
+      "leg_tracks_48": 0,
+      "leg_tracks_72": 0,
+      "path_structure_48": "Eight explicit xz pairs; five-key sampler uses0,1,2,3,4; nonclosing end/start.",
+      "path_structure_72": "Five closed Vector3 points; five-key sampler uses0,0,1,1,2; still nonclosing sampled end/start.",
+      "quality_claim": false
+    },
+    "geometry_modified": false,
+    "materials_modified": false,
+    "motion_values_or_time_formulas_modified": false,
+    "rendered": false,
+    "exported": false,
+    "glb_validated": false,
+    "model_or_gpu_launched": false,
+    "training_data_modified": false,
+    "preparation_note": "Initial writer assertion expected export button id export; actual id exportButton. No source/diagnostic files were written until corrected."
+  },
+  "subsequent_actual_browser_review": {
+    "review_epoch": 1794909360.7168,
+    "raw_syntax_pass": false,
+    "raw_export_pass": false,
+    "diagnostic_exported_and_reopened": true,
+    "bytes": 1977836,
+    "mesh_definitions": 736,
+    "nodes": 808,
+    "materials": 552,
+    "clip_count": 1,
+    "channels": 66,
+    "villagers": 17,
+    "leg_tracks": 0,
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "verdict": "Overallworse thanCCORE; no acceptedrawcheckpoint. Syntaxregressedfrom48; poorlayout/canalextent/actorpaths remain.",
+    "observed": [
+      "Sparsecomposition andfewbuildings relativeCCORE",
+      "Highlyclusteredactors; staticlegs androutepauses/snaps",
+      "Waterstripmovesoutsideplinth",
+      "Unnaturalbrightground/rockcolors"
+    ],
+    "assistance": "Function-name/actor-referencewiring and10unresolvable/malformedtracks omitted; geometry/RNGorder/curves preserved.",
+    "source_generation": {
+      "tokens": 31875,
+      "seconds": 504.13897254201584,
+      "finish_reason": "stop"
+    }
+  },
+  "benchmark_repairs_used_for_training": false
+}

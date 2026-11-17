@@ -1,0 +1,84 @@
+{
+  "scope": "ActualexportedGLBaxisorientation audit; expected local axle axes grounded in eachsource geometry/declaredaxis",
+  "times_seconds": [
+    0,
+    0.37,
+    1.17
+  ],
+  "arms": {
+    "control": {
+      "target": "WaterWheel",
+      "declared_local_axis": [
+        1,
+        0,
+        0
+      ],
+      "frames": [
+        {
+          "time": 0,
+          "world_axis": [
+            1,
+            0,
+            0
+          ],
+          "axis_drift_degrees": 0
+        },
+        {
+          "time": 0.37,
+          "world_axis": [
+            0.9580728984247994,
+            0,
+            0.2865245561970285
+          ],
+          "axis_drift_degrees": 16.650000207470892
+        },
+        {
+          "time": 1.17,
+          "world_axis": [
+            0.6066823273073997,
+            0,
+            0.7949443714706568
+          ],
+          "axis_drift_degrees": 52.6500017077932
+        }
+      ]
+    },
+    "astra": {
+      "target": "waterWheel",
+      "declared_local_axis": [
+        0,
+        0,
+        1
+      ],
+      "frames": [
+        {
+          "time": 0,
+          "world_axis": [
+            0,
+            0,
+            1
+          ],
+          "axis_drift_degrees": 0
+        },
+        {
+          "time": 0.37,
+          "world_axis": [
+            0,
+            0,
+            1
+          ],
+          "axis_drift_degrees": 0
+        },
+        {
+          "time": 1.17,
+          "world_axis": [
+            0,
+            0,
+            1
+          ],
+          "axis_drift_degrees": 0
+        }
+      ]
+    }
+  }
+}

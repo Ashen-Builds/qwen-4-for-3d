@@ -1,0 +1,26 @@
+{
+  "epoch": 1794904396.9018712,
+  "raw_syntax_pass": true,
+  "raw_runtime_pass": false,
+  "raw_failure": "undefined object.name inquaternionTrack",
+  "diagnostic_exported_and_reopened": true,
+  "bytes": 2198120,
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "mesh_definitions": 911,
+  "nodes": 1014,
+  "materials": 42,
+  "clip_count": 1,
+  "channels": 106,
+  "villagers": 16,
+  "leg_gait": false,
+  "observed": [
+    "Actors translate between0and4seconds withstaticlegs",
+    "Sparser andlesscoherentlayoutthanmatchedrepairedCCORE",
+    "Canalgeometrycollapsed/missing; straywaterpieceoutsideplinth",
+    "More visiblepeopleandpalmdetail thanearlierAstra outputs"
+  ],
+  "verdict": "Mixedchanges,butoverallnotbetter; rawruntimefailure preventsacceptance.",
+  "repair_assistance": "Mechanicalwiring/tuple/type/endpoint/trackdimensionfixes;8unresolvablesways omitted;sourcepaths/snaps/staticlegspreserved.",
+  "comparison": "Boththinking-onBF16sameinputsettings;bothGLBsrepair-assisted,notrawpasses. Samecamera/lighting/normalization andresponsivepanes."
+}

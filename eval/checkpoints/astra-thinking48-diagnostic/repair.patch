@@ -1,0 +1,158 @@
+--- pilot-48/generated.html
++++ pilot-48-diagnostic/generated.html
+@@ -3,7 +3,7 @@
+ <head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-  <title>Babylonian Marketplace — Three.js GLB Creator</title>
++  <title>Assisted animated diagnostic — Babylonian Marketplace — Three.js GLB Creator</title>
+ 
+   <style>
+     :root {
+@@ -138,7 +138,7 @@
+       A colorful low-poly town beside a turquoise canal with animated traders,
+       swaying fabric, drifting clouds, flowing water, and a living eight-second loop.
+     </p>
+-    <button id="export" type="button">Export animated GLB</button>
++    <button id="export" type="button">Export assisted animated diagnostic</button>
+     <span id="status"></span>
+   </div>
+ 
+@@ -431,6 +431,9 @@
+     }
+ 
+     function pathAt(f) {
++      // DIAGNOSTIC: wire the authored first 2D endpoint explicitly at f=0.
++      // The original 0 * (pathLength / 0) yields NaN; preserve every positive-f snap below.
++      if (f === 0) return new THREE.Vector3(pathPoints[0][0], 0, pathPoints[0][1]);
+       for (let i = 0; i < pathPoints.length - 1; i++) {
+         const t = Math.max(0, Math.min(1, f * (pathLength / i)));
+         const a = pathPoints[i];
+@@ -1312,7 +1315,7 @@
+           M.woodDark,
+           group
+         );
+-        cylinder(0.09, 0.105, 0.58, 6, M.clothMaterial, group, [side * 0.35, 1.35, 0], [0, 0, 0], `${group.name}_Arm`);
++        cylinder(0.09, 0.105, 0.58, 6, clothMaterial, group, [side * 0.35, 1.35, 0], [0, 0, 0], `${group.name}_Arm`);
+       }
+ 
+       ico(0.1, 0, M.skin, group, [0, 1.58, 0.32], [1, 1, 0.8], `${group.name}_Hand`);
+@@ -1352,13 +1355,18 @@
+     }
+ 
+     function quaternionTrack(object, times, eulerValues) {
++      // DIAGNOSTIC: callers already supply either Euler objects or a flat quaternion sequence.
+       const flattened = [];
+-
+-      for (const euler of eulerValues) {
+-        q.setFromEuler(new THREE.Euler(euler[0], euler[1], euler[2]));
+-        flattened.push(q.x, q.y, q.z, q.w);
+-      }
+-
++      if (eulerValues.length === times.length * 4 && eulerValues.every(Number.isFinite)) {
++        flattened.push(...eulerValues);
++      } else if (eulerValues.length === times.length && eulerValues.every(euler => euler?.isEuler)) {
++        for (const euler of eulerValues) {
++          q.setFromEuler(euler);
++          flattened.push(q.x, q.y, q.z, q.w);
++        }
++      } else {
++        throw new Error("Unresolved authored quaternion representation; no diagnostic defaults supplied");
++      }
+       animationTracks.push(
+         new THREE.QuaternionKeyframeTrack(`${object.name}.quaternion`, times, flattened)
+       );
+@@ -1397,47 +1405,19 @@
+       quaternionTrack(frond.object, palmTimes, values);
+     }
+ 
+-    // Awnings and shade cloth sway.
+-    for (const { object, phase } of armPhases) {
+-      const values = [];
+-      for (let i = 0; i < palmTimes.length; i++) {
+-        const wave = Math.sin((palmTimes[i] / duration) * Math.PI * 2 + phase);
+-        values.push(
+-          new THREE.Euler(
+-            0.025 + wave * 0.045,
+-            0,
+-            wave * 0.025 + phase * 0.01
+-          )
+-        );
+-      }
+-      quaternionTrack(object, palmTimes, values);
+-    }
+-
+-    for (const { object, phase } of armPhases) {
+-      const values = [];
+-      for (let i = 0; i < palmTimes.length; i++) {
+-        const wave = Math.sin((palmTimes[i] / duration) * Math.PI * 2 + phase);
+-        values.push(
+-          new THREE.Euler(
+-            0,
+-            0,
+-            phase * 0.02 + wave * 0.055
+-          )
+-        );
+-      }
+-      quaternionTrack(object, palmTimes, values);
+-    }
++    // DIAGNOSTIC OMITTED: both generic sway loops destructure numeric armPhases as {object, phase}.
++    // Their intended target mappings are not authored, so no awning/reed/arm target is invented.
+ 
+     // Villagers follow their full loopable path. The final key equals the first.
+-    for (const villager of villagerGroups) {
+-      const path = villagerPaths[villager.id];
++    for (const [villagerIndex, villager] of villagerGroups.entries()) {
++      const path = villagerPaths[villagerIndex];
+       const times = [0, 2, 4, 6, 8];
+       const positions = [];
+       const rotations = [];
+ 
+       for (let i = 0; i < times.length; i++) {
+         const point = path[i];
+-        positions.push(point.x, point.y, point.z);
++        positions.push(point[0], villager.position.y, point[1]);
+         q.setFromEuler(
+           new THREE.Euler(
+             0,
+@@ -1453,7 +1433,7 @@
+     }
+ 
+     // The selected trader raises a hand and carries a woven basket.
+-    for (const { object, phase } of armPhases) {
++    for (const { object, phase } of armPivots) {
+       const times = [0, 1, 2, 3, 4, 8];
+       const values = [];
+ 
+@@ -1503,9 +1483,10 @@
+       for (let i = 0; i < times.length; i++) {
+         const point = i === 0 ? start : pathAt(i / 0.25);
+         positions.push(point.x, point.y, point.z);
+-        scales.push(1, 1, 1, 1.035, 1, 1, 1, 1.065, 1, 1, 1, 1, 1, 1, 1);
+-      }
+-
++        // DIAGNOSTIC: the complete five-key scale sequence is wired once after this loop.
++      }
++
++      scales.push(1, 1, 1, 1.035, 1, 1, 1, 1.065, 1, 1, 1, 1, 1, 1, 1);
+       vectorTrack(tile, "position", times, positions);
+       vectorTrack(tile, "scale", times, scales);
+     }
+@@ -1550,7 +1531,7 @@
+           const url = URL.createObjectURL(blob);
+           const link = document.createElement("a");
+           link.href = url;
+-          link.download = "babylonian-marketplace.glb";
++          link.download = "astra-thinking-pilot48-animated-diagnostic.glb";
+           document.body.appendChild(link);
+           link.click();
+           link.remove();
+@@ -1558,7 +1539,7 @@
+           setTimeout(() => URL.revokeObjectURL(url), 2000);
+ 
+           exportButton.disabled = false;
+-          status.textContent = "Downloadedbabylonian-marketplace.glb";
++          status.textContent = "Downloaded assisted pilot48 animated diagnostic; raw output failed.";
+         },
+         (error) => {
+           console.error(error);

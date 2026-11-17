@@ -1,0 +1,41 @@
+{
+  "task": "orrery",
+  "arm": "control",
+  "source_repairs": 0,
+  "raw_html_sha256": "26730a6fe13af2ce821c6a626b79c29423a552079b45af7c32aa622a40647e7f",
+  "generation": {
+    "load_seconds": 1.2636751669924706,
+    "elapsed_seconds": 243.39594483401743,
+    "prompt_tokens": 154,
+    "prompt_tps": 667.6450123279528,
+    "generation_tokens": 16110,
+    "generation_tps": 66.60346091715765,
+    "peak_gb": 9.14051902,
+    "finish_reason": "stop",
+    "prompt_ids_sha256": "3e7e05be7e0072831b9a7472c1cce73fd686dab02f8e0ffa2a05d4cc95fb62fd",
+    "versions": {
+      "mlx": "0.32.4",
+      "mlx-lm": "0.32.2",
+      "transformers": "5.23.0"
+    },
+    "complete_html": true
+  },
+  "actual_browser_review": {
+    "raw_export": true,
+    "validator_errors": 0,
+    "clips": 0,
+    "motion": "Missingallrequestedarmanimations; staticexport"
+  },
+  "glb_present": true,
+  "glb_sha256": "efd541810fcd45bce9a608b0decef529ab7c59685095b96791c9efee42e2c3b4",
+  "validation": {
+    "bytes": 248472,
+    "errors": 0,
+    "warnings": 0,
+    "meshes": 71,
+    "nodes": 76,
+    "materials": 4,
+    "animations": [],
+    "extensionsUsed": []
+  }
+}

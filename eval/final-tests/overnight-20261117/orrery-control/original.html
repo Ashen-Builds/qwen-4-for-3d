@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compact Brass Orrery</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #09111b;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(360px, calc(100vw - 44px));
+      padding: 20px;
+      border: 1px solid rgba(217, 177, 91, 0.28);
+      border-radius: 16px;
+      background: rgba(10, 18, 29, 0.82);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(14px);
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: #d6ad59;
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #f5ead5;
+      font-size: 25px;
+      font-weight: 680;
+      letter-spacing: -0.025em;
+    }
+
+    .description {
+      margin: 9px 0 17px;
+      color: #aeb9c8;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .button-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #exportButton {
+      appearance: none;
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 17px;
+      color: #201609;
+      background: linear-gradient(180deg, #e8c474, #bd8734);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        0 5px 16px rgba(190, 130, 46, 0.23);
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    #exportButton:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.07);
+    }
+
+    #exportButton:active {
+      transform: translateY(0);
+    }
+
+    #exportButton:disabled {
+      cursor: wait;
+      filter: grayscale(0.25);
+      opacity: 0.7;
+    }
+
+    #status {
+      color: #91a1b4;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 5;
+      padding: 8px 11px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 8px;
+      color: rgba(214, 224, 235, 0.65);
+      background: rgba(8, 15, 24, 0.5);
+      font-size: 11px;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 21px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <p class="eyebrow">Procedural Godot Asset</p>
+    <h1>Compact Brass Orrery</h1>
+    <p class="description">
+      A low-poly celestial instrument with a layered bronze base,
+      compact compass housing, and four independently animated planet arms.
+    </p>
+
+    <div class="button-row">
+      <button id="exportButton" type="button">Export GLB</button>
+      <span id="status">Ready · four separate arm animations</span>
+    </div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    // ------------------------------------------------------------
+    // Renderer, camera, and presentation
+    // ------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x09111b);
+    scene.fog = new THREE.Fog(0x09111b, 9, 18);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.05,
+      100
+    );
+    camera.position.set(4.35, 3.15, 5.25);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.02, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 3.0;
+    controls.maxDistance = 9.0;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const roomEnvironment = new RoomEnvironment();
+    const environmentTarget = pmremGenerator.fromScene(roomEnvironment, 0.04);
+    scene.environment = environmentTarget.texture;
+    scene.environmentIntensity = 0.72;
+    pmremGenerator.dispose();
+
+    scene.add(new THREE.HemisphereLight(0xc9ddff, 0x332316, 1.65));
+
+    const keyLight = new THREE.DirectionalLight(0xffe6b0, 3.8);
+    keyLight.position.set(4.5, 7.0, 5.0);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 4;
+    keyLight.shadow.camera.bottom = -4;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 15;
+    keyLight.shadow.bias = -0.00035;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x7faeff, 1.45);
+    fillLight.position.set(-5, 3.5, -4);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffb85c, 1.15);
+    rimLight.position.set(0, 3, -5);
+    scene.add(rimLight);
+
+    // Presentation-only floor. It is intentionally not exported.
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0x0d1723,
+        roughness: 0.94,
+        metalness: 0.05
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.012;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // ------------------------------------------------------------
+    // Exportable asset
+    // ------------------------------------------------------------
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "CompactBrassOrrery";
+    scene.add(assetRoot);
+
+    const brass = new THREE.MeshStandardMaterial({
+      color: 0xb98532,
+      metalness: 0.82,
+      roughness: 0.31,
+      flatShading: true
+    });
+
+    const polishedBrass = new THREE.MeshStandardMaterial({
+      color: 0xd4aa55,
+      metalness: 0.78,
+      roughness: 0.25,
+      flatShading: true
+    });
+
+    const darkBronze = new THREE.MeshStandardMaterial({
+      color: 0x493727,
+      metalness: 0.72,
+      roughness: 0.48,
+      flatShading: true
+    });
+
+    const patina = new THREE.MeshStandardMaterial({
+      color: 0x24514c,
+      metalness: 0.34,
+      roughness: 0.62,
+      flatShading: true
+    });
+
+    function addMesh(parent, geometry, material, name, position, rotation) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.set(...position);
+      if (rotation) mesh.rotation.set(...rotation);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Stationary base
+    // ------------------------------------------------------------
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.78, 0.88, 0.14, 12),
+      darkBronze,
+      "Base_Foot",
+      [0, 0.07, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.72, 0.79, 0.16, 12),
+      brass,
+      "Base_Lower_Band",
+      [0, 0.21, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.64, 0.73, 0.28, 10),
+      brass,
+      "Base_Main_Block",
+      [0, 0.41, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.57, 0.64, 0.10, 10),
+      darkBronze,
+      "Base_Upper_Collar",
+      [0, 0.59, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.55, 0.58, 0.12, 10),
+      polishedBrass,
+      "Base_Top_Cap",
+      [0, 0.69, 0]
+    );
+
+    // Small base rivets.
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      addMesh(
+        assetRoot,
+        new THREE.CylinderGeometry(0.032, 0.032, 0.022, 8),
+        polishedBrass,
+        `Base_Rivet_${i + 1}`,
+        [Math.cos(angle) * 0.52, 0.654, Math.sin(angle) * 0.52]
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Central pedestal and compass housing
+    // ------------------------------------------------------------
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.20, 0.27, 0.44, 8),
+      brass,
+      "Pedestal_Stem",
+      [0, 0.94, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.31, 0.31, 0.10, 10),
+      polishedBrass,
+      "Pedestal_Collar",
+      [0, 1.17, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.17, 0.22, 0.46, 8),
+      darkBronze,
+      "Compass_Column",
+      [0, 1.47, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.28, 0.18, 0.14, 10),
+      brass,
+      "Compass_Housing_Cap",
+      [0, 1.76, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.CylinderGeometry(0.25, 0.25, 0.18, 12),
+      polishedBrass,
+      "Arm_Hub",
+      [0, 1.64, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.TorusGeometry(0.39, 0.045, 6, 24),
+      brass,
+      "Compass_Ring",
+      [0, 1.64, 0],
+      [Math.PI / 2, 0, 0]
+    );
+
+    // Individual ring teeth.
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      addMesh(
+        assetRoot,
+        new THREE.BoxGeometry(0.105, 0.065, 0.052),
+        polishedBrass,
+        `Compass_Tooth_${i + 1}`,
+        [Math.cos(angle) * 0.39, 1.66, Math.sin(angle) * 0.39],
+        [0, -angle, 0]
+      );
+    }
+
+    // Central compass needle.
+    addMesh(
+      assetRoot,
+      new THREE.ConeGeometry(0.068, 0.25, 4),
+      darkBronze,
+      "Compass_Needle",
+      [0, 2.02, 0],
+      [0, Math.PI / 4, 0]
+    );
+
+    addMesh(
+      assetRoot,
+      new THREE.TorusGeometry(0.082, 0.018, 5, 12),
+      polishedBrass,
+      "Compass_Needle_Ring",
+      [0, 1.91, 0],
+      [Math.PI / 2, 0, 0]
+    );
+
+    // ------------------------------------------------------------
+    // Four independently animated planet arms
+    // ------------------------------------------------------------
+
+    const animationClips = [];
+    const yAxis = new THREE.Vector3(0, 1, 0);
+    const pivots = [];
+
+    function createArmClip(pivot, phase, direction, name) {
+      const sampleCount = 9;
+      const times = [];
+      const values = [];
+      let previous = null;
+
+      for (let i = 0; i < sampleCount; i++) {
+        const progress = i / (sampleCount - 1);
+        const angle = phase + direction * Math.PI * 2 * progress;
+        const quaternion = new THREE.Quaternion().setFromAxisAngle(yAxis, angle);
+
+        // Keep quaternion signs continuous for a clean low-poly turn.
+        if (previous && quaternion.dot(previous) < 0) {
+          quaternion.set(
+            -quaternion.x,
+            -quaternion.y,
+            -quaternion.z,
+            -quaternion.w
+          );
+        }
+
+        times.push(progress * 8.0);
+        values.push(
+          quaternion.x,
+          quaternion.y,
+          quaternion.z,
+          quaternion.w
+        );
+        previous = quaternion.clone();
+      }
+
+      const track = new THREE.QuaternionKeyframeTrack(
+        `${pivot.name}.quaternion`,
+        times,
+        values
+      );
+
+      const clip = new THREE.AnimationClip(name, 8.0, [track]);
+      animationClips.push(clip);
+      pivots.push(pivot);
+    }
+
+    for (let i = 0; i < 4; i++) {
+      const pivot = new THREE.Group();
+      pivot.name = `Arm_${i + 1}_Pivot`;
+      pivot.position.set(0, 1.64, 0);
+      pivot.rotation.y = (i / 4) * Math.PI * 2;
+      assetRoot.add(pivot);
+
+      // Main low-poly structural beam.
+      addMesh(
+        pivot,
+        new THREE.BoxGeometry(1.25, 0.095, 0.105),
+        darkBronze,
+        `Arm_${i + 1}_Structural_Beam`,
+        [0.67, 0, 0]
+      );
+
+      // Bright upper rail.
+      addMesh(
+        pivot,
+        new THREE.BoxGeometry(1.04, 0.026, 0.042),
+        polishedBrass,
+        `Arm_${i + 1}_Upper_Rail`,
+        [0.68, 0.066, 0]
+      );
+
+      // Reinforcing band around the arm.
+      addMesh(
+        pivot,
+        new THREE.BoxGeometry(0.075, 0.13, 0.14),
+        brass,
+        `Arm_${i + 1}_Reinforcing_Band`,
+        [0.43, 0.005, 0]
+      );
+
+      // Circular collar around the beam.
+      addMesh(
+        pivot,
+        new THREE.TorusGeometry(0.092, 0.019, 5, 14),
+        polishedBrass,
+        `Arm_${i + 1}_Beam_Collar`,
+        [0.54, 0, 0],
+        [0, Math.PI / 2, 0]
+      );
+
+      // Bearing housing at the planet support point.
+      addMesh(
+        pivot,
+        new THREE.CylinderGeometry(0.105, 0.105, 0.22, 8),
+        brass,
+        `Arm_${i + 1}_Bearing_Housing`,
+        [1.31, 0.015, 0],
+        [0, 0, Math.PI / 2]
+      );
+
+      // Small pointed end cap.
+      addMesh(
+        pivot,
+        new THREE.ConeGeometry(0.055, 0.12, 6),
+        polishedBrass,
+        `Arm_${i + 1}_End_Cap`,
+        [1.77, 0.015, 0],
+        [0, 0, -Math.PI / 2]
+      );
+
+      // Low-poly planet body.
+      addMesh(
+        pivot,
+        new THREE.IcosahedronGeometry(0.20, 1),
+        patina,
+        `Planet_${i + 1}_Body`,
+        [1.54, 0.19, 0]
+      );
+
+      // Three brass meridian bands around each planet.
+      addMesh(
+        pivot,
+        new THREE.TorusGeometry(0.202, 0.014, 4, 20),
+        polishedBrass,
+        `Planet_${i + 1}_Band_A`,
+        [1.54, 0.19, 0]
+      );
+
+      addMesh(
+        pivot,
+        new THREE.TorusGeometry(0.202, 0.014, 4, 20),
+        polishedBrass,
+        `Planet_${i + 1}_Band_B`,
+        [1.54, 0.19, 0],
+        [0, Math.PI / 2, 0]
+      );
+
+      addMesh(
+        pivot,
+        new THREE.TorusGeometry(0.202, 0.014, 4, 20),
+        polishedBrass,
+        `Planet_${i + 1}_Band_C`,
+        [1.54, 0.19, 0],
+        [Math.PI / 2, 0, 0]
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Independent animation preview
+    // ------------------------------------------------------------
+
+    const mixer = new THREE.AnimationMixer(assetRoot);
+
+    animationClips.forEach((clip, index) => {
+      const action = mixer.clipAction(clip);
+      action.setLoop(THREE.LoopRepeat, Infinity);
+      action.play();
+    });
+
+    mixer.setTime(0);
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = Math.min(clock.getDelta(), 0.05);
+      mixer.update(delta);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // ------------------------------------------------------------
+    // GLB export, including all four arm animations
+    // ------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building binary GLB…";
+
+      // Export a clean neutral starting pose while retaining the
+      // animation clips inside the GLB.
+      mixer.setTime(0);
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          const data =
+            result instanceof ArrayBuffer
+              ? result
+              : new TextEncoder().encode(result);
+
+          const blob = new Blob([data], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "compact_brass_orrery.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+          exportButton.disabled = false;
+          status.textContent = "Downloaded · animations included";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed — see console";
+        },
+        {
+          binary: true,
+          animations: animationClips,
+          onlyVisible: true,
+          truncateDrawRange: true
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Resize handling
+    // ------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+  </script>
+</body>
+</html>

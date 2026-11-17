@@ -1,0 +1,8 @@
+{
+  "actual_browser_observed": true,
+  "error": "ReferenceError: duration is not defined",
+  "raw_source_line": 579,
+  "served_source_line": 585,
+  "export_listener_registration_reached": false,
+  "source_repairs": 0
+}

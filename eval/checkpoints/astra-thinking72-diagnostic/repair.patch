@@ -1,0 +1,102 @@
+--- pilot-72/generated.html
++++ pilot-72-diagnostic/generated.html
+@@ -3,7 +3,7 @@
+ <head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-  <title>Bustling Babylonian Marketplace</title>
++  <title>Assisted animated diagnostic — Bustling Babylonian Marketplace</title>
+ 
+   <style>
+     * {
+@@ -167,8 +167,8 @@
+       animated market travelers.
+     </p>
+     <div class="button-row">
+-      <button id="exportButton" type="button">Export GLB</button>
+-      <span id="status">Ready · animated 6-second loop</span>
++      <button id="exportButton" type="button">Export assisted animated diagnostic</button>
++      <span id="status">Assisted diagnostic · authored 8-second clip · raw failed</span>
+     </div>
+   </section>
+ 
+@@ -1428,8 +1428,9 @@
+     // -------------------------------------------------------------------------
+ 
+     const villagerPaths = [];
+-
+-    function能得到Path(index) {
++    const villagerGroups = [];
++
++    function getPath(index) {
+       const angle = index * 2.399963;
+       const sin = Math.sin(angle);
+       const cos = Math.cos(angle);
+@@ -1670,6 +1671,7 @@
+       }
+ 
+       villagerPaths.push(getPath(index));
++      villagerGroups.push(group);
+       return group;
+     }
+ 
+@@ -1810,13 +1812,9 @@
+ 
+       const animatedQuaternion = base.clone().multiply(sway);
+ 
+-      lifeClip.tracks.push(
+-        new THREE.QuaternionKeyframeTrack(
+-          `${panel.name}.quaternion`,
+-          animationTimes,
+-          animatedQuaternion.toArray()
+-        )
+-      );
++      // DIAGNOSTIC OMITTED: one quaternion supplied for five key times.
++      // Preserve original calculations and random draws above; invent no missing keys.
++
+     }
+ 
+     // Palms sway in the breeze.
+@@ -1831,20 +1829,15 @@
+         )
+       );
+ 
+-      const animatedQuaternion = sway.multiply(base);
+-
+-      lifeClip.tracks.push(
+-        new THREE.QuaternionKeyframeTrack(
+-          `${palm.name}.quaternion`,
+-          [0, 2, 4, 6, 8],
+-          animatedQuaternion.toArray()
+-        )
+-      );
++      // DIAGNOSTIC OMITTED: palm-labelled loop selects clouds lacking baseQuaternion.
++      // Preserve original range calls above; invent no palm targets, base rotations or keys.
++
+     }
+ 
+     // Each traveler follows a small looping route.
+     for (let i = 0; i < villagerPaths.length; i++) {
+       const path = villagerPaths[i];
++      const group = villagerGroups[i];
+       const values = [];
+       const quaternions = [];
+ 
+@@ -1948,7 +1941,7 @@
+           const url = URL.createObjectURL(blob);
+           const link = document.createElement("a");
+           link.href = url;
+-          link.download = "bustling_babylonian_marketplace.glb";
++          link.download = "astra-thinking-pilot72-animated-diagnostic.glb";
+           document.body.appendChild(link);
+           link.click();
+           link.remove();
+@@ -1956,7 +1949,7 @@
+           setTimeout(() => URL.revokeObjectURL(url), 1500);
+ 
+           const size = (blob.size / 1024).toFixed(1);
+-          status.textContent = `Exported · ${size} KB · animation included`;
++          status.textContent = `Assisted diagnostic · ${size} KB · raw syntax failed`;
+           exportButton.disabled = false;
+         },
+         (error) => {

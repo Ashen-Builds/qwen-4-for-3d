@@ -10,8 +10,17 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 - Both original checkpoints were downloaded and hash-verified. Official Qwen original/Q8 copies were subsequently deleted at the owner’s request (18.44 GB logical bytes); CCORE stays available. [Acquisition receipt](configs/download-receipt.json), [removal receipt](configs/official-model-removal.json).
 - Comparison completed on M3 Ultra: both raw outputs failed. Separately labeled repaired GLBs load side by side; CCORE is visually richer but misses walking/full-town requirements. [Results and limitations](docs/comparison-results.md). These are historical repaired diagnostics.
 - First comparison: a detailed animated voxel Babylon-inspired marketplace, using identical prompts and conditions for CCORE, upstream Qwen and later our own adapter.
-- An owner-authorized overnight experiment is active on Studio, with a fixed November17 07:42:39 EST stop. Live training/reload/length qualification passed. The initial42-step adapter produced incomplete showcase/probe responses; it is retained as a failed approach. A separately declared direct-code variant is training with stricter data exclusions and matched no-thinking controls. **No improved Astra asset has been demonstrated yet.** [Live experiment record](docs/overnight-run-20261116.md).
-- Source/data archives are complete through the direct Codex Drive connector. The earlier48-hour proposal is historical; the active manual run is capped at11hours. [Archive verification](configs/archive-verification.json), [current data variant](configs/direct-code-adoption.json).
+- The November 16–17 overnight experiment has stopped. **Astra did not improve the Babylon marketplace.** The selected 48-update adapter improved one raw waterwheel's rotation axis, but failed the raw orrery export. These two single-seed tests do not establish general improvement. [Final report](docs/overnight-final-20261117.md).
+- Actual GLBs, raw failures, repair patches, screenshots and accounting are retained. The earlier 48-hour proposal and active-run notes are historical; no further training is scheduled. New checkpoints stay private. [Final evidence](eval/results/overnight-20261117.json), [historical archive verification](configs/archive-verification.json).
+
+Reopen the final comparison after installing the pinned dependencies:
+
+```sh
+python3 scripts/build_final_review.py --out ../outputs/astra-final
+python3 scripts/serve_comparison.py --directory ../outputs/astra-final --port 8767
+```
+
+Open `http://localhost:8767/final-review/`. The four selections include the matched BF16 Babylon diagnostics, the original CCORE reference, and both raw final tests. The viewer starts paused and renders on demand; playback is capped at 30 fps. Babylon's GLBs are explicitly repair-assisted, and the missing Astra orrery is displayed as a failure. These are browser checks, not game-engine import certification.
 
 ## Pipeline
 

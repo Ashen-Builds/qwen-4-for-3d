@@ -1,0 +1,42 @@
+[
+  {
+    "file": "README.md",
+    "bytes": 1139,
+    "sha256": "59e573c5e914ff0967f7dd1c5fbc63403d2eb0d73e9dc7088acd25a10d12678c"
+  },
+  {
+    "file": "asset.glb",
+    "bytes": 2040220,
+    "sha256": "a635240e35f8cd8564082bb2182cf4cb609f63e46a37bcaffe906e0866d3705f"
+  },
+  {
+    "file": "asset.glb.validation.json",
+    "bytes": 151667,
+    "sha256": "8b0fdedd766c1da5e8856ac7c704c617c4e686617f2cce83414dd0b7a99ea7f7"
+  },
+  {
+    "file": "generated.html",
+    "bytes": 57533,
+    "sha256": "f29cd03724f1a71e222daa293888e50e6e33d50f9f3307b7319f2e1d8b28df80"
+  },
+  {
+    "file": "generated.syntax.json",
+    "bytes": 280,
+    "sha256": "aaca81e7afcd49d472c45d7db8ca0f4f81cf82d74739b1da0b876b1c44e806d7"
+  },
+  {
+    "file": "original.html",
+    "bytes": 57156,
+    "sha256": "b18da5ad8312106d1658be3ea737b24c83348f3e477e5f2086559e81891edb69"
+  },
+  {
+    "file": "provenance.json",
+    "bytes": 1226,
+    "sha256": "22b4e5660be0cff78649d0190d16205b426504e4e5a3b59198d6f8d6d86b9113"
+  },
+  {
+    "file": "repair.patch",
+    "bytes": 3384,
+    "sha256": "19ff39b4b7f77468882e41317f69e1a17f5c7aeb78b53262ce9240259996b1f8"
+  }
+]

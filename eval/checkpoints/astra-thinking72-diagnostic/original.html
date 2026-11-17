@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bustling Babylonian Marketplace</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #b9dfe0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      width: min(370px, calc(100vw - 40px));
+      padding: 18px 18px 16px;
+      color: #173c40;
+      background: rgba(255, 248, 224, 0.9);
+      border: 1px solid rgba(30, 83, 88, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 12px 35px rgba(24, 65, 70, 0.18);
+      backdrop-filter: blur(12px);
+      user-select: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 5px;
+      color: #287a78;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+    }
+
+    .description {
+      margin: 9px 0 14px;
+      color: #527075;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .button-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 16px;
+      color: white;
+      background: #287a78;
+      box-shadow: 0 5px 14px rgba(25, 91, 91, 0.25);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 150ms ease, background 150ms ease, opacity 150ms ease;
+    }
+
+    button:hover {
+      background: #1e6664;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #status {
+      color: #5a7478;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 10;
+      padding: 7px 10px;
+      color: rgba(26, 67, 71, 0.72);
+      background: rgba(255, 248, 224, 0.68);
+      border-radius: 8px;
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      .description {
+        margin-bottom: 10px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <div class="eyebrow">Procedural Godot Asset</div>
+    <h1>Bustling Babylonian Marketplace</h1>
+    <p class="description">
+      A colorful low-poly river town with mud-brick stalls, a turquoise animated
+      channel, a stone arch, distant temple, date palms, reed boats, and
+      animated market travelers.
+    </p>
+    <div class="button-row">
+      <button id="exportButton" type="button">Export GLB</button>
+      <span id="status">Ready · animated 6-second loop</span>
+    </div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const viewport = document.querySelector("#viewport");
+    const exportButton = document.querySelector("#exportButton");
+    const status = document.querySelector("#status");
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xb9dfe0);
+    scene.fog = new THREE.Fog(0xb9dfe0, 27, 48);
+
+    const camera = new THREE.PerspectiveCamera(
+      36,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(13.5, 9.5, 15.5);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(-0.2, 1.45, -0.2);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 9;
+    controls.maxDistance = 30;
+    controls.maxPolarAngle = Math.PI * 0.48;
+    controls.update();
+
+    const hemisphere = new THREE.HemisphereLight(0xdff8ff, 0x8d6745, 2.15);
+    scene.add(hemisphere);
+
+    const sun = new THREE.DirectionalLight(0xffe1ad, 3.4);
+    sun.position.set(-8, 15, 9);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -14;
+    sun.shadow.camera.right = 14;
+    sun.shadow.camera.top = 14;
+    sun.shadow.camera.bottom = -14;
+    sun.shadow.camera.near = 0.5;
+    sun.shadow.camera.far = 38;
+    sun.shadow.bias = -0.00035;
+    scene.add(sun);
+
+    const fill = new THREE.DirectionalLight(0x8dd8e0, 0.75);
+    fill.position.set(9, 7, -9);
+    scene.add(fill);
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "BustlingAncientMarketplace";
+    scene.add(assetRoot);
+
+    // -------------------------------------------------------------------------
+    // Deterministic helpers
+    // -------------------------------------------------------------------------
+
+    let seed = 73921;
+
+    function random() {
+      seed |= 0;
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    }
+
+    function range(min, max) {
+      return min + (max - min) * random();
+    }
+
+    function pick(array) {
+      return array[Math.floor(random() * array.length)];
+    }
+
+    function makeMaterial(color, options = {}) {
+      return new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.84,
+        metalness: 0,
+        flatShading: true,
+        ...options
+      });
+    }
+
+    function addMesh(geometry, material, parent = assetRoot, name = "") {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function box(w, h, d, material, x, y, z, parent = assetRoot, name = "") {
+      const mesh = addMesh(
+        new THREE.BoxGeometry(w, h, d),
+        material,
+        parent,
+        name
+      );
+      mesh.position.set(x, y, z);
+      return mesh;
+    }
+
+    function cylinder(
+      radiusTop,
+      radiusBottom,
+      height,
+      material,
+      x,
+      y,
+      z,
+      parent = assetRoot,
+      segments = 8,
+      name = ""
+    ) {
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments,
+          1,
+          false
+        ),
+        material,
+        parent,
+        name
+      );
+      mesh.position.set(x, y, z);
+      return mesh;
+    }
+
+    function cylinderBetween(a, b, radiusTop, radiusBottom, material, parent, name) {
+      const direction = new THREE.Vector3().subVectors(b, a);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          length,
+          7,
+          1,
+          false
+        ),
+        material,
+        parent,
+        name
+      );
+
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    function stoneMaterial() {
+      return pick([
+        makeMaterial(0xc98e52),
+        makeMaterial(0xd5a263),
+        makeMaterial(0xbd8149),
+        makeMaterial(0xe0aa6b),
+        makeMaterial(0xca9152)
+      ]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Ground island and water
+    // -------------------------------------------------------------------------
+
+    const ground = addMesh(
+      new THREE.CylinderGeometry(9.35, 9.8, 1.15, 12),
+      makeMaterial(0xd4a460),
+      assetRoot,
+      "FacetedSandIsland"
+    );
+    ground.position.y = -0.575;
+    ground.scale.z = 0.78;
+    ground.castShadow = false;
+
+    // Irregular sand patches.
+    for (let i = 0; i < 20; i++) {
+      const patch = addMesh(
+        new THREE.CylinderGeometry(
+          range(0.25, 0.8),
+          range(0.3, 0.9),
+          0.025,
+          6
+        ),
+        makeMaterial(range(0xc99456, 0xdfb471)),
+        assetRoot,
+        `SandPatch_${i}`
+      );
+
+      patch.position.set(
+        range(-7.5, 7.5),
+        0.012,
+        range(-6.4, 6.4)
+      );
+      patch.scale.y = range(0.65, 1.15);
+      patch.rotation.y = random() * Math.PI;
+      patch.castShadow = false;
+    }
+
+    // Dark river banks.
+    box(0.22, 0.12, 14.5, makeMaterial(0x8d6744), 4.55, 0.09, 0, assetRoot, "LeftBank");
+    box(0.22, 0.12, 14.5, makeMaterial(0x8d6744), 5.75, 0.09, 0, assetRoot, "RightBank");
+
+    // Flowing water strips.
+    const waterFlows = [];
+
+    for (let i = 0; i < 22; i++) {
+      const flow = box(
+        range(0.52, 0.78),
+        0.055,
+        14,
+        makeMaterial(range(0x2e9eb4, 0x48b7bd), {
+          roughness: 0.3,
+          metalness: 0.05
+        }),
+        5.15,
+        0.17,
+        -7 + i * 0.64,
+        assetRoot,
+        `WaterFlow_${i}`
+      );
+
+      flow.castShadow = false;
+
+      const streak = box(
+        range(0.025, 0.07),
+        0.018,
+        range(0.5, 1.35),
+        makeMaterial(0xcff8ef, { roughness: 0.4 }),
+        range(-0.12, 0.12),
+        0.035,
+        range(-4, 4),
+        flow,
+        `WaterStreak_${i}`
+      );
+      streak.castShadow = false;
+      waterFlows.push(flow);
+    }
+
+    // Rocks along the waterline.
+    for (let i = 0; i < 18; i++) {
+      const rock = addMesh(
+        new THREE.DodecahedronGeometry(range(0.18, 0.42), 0),
+        makeMaterial(range(0x78938a, 0x91aa9e)),
+        assetRoot,
+        `BankRock_${i}`
+      );
+
+      rock.position.set(
+        range(4.1, 5.0),
+        0.13,
+        range(-7.4, 7.4)
+      );
+      rock.scale.set(range(0.8, 1.5), range(0.55, 0.95), range(0.8, 1.4));
+      rock.rotation.set(random(), random(), random());
+    }
+
+    // -------------------------------------------------------------------------
+    // Main mud-brick market building
+    // -------------------------------------------------------------------------
+
+    function addBlockWall(cx, cz, width, height, depth, parent = assetRoot) {
+      box(
+        width,
+        height,
+        0.18,
+        makeMaterial(0x8f5d35),
+        cx,
+        height * 0.5,
+        cz - 0.1,
+        parent,
+        "MortarBacking"
+      );
+
+      const rowHeight = 0.56;
+      const rowStep = 0.59;
+      const columns = 6;
+      const blockWidth = width / columns - 0.035;
+
+      for (let row = 0; row < Math.ceil(height / rowHeight); row++) {
+        const y = 0.285 + row * rowStep;
+
+        for (let column = 0; column < columns; column++) {
+          box(
+            blockWidth,
+            rowHeight - 0.035,
+            0.37,
+            stoneMaterial(),
+            cx - width * 0.5 + blockWidth * (column + 0.5),
+            y,
+            cz - 0.08,
+            parent,
+            `BackStone_${row}_${column}`
+          );
+        }
+
+        for (const side of [-1, 1]) {
+          const sideDepth = depth - 0.34;
+
+          for (let column = 0; column < Math.ceil(sideDepth / 0.66); column++) {
+            box(
+              0.37,
+              rowHeight - 0.035,
+              sideDepth / Math.max(1, column + 1),
+              stoneMaterial(),
+              cx + side * (width * 0.5 - 0.18),
+              y,
+              cz + sideDepth * 0.5 - 0.17,
+              parent,
+              `SideStone_${side}_${row}_${column}`
+            );
+          }
+        }
+      }
+
+      return { cx, cz, width, depth };
+    }
+
+    const building = addBlockWall(-2.8, -0.1, 4.6, 2.7, 2.7);
+    building.cx += building.cx || 0;
+    building.cz += building.cz || 0;
+    building.width += building.width || 0;
+    building.depth += building.depth || 0;
+
+    // Front wall sections leave a broad market doorway.
+    const frontZ = building.cz + building.depth * 0.5 - 0.18;
+
+    box(
+      1.5,
+      2.7,
+      0.35,
+      stoneMaterial(),
+      building.cx - 1.75,
+      1.35,
+      frontZ,
+      assetRoot,
+      "FrontWallLeft"
+    );
+
+    box(
+      0.15,
+      2.7,
+      0.35,
+      stoneMaterial(),
+      building.cx + 1.75,
+      1.35,
+      frontZ,
+      assetRoot,
+      "FrontWallRight"
+    );
+
+    // Dark recessed doorway and timber lintel.
+    box(
+      1.6,
+      2.05,
+      0.08,
+      makeMaterial(0x38291f),
+      -2.8,
+      1.08,
+      frontZ + 0.16,
+      assetRoot,
+      "MarketDoor"
+    );
+
+    box(
+      1.85,
+      0.18,
+      0.14,
+      makeMaterial(0x65402a),
+      -2.8,
+      2.14,
+      frontZ + 0.18,
+      assetRoot,
+      "DoorLintel"
+    );
+
+    // Stepped roof terraces.
+    box(
+      5.02,
+      0.19,
+      3.08,
+      makeMaterial(0x287a78),
+      building.cx,
+      2.73,
+      -0.1,
+      assetRoot,
+      "RoofLower"
+    );
+
+    box(
+      4.72,
+      0.18,
+      2.8,
+      makeMaterial(0xd78a35),
+      building.cx,
+      2.91,
+      -0.1,
+      assetRoot,
+      "RoofMiddle"
+    );
+
+    box(
+      4.38,
+      0.16,
+      2.5,
+      makeMaterial(0x356f69),
+      building.cx,
+      3.08,
+      -0.1,
+      assetRoot,
+      "RoofUpper"
+    );
+
+    box(
+      4.58,
+      0.11,
+      2.66,
+      makeMaterial(0xe0a65d),
+      building.cx,
+      2.83,
+      -0.1,
+      assetRoot,
+      "RoofGoldTrim"
+    );
+
+    // -------------------------------------------------------------------------
+    // Colorful awning
+    // -------------------------------------------------------------------------
+
+    const awning = new THREE.Group();
+    awning.name = "MarketAwning";
+    awning.position.set(-2.8, 2.55, 1.25);
+    awning.rotation.x = 0.2;
+    assetRoot.add(awning);
+
+    const awningMaterials = [
+      makeMaterial(0xd95b45),
+      makeMaterial(0xe8c56e),
+      makeMaterial(0x367f9d),
+      makeMaterial(0xc44b38),
+      makeMaterial(0xf0d69b),
+      makeMaterial(0x527f55),
+      makeMaterial(0xdf7449)
+    ];
+
+    const awningPanels = [];
+
+    for (let i = 0; i < 7; i++) {
+      const panel = box(
+        0.58,
+        0.065,
+        1.65,
+        awningMaterials[i],
+        (i - 3) * 0.58,
+        0,
+        0.78,
+        awning,
+        `AwningPanel_${i}`
+      );
+
+      const valance = box(
+        0.58,
+        0.34,
+        0.055,
+        awningMaterials[i],
+        (i - 3) * 0.58,
+        -0.17,
+        1.58,
+        awning,
+        `AwningValance_${i}`
+      );
+
+      panel.userData.baseQuaternion = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(0.2, 0, 0)
+      );
+
+      awningPanels.push(panel);
+      awning.add(panel, valance);
+    }
+
+    // Awning supports.
+    for (const x of [-4.92, -0.68]) {
+      cylinder(
+        0.09,
+        0.11,
+        2.45,
+        makeMaterial(0x5d3925),
+        x,
+        1.22,
+        1.46,
+        assetRoot,
+        7,
+        "AwningPost"
+      );
+
+      cylinderBetween(
+        new THREE.Vector3(x, 2.43, 1.46),
+        new THREE.Vector3(x, 2.25, 2.02),
+        0.045,
+        0.045,
+        makeMaterial(0x6c4329),
+        assetRoot,
+        "AwningBrace"
+      );
+    }
+
+    cylinderBetween(
+      new THREE.Vector3(-5.02, 2.42, 1.47),
+      new THREE.Vector3(-0.58, 2.42, 1.47),
+      0.065,
+      0.065,
+      makeMaterial(0x65402a),
+      assetRoot,
+      "AwningCrossbar"
+    );
+
+    // Geometric sign texture.
+    function makeSignTexture(text, background, foreground) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 128;
+
+      const context = canvas.getContext("2d");
+      context.fillStyle = background;
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.strokeStyle = foreground;
+      context.lineWidth = 8;
+      context.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+
+      context.fillStyle = foreground;
+      context.font = "900 62px Georgia, serif";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText(text, canvas.width * 0.5, canvas.height * 0.52);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      return texture;
+    }
+
+    const marketSign = addMesh(
+      new THREE.PlaneGeometry(2.35, 0.59),
+      new THREE.MeshStandardMaterial({
+        map: makeSignTexture("MARKET", "#e9bd69", "#234b4d"),
+        roughness: 0.9,
+        side: THREE.DoubleSide
+      }),
+      assetRoot,
+      "MarketSign"
+    );
+    marketSign.position.set(-2.8, 3.31, 1.34);
+    marketSign.castShadow = false;
+
+    // Hanging lanterns.
+    for (const x of [-4.72, -0.88]) {
+      cylinder(
+        0.035,
+        0.035,
+        0.38,
+        makeMaterial(0x4d3424),
+        x,
+        2.0,
+        1.82,
+        assetRoot,
+        6,
+        "LanternHanger"
+      );
+
+      box(
+        0.24,
+        0.32,
+        0.24,
+        makeMaterial(0xffc95c, {
+          emissive: 0xff9d28,
+          emissiveIntensity: 0.65,
+          roughness: 0.45
+        }),
+        x,
+        1.78,
+        1.82,
+        assetRoot,
+        "WarmLantern"
+      );
+
+      cylinder(
+        0.12,
+        0.12,
+        0.08,
+        makeMaterial(0x35585b),
+        x,
+        1.99,
+        1.82,
+        assetRoot,
+        6,
+        "LanternCap"
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Market goods: crates, baskets, pottery, sacks and scale
+    // -------------------------------------------------------------------------
+
+    function makeCrate(x, y, z, scale = 1) {
+      const group = new THREE.Group();
+      group.name = "WovenCrate";
+      group.position.set(x, y, z);
+      group.scale.setScalar(scale);
+      assetRoot.add(group);
+
+      box(0.72, 0.5, 0.58, makeMaterial(0x9c6336), 0, 0.25, 0, group);
+
+      for (const side of [-1, 1]) {
+        box(
+          0.07,
+          0.55,
+          0.62,
+          makeMaterial(0xc18a4d),
+          side * 0.35,
+          0.25,
+          0,
+          group
+        );
+
+        box(
+          0.76,
+          0.07,
+          0.62,
+          makeMaterial(0xc18a4d),
+          0,
+          0.48,
+          0,
+          group
+        );
+      }
+
+      for (const zSide of [-1, 1]) {
+        box(
+          0.76,
+          0.07,
+          0.07,
+          makeMaterial(0xc18a4d),
+          0,
+          0.25,
+          zSide * 0.3,
+          group
+        );
+      }
+
+      return group;
+    }
+
+    function makeBasket(x, y, z, fruitMaterial = makeMaterial(0xe6a33b)) {
+      const group = new THREE.Group();
+      group.name = "DateBasket";
+      group.position.set(x, y, z);
+      assetRoot.add(group);
+
+      const basket = addMesh(
+        new THREE.CylinderGeometry(0.38, 0.29, 0.36, 10, 1, true),
+        makeMaterial(0x9c6336),
+        group,
+        "BasketBody"
+      );
+      basket.position.y = 0.18;
+
+      for (const height of [0.08, 0.2, 0.32]) {
+        const ring = addMesh(
+          new THREE.TorusGeometry(0.31 + height * 0.22, 0.025, 4, 10),
+          makeMaterial(0xc18a4d),
+          group,
+          "BasketBand"
+        );
+        ring.rotation.x = Math.PI * 0.5;
+        ring.position.y = height;
+      }
+
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const fruit = addMesh(
+          new THREE.IcosahedronGeometry(0.11, 0),
+          fruitMaterial,
+          group,
+          "DateFruit"
+        );
+        fruit.position.set(
+          Math.cos(angle) * 0.17,
+          0.39,
+          Math.sin(angle) * 0.17
+        );
+        fruit.scale.y = 1.25;
+      }
+
+      return group;
+    }
+
+    function makePot(x, y, z, scale = 1, material = makeMaterial(0xd95b45)) {
+      const group = new THREE.Group();
+      group.name = "CeramicPot";
+      group.position.set(x, y, z);
+      group.scale.setScalar(scale);
+      assetRoot.add(group);
+
+      const profile = [
+        new THREE.Vector2(0.16, 0),
+        new THREE.Vector2(0.25, 0.08),
+        new THREE.Vector2(0.33, 0.25),
+        new THREE.Vector2(0.37, 0.43),
+        new THREE.Vector2(0.31, 0.56),
+        new THREE.Vector2(0.23, 0.59),
+        new THREE.Vector2(0.21, 0.53),
+        new THREE.Vector2(0.16, 0.28),
+        new THREE.Vector2(0.13, 0.1),
+        new THREE.Vector2(0, 0.1)
+      ];
+
+      addMesh(
+        new THREE.LatheGeometry(profile, 10),
+        material,
+        group,
+        "PotBody"
+      );
+
+      return group;
+    }
+
+    function makeSack(x, y, z, scale = 1) {
+      const group = new THREE.Group();
+      group.name = "GrainSack";
+      group.position.set(x, y, z);
+      group.scale.setScalar(scale);
+      assetRoot.add(group);
+
+      const body = addMesh(
+        new THREE.SphereGeometry(0.35, 8, 6),
+        makeMaterial(0xb98b54),
+        group,
+        "SackBody"
+      );
+      body.scale.set(0.82, 1.15, 0.78);
+      body.position.y = 0.34;
+
+      cylinder(
+        0.1,
+        0.16,
+        0.2,
+        makeMaterial(0x8c643b),
+        0,
+        0.72,
+        0,
+        group,
+        7,
+        "SackTie"
+      );
+
+      const tiedTop = addMesh(
+        new THREE.TorusGeometry(0.11, 0.025, 4, 8),
+        makeMaterial(0x6f472b),
+        group,
+        "SackTieRope"
+      );
+      tiedTop.rotation.x = Math.PI * 0.5;
+      tiedTop.position.y = 0.75;
+
+      return group;
+    }
+
+    function makeScale(x, y, z) {
+      const group = new THREE.Group();
+      group.name = "MarketScale";
+      group.position.set(x, y, z);
+      assetRoot.add(group);
+
+      cylinder(0.045, 0.06, 1.05, makeMaterial(0x46676a), 0, 0.53, 0, group, 6);
+
+      cylinderBetween(
+        new THREE.Vector3(-0.62, 0.96, 0),
+        new THREE.Vector3(0.62, 0.96, 0),
+        0.025,
+        0.025,
+        makeMaterial(0xb88738),
+        group,
+        "ScaleBeam"
+      );
+
+      for (const side of [-1, 1]) {
+        const pan = box(
+          0.28,
+          0.07,
+          0.25,
+          makeMaterial(0xc46d36),
+          side * 0.62,
+          0.96,
+          0,
+          group
+        );
+        pan.rotation.z = side * 0.08;
+
+        cylinder(
+          0.035,
+          0.035,
+          0.3,
+          makeMaterial(0x46676a),
+          side * 0.62,
+          1.12,
+          0,
+          group,
+          6
+        );
+      }
+
+      return group;
+    }
+
+    makeCrate(-3.85, 0.03, 1.58, 0.95);
+    makeBasket(-1.72, 0.03, 1.56, makeMaterial(0xe1a13d));
+    makeBasket(-2.32, 0.03, 1.58, makeMaterial(0xc95545));
+    makePot(-0.72, 0.03, 1.56, 0.8, makeMaterial(0xc84d3d));
+    makePot(-0.28, 0.03, 1.56, 0.62, makeMaterial(0xe2c46e));
+    makeSack(-0.42, 0.03, 1.57, 0.8);
+    makeScale(-2.78, 0.03, 1.62);
+
+    // A few copper pieces on the counter.
+    for (let i = 0; i < 4; i++) {
+      const copper = addMesh(
+        new THREE.CylinderGeometry(0.11, 0.13, 0.07, 8),
+        makeMaterial(0xb86b35, { metalness: 0.55, roughness: 0.42 }),
+        assetRoot,
+        "CopperIngot"
+      );
+      copper.position.set(-0.05 + i * 0.12, 0.12, 1.35 + (i % 2) * 0.18);
+      copper.rotation.z = range(-0.15, 0.15);
+    }
+
+    // -------------------------------------------------------------------------
+    // Stone arch and planked bridge
+    // -------------------------------------------------------------------------
+
+    const bridge = new THREE.Group();
+    bridge.name = "ArchedCanalBridge";
+    assetRoot.add(bridge);
+
+    const bridgeCenterX = 5.15;
+
+    const arch = addMesh(
+      new THREE.TorusGeometry(2.35, 0.23, 5, 18, Math.PI),
+      makeMaterial(0xc99152),
+      bridge,
+      "StoneArch"
+    );
+    arch.position.set(bridgeCenterX, 0.28, 0);
+
+    // Individual voussoir stones around the arch.
+    for (let i = 0; i < 9; i++) {
+      const angle = (i / 8) * Math.PI;
+      const stone = box(
+        0.48,
+        0.39,
+        0.63,
+        stoneMaterial(),
+        bridgeCenterX + Math.cos(angle) * 2.35,
+        0.28 + Math.sin(angle) * 2.35,
+        0,
+        bridge
+      );
+      stone.rotation.z = angle;
+    }
+
+    // Vertical pier supports.
+    for (const x of [2.55, 7.75]) {
+      box(
+        0.55,
+        0.75,
+        1.55,
+        makeMaterial(0xa9733f),
+        x,
+        0.38,
+        0,
+        bridge,
+        "BridgePier"
+      );
+    }
+
+    // Deck boards run across the channel.
+    for (let i = 0; i < 6; i++) {
+      box(
+        5.45,
+        0.14,
+        0.27,
+        stoneMaterial(),
+        bridgeCenterX,
+        0.31,
+        -0.58 + i * 0.25,
+        bridge,
+        "BridgePlank"
+      );
+    }
+
+    // Railings.
+    for (const z of [-0.78, 0.78]) {
+      for (const x of [2.75, 4.3, 5.9, 7.55]) {
+        cylinder(
+          0.045,
+          0.055,
+          0.83,
+          makeMaterial(0x6d452b),
+          x,
+          0.75,
+          z,
+          bridge,
+          6,
+          "BridgePost"
+        );
+      }
+
+      cylinderBetween(
+        new THREE.Vector3(2.75, 1.14, z),
+        new THREE.Vector3(7.55, 1.14, z),
+        0.055,
+        0.055,
+        makeMaterial(0x6d452b),
+        bridge,
+        "BridgeRail"
+      );
+    }
+
+    // Hanging bridge scale.
+    cylinder(0.035, 0.035, 0.7, makeMaterial(0x4b6668), 5.15, 0.72, 0.95, bridge, 6);
+    box(0.28, 0.07, 0.25, makeMaterial(0xc66d35), 5.15, 1.08, 0.95, bridge);
+
+    // -------------------------------------------------------------------------
+    // Distant stepped temple
+    // -------------------------------------------------------------------------
+
+    const temple = new THREE.Group();
+    temple.name = "DistantSteppedTemple";
+    assetRoot.add(temple);
+
+    const templeX = -1.05;
+    const templeZ = -6.15;
+
+    box(2.7, 0.24, 1.25, makeMaterial(0xb9824d), templeX, 0.12, templeZ + 0.35, temple);
+    box(2.35, 0.24, 1.0, makeMaterial(0xc99152), templeX, 0.36, templeZ + 0.2, temple);
+    box(2.02, 0.24, 0.78, makeMaterial(0xdfaa63), templeX, 0.60, templeZ + 0.08, temple);
+
+    box(
+      1.42,
+      1.35,
+      0.82,
+      makeMaterial(0xe0b46b),
+      templeX,
+      1.34,
+      templeZ - 0.12,
+      temple,
+      "TempleBody"
+    );
+
+    for (const x of [templeX - 0.69, templeX + 0.69]) {
+      box(
+        0.13,
+        1.45,
+        0.94,
+        makeMaterial(0x367f9d),
+        x,
+        1.36,
+        templeZ - 0.12,
+        temple
+      );
+    }
+
+    const templeRoof = addMesh(
+      new THREE.ConeGeometry(1.28, 0.85, 4),
+      makeMaterial(0x367f9d),
+      temple,
+      "TempleRoof"
+    );
+    templeRoof.position.set(templeX, 2.47, templeZ - 0.12);
+    templeRoof.rotation.y = Math.PI * 0.25;
+    templeRoof.scale.z = 0.8;
+
+    // Small temple lantern.
+    cylinder(0.03, 0.03, 0.45, makeMaterial(0x4b3426), templeX, 2.9, templeZ + 0.28, temple, 6);
+    box(0.2, 0.28, 0.2, makeMaterial(0xffc75b, {
+      emissive: 0xff9d28,
+      emissiveIntensity: 0.7
+    }), templeX, 2.66, templeZ + 0.28, temple);
+
+    // -------------------------------------------------------------------------
+    // Date palms
+    // -------------------------------------------------------------------------
+
+    function makeFrondGeometry() {
+      const geometry = new THREE.BufferGeometry();
+
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute([
+          0, 0, 0,
+          -0.46, 0.02, 0.88,
+          0, -0.30, 2.0,
+          0.46, 0.02, 0.88,
+          0, 0.15, 0.88
+        ], 3)
+      );
+
+      geometry.setIndex([
+        0, 1, 4,
+        1, 2, 4,
+        2, 3, 4,
+        3, 0, 4
+      ]);
+
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    const frondGeometry = makeFrondGeometry();
+
+    function createPalm(x, z, height, lean = 0.45) {
+      const group = new THREE.Group();
+      group.name = " DatePalm";
+      group.position.set(x, 0, z);
+      assetRoot.add(group);
+
+      const points = [
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(lean * 0.12, height * 0.2, 0.04),
+        new THREE.Vector3(lean * 0.3, height * 0.43, 0.08),
+        new THREE.Vector3(lean * 0.62, height * 0.7, 0.1),
+        new THREE.Vector3(lean, height, 0.1)
+      ];
+
+      for (let i = 0; i < points.length - 1; i++) {
+        cylinderBetween(
+          points[i],
+          points[i + 1],
+          0.14 - i * 0.018,
+          0.20 - i * 0.018,
+          makeMaterial(i % 2 ? 0x8c5b35 : 0xa57342),
+          group,
+          "PalmTrunkSegment"
+        );
+      }
+
+      const crown = new THREE.Group();
+      crown.name = "PalmCrown";
+      crown.position.copy(points[points.length - 1]);
+      group.add(crown);
+
+      const frondColors = [
+        makeMaterial(0x367f55),
+        makeMaterial(0x468b58),
+        makeMaterial(0x2f7250),
+        makeMaterial(0x57985c)
+      ];
+
+      for (let i = 0; i < 8; i++) {
+        const frond = addMesh(
+          frondGeometry,
+          frondColors[i % frondColors.length],
+          crown,
+          "PalmFrond"
+        );
+        frond.rotation.y = (i / 8) * Math.PI * 2 + range(-0.15, 0.15);
+        frond.rotation.x = range(0.05, 0.16);
+        frond.scale.setScalar(range(0.85, 1.12));
+      }
+
+      for (let i = 0; i < 3; i++) {
+        const coconut = addMesh(
+          new THREE.IcosahedronGeometry(0.15, 0),
+          makeMaterial(0x795034),
+          crown,
+          "Coconut"
+        );
+        coconut.position.set(
+          range(-0.2, 0.2),
+          -0.15,
+          range(-0.2, 0.2)
+        );
+      }
+
+      return group;
+    }
+
+    createPalm(-5.85, -3.65, 3.85, 0.65);
+    createPalm(-0.25, -4.65, 3.45, -0.4);
+    createPalm(8.05, 3.35, 3.7, 0.5);
+    createPalm(8.0, -2.65, 3.35, -0.55);
+
+    // -------------------------------------------------------------------------
+    // Reed clusters along the water
+    // -------------------------------------------------------------------------
+
+    function createReeds(x, z, scale = 1) {
+      const group = new THREE.Group();
+      group.name = "ReedCluster";
+      group.position.set(x, 0.05, z);
+      group.scale.setScalar(scale);
+      assetRoot.add(group);
+
+      for (let i = 0; i < 6; i++) {
+        const height = range(0.85, 1.45);
+        const offsetX = range(-0.22, 0.22);
+        const offsetZ = range(-0.22, 0.22);
+
+        cylinderBetween(
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(offsetX, height, offsetZ),
+          0.025,
+          0.045,
+          makeMaterial(0x6d8d43),
+          group,
+          "ReedStalk"
+        );
+
+        const leaf = addMesh(
+          new THREE.ConeGeometry(0.11, 0.48, 4),
+          makeMaterial(0x78964a),
+          group,
+          "ReedLeaf"
+        );
+        leaf.position.set(offsetX * 0.7, height * 0.62, offsetZ * 0.7);
+        leaf.rotation.z = offsetX * 0.8;
+        leaf.rotation.x = offsetZ * 0.6;
+      }
+
+      return group;
+    }
+
+    [
+      [4.0, -5.7, 0.9],
+      [6.15, -4.7, 0.85],
+      [4.0, -2.2, 0.95],
+      [6.1, 0.6, 0.8],
+      [4.0, 2.9, 0.9],
+      [6.15, 5.3, 0.85],
+      [4.0, 6.7, 0.9],
+      [6.1, 7.1, 0.75]
+    ].forEach(([x, z, scale]) => createReeds(x, z, scale));
+
+    // -------------------------------------------------------------------------
+    // Small reed-powered boats
+    // -------------------------------------------------------------------------
+
+    function createBoat(x, z, colorMaterial = makeMaterial(0x9b5c32)) {
+      const group = new THREE.Group();
+      group.name = "ReedBoat";
+      group.position.set(x, 0.32, z);
+      group.rotation.y = range(-0.16, 0.16);
+      assetRoot.add(group);
+
+      const hullGeometry = new THREE.ConeGeometry(0.38, 1.55, 6, 1, true);
+      hullGeometry.rotateX(Math.PI * 0.5);
+
+      const hull = addMesh(
+        hullGeometry,
+        colorMaterial,
+        group,
+        "BoatHull"
+      );
+      hull.scale.set(1.35, 1, 0.75);
+
+      box(
+        0.56,
+        0.07,
+        1.03,
+        makeMaterial(0x6f452b),
+        0,
+        0.23,
+        0,
+        group,
+        "BoatDeck"
+      );
+
+      for (const zSeat of [-0.28, 0.28]) {
+        box(
+          0.56,
+          0.08,
+          0.14,
+          makeMaterial(0xb98a52),
+          0,
+          0.34,
+          zSeat,
+          group,
+          "BoatSeat"
+        );
+      }
+
+      cylinder(
+        0.045,
+        0.045,
+        0.85,
+        makeMaterial(0x74452b),
+        -0.18,
+        0.68,
+        0,
+        group,
+        6,
+        "OarHandle"
+      );
+
+      cylinderBetween(
+        new THREE.Vector3(-0.18, 0.92, 0),
+        new THREE.Vector3(0.25, 0.42, 0.2),
+        0.025,
+        0.025,
+        makeMaterial(0x74452b),
+        group,
+        "OarShaft"
+      );
+
+      return group;
+    }
+
+    createBoat(5.13, 3.72, makeMaterial(0x9b5c32));
+    createBoat(5.18, -3.55, makeMaterial(0xbb6b38));
+
+    // -------------------------------------------------------------------------
+    // Animated market villagers
+    // -------------------------------------------------------------------------
+
+    const villagerPaths = [];
+
+    function能得到Path(index) {
+      const angle = index * 2.399963;
+      const sin = Math.sin(angle);
+      const cos = Math.cos(angle);
+
+      return [
+        new THREE.Vector3(-2.8 + 1.25 * sin, 0, 3.05 + 0.35 * cos),
+        new THREE.Vector3(-5.75 + 0.45 * sin, 0, 1.05 + 0.65 * cos),
+        new THREE.Vector3(-5.55 + 0.35 * sin, 0, -1.1 + 0.55 * cos),
+        new THREE.Vector3(-0.7 + 0.3 * sin, 0, -2.65 - 0.3 * cos),
+        new THREE.Vector3(-2.8 + 1.25 * sin, 0, 3.05 + 0.35 * cos)
+      ];
+    }
+
+    function createVillager(index) {
+      const group = new THREE.Group();
+      group.name = `Village_${String(index).padStart(2, "0")}`;
+      assetRoot.add(group);
+
+      const color = makeMaterial(
+        index % 5 === 0
+          ? 0xb96e43
+          : index % 3 === 0
+            ? 0x9f6540
+            : 0xc98252
+      );
+
+      const shirt = makeMaterial(
+        index % 4 === 0
+          ? 0x367f9d
+          : index % 2 === 0
+            ? 0xd8862f
+            : 0xc44b38
+      );
+
+      const skin = makeMaterial(0xc98252);
+      const hair = makeMaterial(0x3a261c);
+      const dark = makeMaterial(0x293638);
+      const straw = makeMaterial(0xd8b064);
+      const copper = makeMaterial(0xb86b36, { metalness: 0.45 });
+
+      // Legs.
+      for (const side of [-1, 1]) {
+        const leg = box(
+          0.16,
+          0.65,
+          0.18,
+          dark,
+          side * 0.16,
+          0.34,
+          0,
+          group,
+          "VillagerLeg"
+        );
+        leg.rotation.z = side * 0.035;
+      }
+
+      // Torso and neck.
+      cylinder(
+        0.23,
+        0.29,
+        0.75,
+        shirt,
+        0,
+        1.08,
+        0,
+        group,
+        7,
+        "VillagerTorso"
+      );
+
+      cylinder(
+        0.09,
+        0.1,
+        0.15,
+        skin,
+        0,
+        1.5,
+        0,
+        group,
+        7,
+        "VillagerNeck"
+      );
+
+      // Head and face.
+      const head = addMesh(
+        new THREE.SphereGeometry(0.23, 8, 6),
+        skin,
+        group,
+        "VillagerHead"
+      );
+      head.position.y = 1.72;
+
+      const nose = addMesh(
+        new THREE.SphereGeometry(0.055, 6, 4),
+        skin,
+        group,
+        "VillagerNose"
+      );
+      nose.position.set(0, 1.7, 0.225);
+
+      for (const side of [-1, 1]) {
+        const eye = addMesh(
+          new THREE.SphereGeometry(0.027, 6, 4),
+          dark,
+          group,
+          "VillagerEye"
+        );
+        eye.position.set(side * 0.078, 1.76, 0.215);
+        eye.castShadow = false;
+      }
+
+      // Hair and beard.
+      const hairCap = addMesh(
+        new THREE.SphereGeometry(0.235, 8, 5, 0, Math.PI * 2, 0, Math.PI * 0.48),
+        hair,
+        group,
+        "VillagerHair"
+      );
+      hairCap.position.y = 1.75;
+
+      if (index % 3 !== 1) {
+        const beard = addMesh(
+          new THREE.ConeGeometry(0.15, 0.31, 6),
+          hair,
+          group,
+          "VillagerBeard"
+        );
+        beard.position.set(0, 1.52, 0.19);
+        beard.rotation.z = Math.PI;
+      }
+
+      // Woven sun hat.
+      cylinder(
+        0.36,
+        0.36,
+        0.055,
+        straw,
+        0,
+        1.87,
+        0,
+        group,
+        10,
+        "WovenHatBrim"
+      );
+
+      cylinder(
+        0.21,
+        0.27,
+        0.25,
+        makeMaterial(0xd6a55d),
+        0,
+        2.02,
+        0,
+        group,
+        8,
+        "WovenHatCrown"
+      );
+
+      // Arms.
+      cylinderBetween(
+        new THREE.Vector3(-0.22, 1.35, 0),
+        new THREE.Vector3(-0.38, 1.05, 0.08),
+        0.075,
+        0.065,
+        shirt,
+        group,
+        "VillagerArm"
+      );
+
+      cylinderBetween(
+        new THREE.Vector3(0.22, 1.35, 0),
+        new THREE.Vector3(0.38, 1.05, 0.08),
+        0.075,
+        0.065,
+        shirt,
+        group,
+        "VillagerArm"
+      );
+
+      const hand = new THREE.Vector3(0.39, 1.04, 0.08);
+
+      if (index % 4 === 0) {
+        // Trade bundle carried by alternating travelers.
+        const bundle = new THREE.Group();
+        bundle.name = "TradeBundle";
+        bundle.position.copy(hand);
+        bundle.rotation.z = -0.08;
+        group.add(bundle);
+
+        for (let i = 0; i < 3; i++) {
+          const bundleStem = cylinder(
+            0.025,
+            0.03,
+            0.48,
+            straw,
+            (i - 1) * 0.065,
+            0.23,
+            0,
+            bundle,
+            6,
+            "BundleStem"
+          );
+          bundleStem.rotation.z = (i - 1) * 0.12;
+        }
+
+        const bundleTie = addMesh(
+          new THREE.TorusGeometry(0.15, 0.025, 4, 8),
+          makeMaterial(0x9b6337),
+          bundle,
+          "BundleTie"
+        );
+        bundleTie.rotation.x = Math.PI * 0.5;
+        bundleTie.position.y = 0.12;
+      } else {
+        // Open gesture, perhaps welcoming a newcomer.
+        const handMesh = addMesh(
+          new THREE.SphereGeometry(0.09, 6, 5),
+          skin,
+          group,
+          "VillagerHand"
+        );
+        handMesh.position.copy(hand);
+      }
+
+      // Small trousers and sandals.
+      for (const side of [-1, 1]) {
+        box(
+          0.25,
+          0.18,
+          0.34,
+          makeMaterial(0x77523a),
+          side * 0.16,
+          0.08,
+          0.08,
+          group,
+          "VillagerSandal"
+        );
+      }
+
+      villagerPaths.push(getPath(index));
+      return group;
+    }
+
+    for (let i = 0; i < 17; i++) {
+      createVillager(i);
+    }
+
+    // -------------------------------------------------------------------------
+    // Floating low-poly clouds
+    // -------------------------------------------------------------------------
+
+    const cloudAnimations = [];
+    const cloudPositions = [
+      [-5.9, 7.15, -2.0],
+      [-0.2, 8.25, -4.8],
+      [4.3, 6.85, -6.7],
+      [6.6, 7.55, -0.5],
+      [-6.3, 6.15, 4.8]
+    ];
+
+    const cloudGroups = [];
+
+    for (let i = 0; i < cloudPositions.length; i++) {
+      const group = new THREE.Group();
+      group.name = `Cloud_${i}`;
+      group.position.set(...cloudPositions[i]);
+      assetRoot.add(group);
+
+      const cloudMaterial = makeMaterial(0xf4fbf4, {
+        roughness: 1,
+        emissive: 0xffffff,
+        emissiveIntensity: 0.08
+      });
+
+      const offsets = [
+        [-0.35, 0, 0],
+        [0.1, 0.12, 0.05],
+        [0.42, -0.05, -0.08]
+      ];
+
+      offsets.forEach((offset, j) => {
+        const puff = addMesh(
+          new THREE.IcosahedronGeometry(j === 1 ? 0.42 : 0.29, 1),
+          cloudMaterial,
+          group,
+          "CloudPuff"
+        );
+        puff.position.set(...offset);
+        puff.scale.set(1.25, 0.72, 0.9);
+        puff.castShadow = false;
+      });
+
+      cloudGroups.push(group);
+      cloudAnimations.push({
+        object: group,
+        start: group.position.clone(),
+        end: group.position.clone(),
+        phase: i * 0.7
+      });
+    }
+
+    // -------------------------------------------------------------------------
+    // Animation clip: water, clouds, awnings, palms and travelers
+    // -------------------------------------------------------------------------
+
+    const lifeClip = new THREE.AnimationClip("MarketDriftAndTrade", 8, []);
+    const animationTimes = [0, 2, 4, 6, 8];
+
+    // Water strips travel down the channel and reset.
+    for (const flow of waterFlows) {
+      lifeClip.tracks.push(
+        new THREE.VectorKeyframeTrack(
+          `${flow.name}.position`,
+          [0, 6],
+          [
+            flow.position.x,
+            flow.position.y,
+            -7,
+            flow.position.x,
+            flow.position.y,
+            7
+          ]
+        )
+      );
+    }
+
+    // Clouds drift from one edge to the other and return.
+    for (const clip of cloudAnimations) {
+      lifeClip.tracks.push(
+        new THREE.VectorKeyframeTrack(
+          `${clip.object.name}.position`,
+          animationTimes,
+          [
+            clip.start.x,
+            clip.start.y,
+            clip.start.z,
+            clip.end.x,
+            clip.end.y,
+            clip.end.z,
+            clip.start.x,
+            clip.start.y,
+            clip.start.z,
+            clip.end.x,
+            clip.end.y,
+            clip.end.z,
+            clip.start.x,
+            clip.start.y,
+            clip.start.z
+          ]
+        )
+      );
+
+      lifeClip.tracks.push(
+        new THREE.VectorKeyframeTrack(
+          `${clip.object.name}.scale`,
+          animationTimes,
+          [
+            1, 1, 1,
+            1.12, 0.95, 1.12,
+            1, 1, 1,
+            1.04, 0.96, 1.04,
+            1, 1, 1
+          ]
+        )
+      );
+    }
+
+    // Awning fabric settles into a gentle sway.
+    for (const panel of awningPanels) {
+      const base = panel.userData.baseQuaternion;
+      const sway = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(
+          range(-0.018, 0.018),
+          range(-0.025, 0.025),
+          range(-0.055, 0.055)
+        )
+      );
+
+      const animatedQuaternion = base.clone().multiply(sway);
+
+      lifeClip.tracks.push(
+        new THREE.QuaternionKeyframeTrack(
+          `${panel.name}.quaternion`,
+          animationTimes,
+          animatedQuaternion.toArray()
+        )
+      );
+    }
+
+    // Palms sway in the breeze.
+    for (let i = 0; i < cloudGroups.length; i += 2) {
+      const palm = cloudGroups[i];
+      const base = palm.userData.baseQuaternion;
+      const sway = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(
+          range(-0.045, 0.045),
+          range(-0.06, 0.06),
+          range(-0.1, 0.1)
+        )
+      );
+
+      const animatedQuaternion = sway.multiply(base);
+
+      lifeClip.tracks.push(
+        new THREE.QuaternionKeyframeTrack(
+          `${palm.name}.quaternion`,
+          [0, 2, 4, 6, 8],
+          animatedQuaternion.toArray()
+        )
+      );
+    }
+
+    // Each traveler follows a small looping route.
+    for (let i = 0; i < villagerPaths.length; i++) {
+      const path = villagerPaths[i];
+      const values = [];
+      const quaternions = [];
+
+      for (let time = 0; time < animationTimes.length; time++) {
+        const progress = (time / animationTimes[animationTimes.length - 1]) * 4;
+        const point = path[Math.min(
+          path.length - 1,
+          Math.floor(progress)
+        )];
+
+        const yaw = Math.sin(progress * 1.7 + i) * 0.055;
+        const quaternion = new THREE.Quaternion().setFromEuler(
+          new THREE.Euler(0, yaw, range(-0.025, 0.025))
+        );
+
+        values.push(
+          point.x,
+          0.08 + Math.sin(progress * 2 + i) * 0.018,
+          point.z
+        );
+
+        quaternions.push(
+          quaternion.x,
+          quaternion.y,
+          quaternion.z,
+          quaternion.w
+        );
+      }
+
+      lifeClip.tracks.push(
+        new THREE.VectorKeyframeTrack(
+          `${group.name}.position`,
+          animationTimes,
+          values
+        )
+      );
+
+      lifeClip.tracks.push(
+        new THREE.QuaternionKeyframeTrack(
+          `${group.name}.quaternion`,
+          animationTimes,
+          quaternions
+        )
+      );
+    }
+
+    const mixer = new THREE.AnimationMixer(assetRoot);
+    const animationAction = mixer.clipAction(lifeClip);
+    animationAction.setLoop(THREE.LoopRepeat, Infinity);
+    animationAction.play();
+
+    // -------------------------------------------------------------------------
+    // Final scene setup
+    // -------------------------------------------------------------------------
+
+    assetRoot.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = object.castShadow !== false;
+        object.receiveShadow = true;
+      }
+    });
+
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const delta = Math.min(clock.getDelta(), 0.05);
+      mixer.update(delta);
+      controls.update();
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    // -------------------------------------------------------------------------
+    // GLB export, including the animation clip
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building animated GLB…";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "bustling_babylonian_marketplace.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          const size = (blob.size / 1024).toFixed(1);
+          status.textContent = `Exported · ${size} KB · animation included`;
+          exportButton.disabled = false;
+        },
+        (error) => {
+          console.error(error);
+          status.textContent = "Export failed — see console";
+          exportButton.disabled = false;
+        },
+        {
+          binary: true,
+          animations: [lifeClip],
+          onlyVisible: true,
+          maxTextureSize: 2048
+        }
+      );
+    });
+  </script>
+</body>
+</html>

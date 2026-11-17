@@ -1,0 +1,41 @@
+{
+  "verified_epoch": 1794914755.191506,
+  "url": "http://localhost:8767/final-review/",
+  "actual_glbs_reimported": true,
+  "cases": [
+    "babylon",
+    "waterwheel",
+    "orrery",
+    "historical"
+  ],
+  "paused": true,
+  "idle_render_mode": "on demand, no recurring animation frame while paused",
+  "playback_cap_fps": 30,
+  "no_source_glb_edits": true,
+  "camera": [
+    25,
+    19,
+    29
+  ],
+  "target": [
+    0,
+    0,
+    0
+  ],
+  "fit": "animation time 0, maximum dimension 20, shared lights and pixel ratio 1",
+  "missing_orrery_export_labeled": true,
+  "browser_console": "One unrelated injected extension ethereum property error; no viewer error observed",
+  "deliverable_marked": true,
+  "staging_reproduction": "8 staged viewer/GLB files byte-identical to inspected deliverable",
+  "training_jobs_stopped": true,
+  "gpu_holders_and_waiters_empty_at_cleanup": true,
+  "python_tests": {
+    "run": 98,
+    "passed": 96,
+    "skipped": 2
+  },
+  "node_verifier_passed": 8,
+  "preflight_checks_passed": 20,
+  "preflight_launched_training": false,
+  "preflight_checks_total": 20
+}

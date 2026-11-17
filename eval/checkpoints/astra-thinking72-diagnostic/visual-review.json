@@ -1,0 +1,29 @@
+{
+  "review_epoch": 1794909360.7168,
+  "raw_syntax_pass": false,
+  "raw_export_pass": false,
+  "diagnostic_exported_and_reopened": true,
+  "bytes": 1977836,
+  "mesh_definitions": 736,
+  "nodes": 808,
+  "materials": 552,
+  "clip_count": 1,
+  "channels": 66,
+  "villagers": 17,
+  "leg_tracks": 0,
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "verdict": "Overallworse thanCCORE; no acceptedrawcheckpoint. Syntaxregressedfrom48; poorlayout/canalextent/actorpaths remain.",
+  "observed": [
+    "Sparsecomposition andfewbuildings relativeCCORE",
+    "Highlyclusteredactors; staticlegs androutepauses/snaps",
+    "Waterstripmovesoutsideplinth",
+    "Unnaturalbrightground/rockcolors"
+  ],
+  "assistance": "Function-name/actor-referencewiring and10unresolvable/malformedtracks omitted; geometry/RNGorder/curves preserved.",
+  "source_generation": {
+    "tokens": 31875,
+    "seconds": 504.13897254201584,
+    "finish_reason": "stop"
+  }
+}

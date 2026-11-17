@@ -1,0 +1,46 @@
+{
+  "task": "waterwheel",
+  "arm": "astra",
+  "source_repairs": 0,
+  "raw_html_sha256": "292c98df486739f7a246819d16b88299ed7ab4f29a5c935e30eb63e9eaba9e42",
+  "generation": {
+    "load_seconds": 1.2401359580107965,
+    "elapsed_seconds": 269.15282754201326,
+    "prompt_tokens": 162,
+    "prompt_tps": 715.6780995053442,
+    "generation_tokens": 17228,
+    "generation_tps": 64.3642677125752,
+    "peak_gb": 9.176944764,
+    "finish_reason": "stop",
+    "prompt_ids_sha256": "494cf50c010d886e0808ce1cb1e1180997ab6dfadb85cb8dff4cbc5aa01c8d5a",
+    "versions": {
+      "mlx": "0.32.4",
+      "mlx-lm": "0.32.2",
+      "transformers": "5.23.0"
+    },
+    "complete_html": true
+  },
+  "actual_browser_review": {
+    "raw_export": true,
+    "validator_errors": 0,
+    "clips": 1,
+    "motion": "Correctrotationaboutwheelaxle retained"
+  },
+  "glb_present": true,
+  "glb_sha256": "c965e587e0248470d686296b435a19415641b5a6f6cfb37e8d6a20a4376a84e4",
+  "validation": {
+    "bytes": 272388,
+    "errors": 0,
+    "warnings": 0,
+    "meshes": 120,
+    "nodes": 136,
+    "materials": 10,
+    "animations": [
+      {
+        "name": "WaterWheel_Rotate",
+        "channels": 1
+      }
+    ],
+    "extensionsUsed": []
+  }
+}

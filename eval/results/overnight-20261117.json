@@ -1,0 +1,218 @@
+{
+  "schema": 1,
+  "experiment": "Overnight Astra 3D, November 16\u201317 2026",
+  "overall_verdict": "No demonstrated improvement on the primary Babylon marketplace task; mixed results on two limited held-out tasks.",
+  "primary_raw_success": false,
+  "accepted_quality_checkpoint": null,
+  "selected_for_final_evaluation": {
+    "label": "Thinking48",
+    "main_updates_inherited": 48,
+    "qualification_updates_inherited": 0,
+    "real_target_exposures_inherited": 987295,
+    "adapter_sha256": "553644f2a1d85c06642484f327b657eca0cf8e7516a874ca1182ed6b9720ab66",
+    "selected_before_final_outputs": true,
+    "not_a_quality_acceptance": true
+  },
+  "test_protocol": {
+    "tasks": [
+      "waterwheel",
+      "orrery"
+    ],
+    "seed": 42,
+    "max_tokens": 32768,
+    "enable_thinking_both": true,
+    "temperature": 0.8,
+    "top_p": 0.95,
+    "top_k": 40,
+    "runtime": "MLX BF16, same pinned runtime for both arms",
+    "same_task_prompt_ids_verified": true,
+    "source_repairs": 0,
+    "post_test_weight_updates": 0,
+    "limitation": "Two tasks and one seed; held out from added training by documented filters, no claim about upstream pretraining."
+  },
+  "tasks": [
+    {
+      "task": "waterwheel",
+      "arm": "control",
+      "source_repairs": 0,
+      "raw_html_sha256": "e6c0f3ecb035b110be21e3fad57c1e5fa9069bac72fbe9e94ab15b570d8b4044",
+      "generation": {
+        "load_seconds": 1.2363482499786187,
+        "elapsed_seconds": 287.00726891699014,
+        "prompt_tokens": 162,
+        "prompt_tps": 722.522673412706,
+        "generation_tokens": 18952,
+        "generation_tps": 66.37617888945982,
+        "peak_gb": 9.221902532,
+        "finish_reason": "stop",
+        "prompt_ids_sha256": "494cf50c010d886e0808ce1cb1e1180997ab6dfadb85cb8dff4cbc5aa01c8d5a",
+        "versions": {
+          "mlx": "0.32.4",
+          "mlx-lm": "0.32.2",
+          "transformers": "5.23.0"
+        },
+        "complete_html": true
+      },
+      "actual_browser_review": {
+        "raw_export": true,
+        "validator_errors": 0,
+        "clips": 1,
+        "motion": "Actual exported wheel changes axle direction; visible orientation drift relative to fixed axle."
+      },
+      "glb_present": true,
+      "glb_sha256": "824e48b70c7812e7ab065add59f39c6b4785f83dec5becea083396170e84001d",
+      "validation": {
+        "bytes": 389484,
+        "errors": 0,
+        "warnings": 0,
+        "meshes": 187,
+        "nodes": 206,
+        "materials": 11,
+        "animations": [
+          {
+            "name": "WaterWheelRotation",
+            "channels": 1
+          }
+        ],
+        "extensionsUsed": []
+      }
+    },
+    {
+      "task": "waterwheel",
+      "arm": "astra",
+      "source_repairs": 0,
+      "raw_html_sha256": "292c98df486739f7a246819d16b88299ed7ab4f29a5c935e30eb63e9eaba9e42",
+      "generation": {
+        "load_seconds": 1.2401359580107965,
+        "elapsed_seconds": 269.15282754201326,
+        "prompt_tokens": 162,
+        "prompt_tps": 715.6780995053442,
+        "generation_tokens": 17228,
+        "generation_tps": 64.3642677125752,
+        "peak_gb": 9.176944764,
+        "finish_reason": "stop",
+        "prompt_ids_sha256": "494cf50c010d886e0808ce1cb1e1180997ab6dfadb85cb8dff4cbc5aa01c8d5a",
+        "versions": {
+          "mlx": "0.32.4",
+          "mlx-lm": "0.32.2",
+          "transformers": "5.23.0"
+        },
+        "complete_html": true
+      },
+      "actual_browser_review": {
+        "raw_export": true,
+        "validator_errors": 0,
+        "clips": 1,
+        "motion": "Actual exported wheel retains correct rotation about its authored axle."
+      },
+      "glb_present": true,
+      "glb_sha256": "c965e587e0248470d686296b435a19415641b5a6f6cfb37e8d6a20a4376a84e4",
+      "validation": {
+        "bytes": 272388,
+        "errors": 0,
+        "warnings": 0,
+        "meshes": 120,
+        "nodes": 136,
+        "materials": 10,
+        "animations": [
+          {
+            "name": "WaterWheel_Rotate",
+            "channels": 1
+          }
+        ],
+        "extensionsUsed": []
+      }
+    },
+    {
+      "task": "orrery",
+      "arm": "control",
+      "source_repairs": 0,
+      "raw_html_sha256": "26730a6fe13af2ce821c6a626b79c29423a552079b45af7c32aa622a40647e7f",
+      "generation": {
+        "load_seconds": 1.2636751669924706,
+        "elapsed_seconds": 243.39594483401743,
+        "prompt_tokens": 154,
+        "prompt_tps": 667.6450123279528,
+        "generation_tokens": 16110,
+        "generation_tps": 66.60346091715765,
+        "peak_gb": 9.14051902,
+        "finish_reason": "stop",
+        "prompt_ids_sha256": "3e7e05be7e0072831b9a7472c1cce73fd686dab02f8e0ffa2a05d4cc95fb62fd",
+        "versions": {
+          "mlx": "0.32.4",
+          "mlx-lm": "0.32.2",
+          "transformers": "5.23.0"
+        },
+        "complete_html": true
+      },
+      "actual_browser_review": {
+        "raw_export": true,
+        "validator_errors": 0,
+        "clips": 0,
+        "motion": "Actual export is static; all requested arm animations are missing."
+      },
+      "glb_present": true,
+      "glb_sha256": "efd541810fcd45bce9a608b0decef529ab7c59685095b96791c9efee42e2c3b4",
+      "validation": {
+        "bytes": 248472,
+        "errors": 0,
+        "warnings": 0,
+        "meshes": 71,
+        "nodes": 76,
+        "materials": 4,
+        "animations": [],
+        "extensionsUsed": []
+      }
+    },
+    {
+      "task": "orrery",
+      "arm": "astra",
+      "source_repairs": 0,
+      "raw_html_sha256": "19f4ba96460388436124609f82d742ecf8331806b6f5ac0e377b93266784ea76",
+      "generation": {
+        "load_seconds": 1.2301576250174548,
+        "elapsed_seconds": 255.87445575001766,
+        "prompt_tokens": 154,
+        "prompt_tps": 670.110774936532,
+        "generation_tokens": 16485,
+        "generation_tps": 64.80156027045723,
+        "peak_gb": 9.14645918,
+        "finish_reason": "stop",
+        "prompt_ids_sha256": "3e7e05be7e0072831b9a7472c1cce73fd686dab02f8e0ffa2a05d4cc95fb62fd",
+        "versions": {
+          "mlx": "0.32.4",
+          "mlx-lm": "0.32.2",
+          "transformers": "5.23.0"
+        },
+        "complete_html": true
+      },
+      "actual_browser_review": {
+        "raw_export": false,
+        "runtime_error": "ReferenceError: duration is not defined",
+        "clips": null,
+        "motion": "Runtime ReferenceError: duration is not defined; no GLB exported."
+      },
+      "glb_present": false
+    }
+  ],
+  "training_accounting": {
+    "completed_optimizer_updates": 574,
+    "reported_target_exposures": 5354035,
+    "corrected_real_target_exposures": 5353558,
+    "excluded_padding_labels": 477,
+    "successful_training_job_wall_seconds": 4479.215096473694,
+    "aborted_training_job_wall_seconds": 371.485347032547,
+    "reported_optimizer_timer_seconds": 3249.5428612251417,
+    "validation_timer_seconds": 954.3529256230395,
+    "peak_reported_mlx_gb": 51.26897329
+  },
+  "successful_training_wall_minutes": 74.65358494122823,
+  "external_optimizer_updates_at_least": 19,
+  "external_inventory_exhaustive": false,
+  "erratum": "The frozen v2 plan says candidate_length_updates=3. Saved parent configs prove selected Thinking48 inherited48 main updates only and no qualification updates. Preserve plan and read the separate correction.",
+  "artifact_root": "../final-tests/overnight-20261117",
+  "primary_diagnostic": "../checkpoints/astra-thinking48-diagnostic",
+  "later_rejected_diagnostic": "../checkpoints/astra-thinking72-diagnostic",
+  "matched_bf16_control_diagnostic": "../baselines/babylon-bf16-20261116",
+  "waterwheel_axis_audit": "../final-tests/overnight-20261117/waterwheel-axis-audit.json"
+}

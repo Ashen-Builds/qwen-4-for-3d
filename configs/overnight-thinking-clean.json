@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "status": "authorized-single24-update-continuation-after-reviewed48pilot",
+  "name": "Astra original-thinking fresh pilot",
+  "base": "ccore/Qwen3.5-4B-GLB-3D-Coder",
+  "base_revision": "8f32a199f8b22fe3157b9c5c8b42b052a0750dd3",
+  "start": "2026-11-16T20:42:39-05:00",
+  "hard_stop": "2026-11-17T07:42:39-05:00",
+  "timezone": "America/New_York",
+  "clock": "Manual immediate start;11h maximum and08:00EST ceiling.",
+  "authorization": "Owner answered Start now as requested after stale attachment timing clarification; this overrides the old9pm prohibition.",
+  "milestones": [
+    {
+      "elapsed_hours": 8,
+      "time": "2026-11-17T04:42:39-05:00",
+      "deliverable": "Intermediate same-prompt comparison before05:00EST"
+    },
+    {
+      "elapsed_hours": 11,
+      "time": "2026-11-17T07:42:39-05:00",
+      "deliverable": "Final comparison/report and owned heavy compute stopped"
+    }
+  ],
+  "gpu_policy": "Honor shared GPU slots and streaming guard; pause at safe boundaries. Keep wall-clock stop. Never remove guard or take over another job.",
+  "showcase_prompt": "eval/prompts/babylon-marketplace-v3.txt",
+  "showcase_seed": 42,
+  "evaluation": "Regenerate untouched CCORE on chosen common evaluation runtime/precision once before adapter comparisons. Historical repaired Q8 native GLB is a gallery reference, not a raw matched control for a different backend.",
+  "training_data_gate": "Pinned rights/provenance, code-family splits, complete assistant targets, no benchmark leakage, independently executed/rendered/export-validated new examples",
+  "remaining_unbuilt": [
+    "Freshshort/reload andcomplete32659-token qualification",
+    "48-main-update pilot andfunctionaloutputreview",
+    "Milestone/finalcomparison andarchive"
+  ],
+  "readiness": "CPU dataset and template verified; actual32K qualification required before48 mainupdates",
+  "prepared": [
+    "Complete direct-connector source archive",
+    "BF16 text conversion and zero-update adapter module audit",
+    "Frozen replay and tested generic repair curriculum with exact masks/no truncation",
+    "Final/development probe families and before/after viewer template",
+    "Guarded, plan-only training entrypoint; no schedule or active trainer"
+  ],
+  "qualification_configs": [
+    "configs/lora-qualification.yaml",
+    "configs/lora-length-qualification.yaml",
+    "configs/lora-main-draft.yaml"
+  ],
+  "archive_receipt": "configs/archive-verification.json",
+  "controller": {
+    "entrypoint": "scripts/overnight_controller.py",
+    "mode": "live-supervised",
+    "reviewer": "Current Codex supervisor; wait safely if unavailable",
+    "schedule_safety": "06:27:39 training cutoff;07:40:39 shutdown start;07:42:39 hard stop",
+    "resume_semantics": "Adapter-weight warm restart; optimizer/data iterator are not bit-exact resumed"
+  },
+  "authorization_scope": "manual-overnight-sprint",
+  "compute_window": {
+    "start_hour": 20,
+    "stop_hour": 8,
+    "drain_minutes": 2
+  },
+  "evaluation_lead_seconds": 3600,
+  "final_training_stop_seconds_before_deadline": 4500,
+  "shutdown_reserve_seconds": 120,
+  "evaluation_thinking": true,
+  "variant": "original-thinking-clean-rank16",
+  "data_manifest_sha256": "e8404afb752910be8e0ca7e1242d3d62e32fa6f5a31740ae6b0e40d1f8d1acdd",
+  "notes": "Fresh originalCCORE, no prioradapter inherited. Originalreasoning+code399trainrows; no shorthelpers or empty-reasoningcorrections inmain. Two24-update warm-restart segments then enforcedphase_complete. Reuse unchanged originalthinking-onCCORE control with exactinput/runtime evidence. Original20:42:39start/07:42:39stop retained. Reviewer observed syntaxpass/explicittracks but rawruntimefailure andworseassistedcomposition. Allow exactlyoneadditional24-updateblock thenreview72; noautomaticextension. Cached-prefixcandidatequalifiedbutnotadopted.",
+  "max_segment_iterations": 24,
+  "stop_after_segment_count": 3
+}

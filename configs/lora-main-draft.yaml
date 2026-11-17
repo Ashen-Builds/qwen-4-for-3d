@@ -1,6 +1,6 @@
-# Verified correction phase; complete assistant targets only, no padding labels.
+# Fresh CCORE reasoning-preserving pilot; helpers excluded from main training.
 model: ../work/models-derived/ccore-bf16
-data: ../work/sprint-prep/qualified-correction-data-v1/targeted-correction
+data: ../work/sprint-prep/thinking-clean-proposal/data-v1/mixture
 train: false
 test: false
 fine_tune_type: lora
@@ -9,13 +9,13 @@ seed: 42
 num_layers: 1
 batch_size: 1
 grad_accumulation_steps: 1
-iters: 12
+iters: 24
 learning_rate: 3.0e-06
-max_seq_length: 16384
+max_seq_length: 32768
 grad_checkpoint: false
 mask_prompt: true
 steps_per_report: 1
-steps_per_eval: 12
+steps_per_eval: 24
 val_batches: -1
 save_every: 10
 adapter_path: ../work/sprint-prep/main-adapter
@@ -26,6 +26,7 @@ lora_parameters:
 trust_remote_code: false
 report_to: null
 frozen_prefix_inference: true
-response_only_training: true
+response_only_training: false
 adapter_setup_audit: ../work/sprint-prep/rank16-from200-proposal/adapter-setup-audit.json
 complete_target_mask: exclusive_end_v1
+enable_thinking: true

@@ -1,0 +1,1 @@
+A canal-fed wooden waterwheel with a supported axle, buckets and a stone trough; existing waterwheel rotation must survive GLB export. Return a complete Three.js r160 HTML scene with a working binary GLB export that retains any requested animation. Use a coherent low-poly style; preserve all requested parts.

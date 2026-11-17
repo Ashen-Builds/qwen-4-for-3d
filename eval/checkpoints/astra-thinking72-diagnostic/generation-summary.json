@@ -1,0 +1,15 @@
+{
+  "elapsed_seconds": 504.13897254201584,
+  "prompt_tokens": 277,
+  "generation_tokens": 31875,
+  "generation_tps": 63.41660500870741,
+  "peak_gb": 9.672121196,
+  "finish_reason": "stop",
+  "prompt_ids_sha256": "60f73d6e3e30203ae19fd250d30b0b7548982144de9d473d3f0bdd3e1b7561a4",
+  "versions": {
+    "mlx": "0.32.4",
+    "mlx-lm": "0.32.2",
+    "transformers": "5.23.0"
+  },
+  "complete_html": true
+}

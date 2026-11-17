@@ -1,0 +1,46 @@
+{
+  "task": "waterwheel",
+  "arm": "control",
+  "source_repairs": 0,
+  "raw_html_sha256": "e6c0f3ecb035b110be21e3fad57c1e5fa9069bac72fbe9e94ab15b570d8b4044",
+  "generation": {
+    "load_seconds": 1.2363482499786187,
+    "elapsed_seconds": 287.00726891699014,
+    "prompt_tokens": 162,
+    "prompt_tps": 722.522673412706,
+    "generation_tokens": 18952,
+    "generation_tps": 66.37617888945982,
+    "peak_gb": 9.221902532,
+    "finish_reason": "stop",
+    "prompt_ids_sha256": "494cf50c010d886e0808ce1cb1e1180997ab6dfadb85cb8dff4cbc5aa01c8d5a",
+    "versions": {
+      "mlx": "0.32.4",
+      "mlx-lm": "0.32.2",
+      "transformers": "5.23.0"
+    },
+    "complete_html": true
+  },
+  "actual_browser_review": {
+    "raw_export": true,
+    "validator_errors": 0,
+    "clips": 1,
+    "motion": "Exportedwheelturnsaboutwrongaxis; visibleorientationdrift relativefixedaxle"
+  },
+  "glb_present": true,
+  "glb_sha256": "824e48b70c7812e7ab065add59f39c6b4785f83dec5becea083396170e84001d",
+  "validation": {
+    "bytes": 389484,
+    "errors": 0,
+    "warnings": 0,
+    "meshes": 187,
+    "nodes": 206,
+    "materials": 11,
+    "animations": [
+      {
+        "name": "WaterWheelRotation",
+        "channels": 1
+      }
+    ],
+    "extensionsUsed": []
+  }
+}

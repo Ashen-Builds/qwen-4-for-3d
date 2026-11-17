@@ -1,0 +1,31 @@
+{
+  "schema": 2,
+  "frozen_epoch": 1794909776.975181,
+  "status": "frozen-before-any-final-generation",
+  "supersedes": "final-evaluation-plan-v1.json",
+  "change_reason": "Selectedcandidateusesoriginalthinkinginterface; setthinkingTrueforBOTHarms beforeseeinganyfinaloutput. TaskIDs/seed/tokenlimit unchanged.",
+  "ids": [
+    "waterwheel",
+    "orrery"
+  ],
+  "seed": 42,
+  "max_tokens": 32768,
+  "enable_thinking": true,
+  "candidate": "astra-thinking-clean-20261117/checkpoints/job-00005",
+  "candidate_sha256": "553644f2a1d85c06642484f327b657eca0cf8e7516a874ca1182ed6b9720ab66",
+  "candidate_main_updates": 48,
+  "candidate_length_updates": 3,
+  "candidate_accepted": false,
+  "selection_reason": "Onlysyntax-passingmainshowcase amongcompletedtrainedvariants; actualassisteddiagnosticinspected.72regressedsyntaxandremainedvisuallyworse. Neitherwasarawexportpass.",
+  "baseline": "untouchedCCOREBF16",
+  "no_further_weight_updates": true,
+  "limited_scope": "Two prespecified tasks,one seed; not20-task/full-two-seedbenchmark. Noabsencefromupstreampretrainingclaim.",
+  "sampler": {
+    "temperature": 0.8,
+    "top_p": 0.95,
+    "top_k": 40
+  },
+  "per_model_timeout_seconds": 900,
+  "sigterm_grace_seconds": 60,
+  "all_compute_stop_by": "2026-11-17T07:40:39-05:00"
+}
