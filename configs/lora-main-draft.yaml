@@ -1,4 +1,4 @@
-# Direct-code variant; no reasoning targets; same prompt/system for paired no-thinking evaluation.
+# Qualified rank16 continuation from200 main steps; lower learning rate after rejected300-step branch.
 model: ../work/models-derived/ccore-bf16
 data: ../work/sprint-prep/direct-code-proposal/data-v1/mixture
 train: false
@@ -10,7 +10,7 @@ num_layers: 1
 batch_size: 1
 grad_accumulation_steps: 1
 iters: 200
-learning_rate: 1.0e-05
+learning_rate: 3.0e-06
 max_seq_length: 16384
 grad_checkpoint: false
 mask_prompt: true
@@ -20,10 +20,11 @@ val_batches: 4
 save_every: 10
 adapter_path: ../work/sprint-prep/main-adapter
 lora_parameters:
-  rank: 8
+  rank: 16
   scale: 20.0
   dropout: 0.0
 trust_remote_code: false
 report_to: null
 frozen_prefix_inference: true
 response_only_training: true
+adapter_setup_audit: ../work/sprint-prep/rank16-from200-proposal/adapter-setup-audit.json

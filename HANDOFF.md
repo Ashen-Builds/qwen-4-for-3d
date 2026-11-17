@@ -1,6 +1,6 @@
 # Astra 3D overnight experiment
 
-Updated November17,2026 at00:00EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR#1. The overnight goal is active. No improved Astra asset has been demonstrated.
+Updated November17,2026 at00:24EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR#1. The overnight goal is active. No improved Astra asset has been demonstrated.
 
 ## Authority and fixed deadline
 
@@ -12,10 +12,10 @@ Local training, evaluation, routine Codex reviews, branch pushes and practical p
 
 The workspace's sibling `work/` contains models, private data and run state; it is not inside this checkout. Actual machine: M3 Ultra,256GiB. Python3.12,MLX0.32.4,MLX-LM0.32.2,Transformers5.23.0. Use the shared GPU-slot wrapper and inspect actual processes before every handoff. The watchdog currently reduces the cap to2; do not weaken it. Run model jobs serially. Preserve streaming/global flags and foreign sessions.
 
-- Current controller: tmux `astra-direct-20261116`; config `configs/overnight-direct-code.json`; private authorization `work/sprint-prep/owner-start-direct-20261116.json`.
-- Run root: `work/sprint-prep/overnight/astra-direct-20261116`. At this update it is cleanly **paused locally**, with no active job, after three100-step main segments. This is an orchestration hold, not a paused user goal.
-- Confirmed controller updates:313=13qualification+300main. Latest immutable checkpoint `checkpoints/job-00007`; no visually accepted best checkpoint yet. Job00007 completed536.94s,reported peak29.56GB.
-- Cached-prefix two-layer short qualification passed, but the5327-token length step breached the24GiB reclaimable-memory floor before any update. Owned processes were SIGTERMed and memory recovered; no two-layer adoption/retry. Root now owns the GPU for300-step primary evaluation (exec75778,labelastra-300step-evaluation,worker73552); inspect before any launch. `capacity2_probe` is CPU-only preparing a rank16 layer31 warm expansion, with NO GPU permission until explicit new handoff.
+- Current controller: tmux `astra-direct-rank16-20261117`; config `configs/overnight-direct-rank16.json`; private authorization `work/sprint-prep/owner-start-direct-rank16-20261117.json`. Run ID remains `astra-direct-20261116`.
+- Run root: `work/sprint-prep/overnight/astra-direct-20261116`. The first rank16 continuation segment is running as job00009 (99 requested steps). CPU monitor exec76460 will write the local PAUSE after segment_number4 for an early review; verify it before launching other GPU work.
+- Confirmed controller updates:313=13qualification+300main. Rejected checkpoint00007 remains preserved. Current parent is `checkpoints/rank16-from200-qualified`, inherited200main steps plus3new rank16 length-qualification updates. No visually accepted best checkpoint exists. Job00007 had completed536.94s,reported peak29.56GB.
+- Cached-prefix two-layer short qualification passed, but its5327-token step breached the24GiB reclaimable-memory floor before any update; no adoption/retry. Rank16 expansion within layer31 passed strict warmforward/gradients/reload and complete5327/9648/15909 steps atLR3e-6,peak29.91GB. Root owns the live controller GPU job; agents have NO GPU authority without a new explicit handoff.
 - Earlier `astra-manual-20261116` controller is stopped; preserve its42-step checkpoint and failed outputs. Older scheduled `astra-overnight-20261116` never trained and must not be restarted.
 - Local server `http://localhost:8767/` serves only sibling `outputs/babylon-comparison`. Inspect its actual process before restarting. Task-owned server was restarted after allowing localblob fetches required by embedded GLB textures; exec93118. The200-step diagnostic review tab was closed and its slot released.
 
@@ -23,7 +23,7 @@ The workspace's sibling `work/` contains models, private data and run state; it 
 
 Base is pinned `ccore/Qwen3.5-4B-GLB-3D-Coder` revision `8f32a199f8b22fe3157b9c5c8b42b052a0750dd3`, derived BF16 text checkpoint in `work/models-derived/ccore-bf16`. Original CCORE weights are retained. Official Qwen3.5-4B weights and derived copies were deleted at the owner's request; historical outputs remain.
 
-Current one-layer LoRA: layer31 only,rank8,scale20,dropout0,479232trainable parameters,learning rate1e-5. Each segment warm-starts adapter weights; Adam state and iterator restart with seed42+segment_index. This is not exact optimizer continuation. Complete outputs are trained without truncation. Frozen layers0–30 use eval kernels, with gradient detached only at layer31 input.
+Current one-layer LoRA: layer31 only,rank16,scale20,dropout0,958464trainable parameters,learning rate3e-6. The prior rank8/1e-5 branch is retained but no longer continued. Each segment warm-starts adapter weights; Adam state and iterator restart with seed42+segment_index. This is not exact optimizer continuation. Complete outputs are trained without truncation. Frozen layers0–30 use eval kernels, with gradient detached only at layer31 input.
 
 The initial training-ops equivalence check failed strict tolerances and remains recorded. A separate short check against full-model eval computation **inside autodiff** passed logits/loss/gradients/update/reload exactly. Later independent diagnostics found that eval-prefix computation inside autodiff differs numerically from materializing it outside; do not describe the one-layer runtime as proven identical to every ordinary-inference arithmetic path. The pending two-layer candidate materializes frozen prefix0–29 outside autodiff and tests the native suffix against an independent oracle.
 
@@ -46,8 +46,8 @@ The common render harness in `eval/render-harness` has actual browser0/4second s
 
 ## Next actions
 
-1. Monitor existing300step inference until exit; preserveexactinputmatch (alreadyverifiedagainstfreshno-thinkingcontrol). GetCPU rank16proposal, grantonlyoneboundedGPUqualificationatcleanhandoff. Two-layerlongpathisrejected; preserveallfailures.
-2. Inspect300steprawoutput and recheckviewertextures atsafeGPUboundary.200stepdiagnosticisobservedworse; keepfailure/assistancelabels. Adoptrank16onlyaftershort/full-length/save-reloadgates;retain300stepinputweights.
+1. Monitor live job00009 and CPU hold monitor76460 until the first rank16 segment finishes and cleanly pauses. Never launch a second model/browser while it runs. The300step generation was aborted after at least39936reported tokens/653.6seconds and5950nested repeatedcalls; both model/wrapper exited143. Preserve this censored failure, not a completed full-budget generation.
+2. At that safe GPU boundary, evaluate the new rank16 snapshot and recheck viewer textures. Six derived full-program correction candidates are staged in `work/sprint-prep/full-program-corrections-v1/data-v2`; REVIEW_QUICKSTART lists12clean/corrupt URLs. Do not train them until actual source export/reimport/motion and negative checks pass. They reuse existing licensed CCORE procedural targets; they are not new independent asset knowledge. One floor-fan fixture was rejected because its animation keys did not move.
 3. Continue a justified bounded approach within the same deadline. Inspect review packets; routine continuation is Codex's responsibility. Preserve independent final tests and all raw failures. Do not call falling loss a quality win.
 4. Deliver intermediate/final comparisons at the fixed times. By hard stop, stop all owned heavy jobs, leave a labeled localhost GLB comparison in Chrome, save real screenshots/playback evidence, and report better/worse/mixed honestly.
 5. Push sanitized source/results and this rolling handoff; back up new data/checkpoints/results through the **direct Google Drive connector only**, then update the GitHub-backed wiki. Do not claim the old archive contains new live-run checkpoints.

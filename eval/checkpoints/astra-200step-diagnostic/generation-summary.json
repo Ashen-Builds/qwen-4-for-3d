@@ -8,5 +8,6 @@
   "main_steps": 200,
   "thinking": false,
   "raw_export_pass": false,
-  "diagnostic_only": true
+  "diagnostic_only": true,
+  "peak_gb": 9.016621692
 }

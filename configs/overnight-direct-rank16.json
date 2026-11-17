@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "status": "authorized-reviewed-rank16-continuation",
+  "name": "Astra rank16 direct-code continuation",
+  "base": "ccore/Qwen3.5-4B-GLB-3D-Coder",
+  "base_revision": "8f32a199f8b22fe3157b9c5c8b42b052a0750dd3",
+  "start": "2026-11-16T20:42:39-05:00",
+  "hard_stop": "2026-11-17T07:42:39-05:00",
+  "timezone": "America/New_York",
+  "clock": "Manual immediate start;11h maximum and08:00EST ceiling.",
+  "authorization": "Owner answered Start now as requested after stale attachment timing clarification; this overrides the old9pm prohibition.",
+  "milestones": [
+    {
+      "elapsed_hours": 8,
+      "time": "2026-11-17T04:42:39-05:00",
+      "deliverable": "Intermediate same-prompt comparison before05:00EST"
+    },
+    {
+      "elapsed_hours": 11,
+      "time": "2026-11-17T07:42:39-05:00",
+      "deliverable": "Final comparison/report and owned heavy compute stopped"
+    }
+  ],
+  "gpu_policy": "Honor shared GPU slots and streaming guard; pause at safe boundaries. Keep wall-clock stop. Never remove guard or take over another job.",
+  "showcase_prompt": "eval/prompts/babylon-marketplace-v3.txt",
+  "showcase_seed": 42,
+  "evaluation": "Regenerate untouched CCORE on chosen common evaluation runtime/precision once before adapter comparisons. Historical repaired Q8 native GLB is a gallery reference, not a raw matched control for a different backend.",
+  "training_data_gate": "Pinned rights/provenance, code-family splits, complete assistant targets, no benchmark leakage, independently executed/rendered/export-validated new examples",
+  "remaining_unbuilt": [
+    "Demonstrate improved raw animated GLB",
+    "Verify proposed full-program correction data before adoption",
+    "Complete intermediate/final comparison and private backup"
+  ],
+  "readiness": "Live rank16 short/full-length/reload checks passed; asset improvement unproven",
+  "prepared": [
+    "Complete direct-connector source archive",
+    "BF16 text conversion and zero-update adapter module audit",
+    "Frozen replay and tested generic repair curriculum with exact masks/no truncation",
+    "Final/development probe families and before/after viewer template",
+    "Guarded, plan-only training entrypoint; no schedule or active trainer"
+  ],
+  "qualification_configs": [
+    "configs/lora-qualification.yaml",
+    "configs/lora-length-qualification.yaml",
+    "configs/lora-main-draft.yaml"
+  ],
+  "archive_receipt": "configs/archive-verification.json",
+  "controller": {
+    "entrypoint": "scripts/overnight_controller.py",
+    "mode": "live-supervised",
+    "reviewer": "Current Codex supervisor; wait safely if unavailable",
+    "schedule_safety": "06:27:39 training cutoff;07:40:39 shutdown start;07:42:39 hard stop",
+    "resume_semantics": "Adapter-weight warm restart; optimizer/data iterator are not bit-exact resumed"
+  },
+  "authorization_scope": "manual-overnight-sprint",
+  "compute_window": {
+    "start_hour": 20,
+    "stop_hour": 8,
+    "drain_minutes": 2
+  },
+  "evaluation_lead_seconds": 3600,
+  "final_training_stop_seconds_before_deadline": 4500,
+  "shutdown_reserve_seconds": 120,
+  "evaluation_thinking": false,
+  "variant": "direct-code-rank16-lr3e6-from200",
+  "data_manifest_sha256": "c49f37efe977377c86f221a4579decc55b2841038230194504e6a91828703cb6",
+  "notes": "Continue from200-main-step checkpoint, expandedrank16 withzero addedB then3complete qualification updates atLR3e-6. Rejected300stepbranch preserved. No-thinking control/prompt/data unchanged. Newconfig/source/input binding reviewed atstoppedboundary. No two-layer GDN adoption. Originaldeadline unchanged."
+}

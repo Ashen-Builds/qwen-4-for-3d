@@ -1,0 +1,30 @@
+{
+  "status": "adopted-after-short-and-full-length-qualification",
+  "parent_checkpoint": "job-00006",
+  "inherited_main_steps": 200,
+  "rejected_checkpoint": "job-00007",
+  "rejected_branch_main_steps": 100,
+  "rank": 16,
+  "num_layers": 1,
+  "trainable_parameters": 958464,
+  "learning_rate": 3e-06,
+  "scale": 20.0,
+  "dropout": 0.0,
+  "additional_length_qualification_steps": 3,
+  "isolated_short_updates_not_adopted": 1,
+  "short_old_vs_expanded_max_logit_delta": 0.0,
+  "short_compiled_gradient_delta": 0.0,
+  "ordinary_reload_short_and_long_last_token_delta": 0.0,
+  "lengths": [
+    5327,
+    9648,
+    15909
+  ],
+  "peak_mlx_gb": 29.910414542,
+  "data_changed": false,
+  "evaluation_changed": false,
+  "two_layer_gdn_adopted": false,
+  "same_fixed_deadline": "2026-11-17T07:42:39-05:00",
+  "quality_status": "Unproven.200steprawfailed;300stepgenerationabortedfordegeneration.",
+  "resume": "Adapter weights only; optimizer and sampling restart. Parent retains original three rank8 length-probe updates; short warm-check update is isolated."
+}

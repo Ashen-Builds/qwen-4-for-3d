@@ -2,13 +2,13 @@
 
 The active owner's **Start now** instruction overrides the stale 21:00 text in the attachment. The experiment began **20:42:39 EST November 16** and must stop by **07:42:39 EST November 17**, eleven hours including qualification, pauses and reviews. The direct-code revision retains this original clock; it does not extend the deadline.
 
-Current run: `astra-direct-20261116`; config: `configs/overnight-direct-code.json`; private authorization: `work/sprint-prep/owner-start-direct-20261116.json` under the workspace, outside this checkout. Its scope is `manual-overnight-sprint`. This record documents existing owner authority and the exact config hash; it grants no extra scope. The earlier timed and reasoning-heavy variants are stopped. There is no recurring automation. Codex supervises routine reviews.
+Current run: `astra-direct-20261116`; config: `configs/overnight-direct-rank16.json`; private authorization: `work/sprint-prep/owner-start-direct-rank16-20261117.json` under the workspace, outside this checkout. Its scope is `manual-overnight-sprint`. This record documents existing owner authority and the exact config hash; it grants no extra scope. The earlier timed and reasoning-heavy variants are stopped. There is no recurring automation. Codex supervises routine reviews.
 
 The intermediate comparison is due **04:42:39 EST November 17**, with its generation window beginning 03:42:39. Main training drains by **06:27:39**; the final generation window begins 06:42:39. Owned compute shutdown begins **07:40:39**, preserving the configured **120-second shutdown reserve** before the **07:42:39** hard stop. These times derive from the active config's numeric schedule fields. Historical 48-hour fixtures are regression coverage only.
 
 ## Controller operation
 
-Live direct-code qualification has passed: ten short backward steps, ordinary adapter-effect/reload verification, and three complete-code length probes. Three main segments have completed 300 training steps. The first evaluation at200steps produced complete-length HTML but failed raw JavaScript syntax; no successful raw Astra GLB or visual improvement is established. The current local hold allows a separately qualified capacity revision. Use the current Codex session as supervisor/reviewer. Completed HTML, lower loss and a repaired diagnostic do not prove raw export success.
+Live direct-code qualification has passed: ten short backward steps, ordinary adapter-effect/reload verification, and three complete-code length probes. Three main segments have completed 300 training steps. The first evaluation at200steps produced complete-length HTML but failed raw JavaScript syntax; no successful raw Astra GLB or visual improvement is established. A separately qualified rank16/lower-learning-rate continuation now starts from the200-step parent; the300-step follow-up was rejected for degeneration. All earlier counts and checkpoints remain recorded. Use the current Codex session as supervisor/reviewer. Completed HTML, lower loss and a repaired diagnostic do not prove raw export success.
 
 ## Sequence
 
@@ -32,7 +32,7 @@ The owner has already authorized this run. Do not launch a second controller or 
 
 ```sh
 ../work/qwen-eval-env/bin/python scripts/overnight_controller.py \
-  --config configs/overnight-direct-code.json \
+  --config configs/overnight-direct-rank16.json \
   --run-id astra-direct-20261116 --status
 ```
 

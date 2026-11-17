@@ -15,6 +15,11 @@
     "sha256": "1222da079719e17823d96395c2c9fc2dadca2be082d802fef0e8cc1386220a1b"
   },
   {
+    "file": "asset.glb.validation.json",
+    "bytes": 127881,
+    "sha256": "e33cad4cde0045c1edc495bda2b142e3ff294fb030f0d12c86382416607f601c"
+  },
+  {
     "file": "comparison-0s.jpg",
     "bytes": 115346,
     "sha256": "2dc0a4e8a0ed285f0618e7c8390ad213a9d1c4e7dbec84b5154ac1f7f154afbd"
@@ -31,8 +36,8 @@
   },
   {
     "file": "generation-summary.json",
-    "bytes": 291,
-    "sha256": "64b6d34e792ef3a713b8729a32bf22f448c5cef4e7f0c3a67e64144aa184700a"
+    "bytes": 317,
+    "sha256": "5c011290684ce577cc401249317c749a5304cd34d92cd318b4249ad4d39c855c"
   },
   {
     "file": "original.html",
