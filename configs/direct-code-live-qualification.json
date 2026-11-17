@@ -1,0 +1,53 @@
+{
+  "variant": "direct-code-v1",
+  "training_mode": "complete responses, empty reasoning; matched no-thinking evaluation",
+  "start_clock": "original20:42:39EST retained",
+  "hard_stop": "2026-11-17T07:42:39-05:00",
+  "qualification": {
+    "short": {
+      "job_id": "job-00002",
+      "simulated": false,
+      "exit_code": 0,
+      "stop_reason": null,
+      "elapsed_seconds": 15.871875762939453,
+      "okay": true,
+      "completed_steps": 10,
+      "finite_losses": true,
+      "seconds_per_step": 0.13082183300866745,
+      "peak_memory_gb": 8.897995958
+    },
+    "reload": {
+      "job_id": "job-00003",
+      "simulated": false,
+      "exit_code": 0,
+      "stop_reason": null,
+      "elapsed_seconds": 25.169179916381836,
+      "okay": true,
+      "finite": true,
+      "adapter_effect_max_logit_delta": 1.140625,
+      "reload_max_logit_delta": 0.0,
+      "reload_verified": true,
+      "training_performed_by_reload_check": false
+    },
+    "length": {
+      "job_id": "job-00004",
+      "simulated": false,
+      "exit_code": 0,
+      "stop_reason": null,
+      "elapsed_seconds": 49.03964591026306,
+      "okay": true,
+      "completed_steps": 3,
+      "finite_losses": true,
+      "seconds_per_step": 9.574875207996229,
+      "peak_memory_gb": 29.900698346
+    }
+  },
+  "untouched_control": {
+    "finish_reason": "length",
+    "generation_tokens": 49152,
+    "usable_scene": false,
+    "failure": "repetitive planning and HTML skeleton with ellipsis; raw source frozen"
+  },
+  "main_started": true,
+  "quality_claim": "none; early direct-code checkpoint pending"
+}
