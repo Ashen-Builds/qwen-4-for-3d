@@ -60,5 +60,6 @@
     "drain_minutes": 2
   },
   "evaluation_lead_seconds": 3600,
-  "final_training_stop_seconds_before_deadline": 4500
+  "final_training_stop_seconds_before_deadline": 4500,
+  "shutdown_reserve_seconds": 120
 }

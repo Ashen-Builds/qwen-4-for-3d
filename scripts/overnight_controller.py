@@ -118,6 +118,9 @@ class Engine:
             self.s['status'] = 'deadline'
             self.event(now, 'hard-stop')
             return {'action': 'stop', 'reason': 'hard-deadline'}
+        if now>=self.s['deadline']-self.config.get('shutdown_reserve_seconds',0):
+            self.s['status']='finalizing'
+            return {'action':'stop','reason':'deadline-drain'} if self.s['active_job'] else None
         if flags.get('stop'):
             self.s['status'] = 'stopped'
             self.event(now, 'operator-stop')
@@ -176,6 +179,7 @@ class Engine:
         job = {'action': 'launch', 'id': f"job-{self.s['job_number']:05d}",
                'kind': kind, 'started': now, 'max_seconds': limits[kind],
                'checkpoint': self.s['latest_checkpoint'], 'simulated': self.simulated, **extra}
+        job['max_seconds']=min(job['max_seconds'],max(0,self.s['deadline']-now-self.config.get('shutdown_reserve_seconds',0)))
         self.s['active_job'] = job
         self.s['status'] = 'running'
         if kind in {'short', 'length', 'segment'}:
@@ -294,7 +298,7 @@ class Engine:
 
 
 def process_identity(pid):
-    p = subprocess.run(['ps','-p',str(pid),'-o','lstart=,args='],capture_output=True,text=True)
+    p = subprocess.run(['ps','-p',str(pid),'-o','lstart='],capture_output=True,text=True)
     return p.stdout.strip() if p.returncode == 0 else None
 
 
@@ -348,7 +352,7 @@ def terminate_owned(child, identity, grace=60, tracked=None):
 def recover_after_restart(engine, now, lookup=process_identity):
     state=engine.s;old=state['active_job']
     if not old:return
-    pids=state.get('orphan_group',[])+([old['pid']] if old.get('pid') else [])
+    pids=state.get('orphan_group',[])+([old['pid']] if old.get('pid') else [])+[int(pid) for pid in old.get('process_tree',{})]
     if any(lookup(pid) for pid in pids):
         raise RuntimeError('Recorded worker/descendant still alive; explicit inspected handoff required')
     state['active_job']=None;state['crashes']+=1

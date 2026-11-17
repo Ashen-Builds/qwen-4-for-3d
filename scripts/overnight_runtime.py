@@ -92,7 +92,7 @@ def collect(job,jobdir,runroot,code,reason,elapsed):
         result['raw_export_and_visual_review_required']=True
     if code==75:
         result['paused']=True;result['resource_hold']=True
-    if reason in {'streaming','manual-pause','owner-computer-time','global-gpu-pause'}:result['paused']=True
+    if reason in {'streaming','manual-pause','owner-computer-time','global-gpu-pause','deadline-drain'}:result['paused']=True
     atomic_json(jobdir/'result.json',result);return result
 
 

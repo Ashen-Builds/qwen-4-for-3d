@@ -413,3 +413,25 @@ class DetachedGPUWrapperTests(unittest.TestCase):
         from overnight_runtime import owned_rss
         with patch('overnight_runtime.process_tree',return_value=[11,12]),patch('overnight_runtime.subprocess.run',return_value=types.SimpleNamespace(stdout='11 100\n12 200\n13 900\n')):
             self.assertEqual(owned_rss(11),300*1024)
+
+class LiveReviewRegressionTests(unittest.TestCase):
+    def test_executable_normalization_does_not_change_process_identity(self):
+        from unittest.mock import patch
+        def fake_ps(command,**_):
+            self.assertEqual(command[-1],'lstart=')
+            return types.SimpleNamespace(returncode=0,stdout='Mon Nov 16 20:42:40 2026\n')
+        with patch('overnight_controller.subprocess.run',side_effect=fake_ps):
+            self.assertEqual(process_identity(111),'Mon Nov 16 20:42:40 2026')
+
+    def test_dead_wrapper_with_recorded_detached_worker_blocks_recovery(self):
+        from overnight_controller import recover_after_restart
+        e=engine();e.tick(e.s['start']);e.s['active_job']['pid']=123;e.s['active_job']['process_tree']={'456':'recorded-start'}
+        with self.assertRaises(RuntimeError):recover_after_restart(e,e.s['start']+1,lambda pid:'live-start' if pid==456 else None)
+
+    def test_reserve_stops_all_workers_before_hard_deadline(self):
+        cfg=copy.deepcopy(CONFIG);cfg['shutdown_reserve_seconds']=120;e=Engine(new_state(cfg,'reserve'),cfg,True);e.tick(e.s['start'])
+        a=e.tick(e.s['deadline']-120,{'daytime_approved':True});self.assertEqual(a['reason'],'deadline-drain')
+        e.finish(e.s['deadline']-119,{'simulated':True,'okay':False,'paused':True});self.assertIsNone(e.tick(e.s['deadline']-60,{'daytime_approved':True}));self.assertIsNone(e.s['active_job'])
+
+    def test_worker_budget_is_clamped_to_shutdown_reserve(self):
+        cfg=copy.deepcopy(CONFIG);cfg['shutdown_reserve_seconds']=120;e=Engine(new_state(cfg,'clamp'),cfg,True);a=e.tick(e.s['deadline']-180,{'daytime_approved':True});self.assertEqual(a['max_seconds'],60)
