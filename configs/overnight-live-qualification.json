@@ -1,0 +1,134 @@
+{
+  "run_id": "astra-manual-20261116",
+  "status": "main-training-started",
+  "control": {
+    "model_directory": "ccore-bf16",
+    "load_seconds": 2.1783270000014454,
+    "elapsed_seconds": 631.2834709580056,
+    "prompt_tokens": 277,
+    "prompt_tps": 826.5316664845362,
+    "generation_tokens": 39594,
+    "generation_tps": 62.972945771767,
+    "peak_gb": 9.944769992,
+    "finish_reason": "stop",
+    "prompt_token_sha256": "60f73d6e3e30203ae19fd250d30b0b7548982144de9d473d3f0bdd3e1b7561a4",
+    "versions": {
+      "mlx": "0.32.4",
+      "mlx-lm": "0.32.2",
+      "transformers": "5.23.0"
+    },
+    "complete_html": true
+  },
+  "qualification": {
+    "short": {
+      "job_id": "job-00005",
+      "simulated": false,
+      "exit_code": 0,
+      "stop_reason": null,
+      "elapsed_seconds": 15.862150192260742,
+      "okay": true,
+      "completed_steps": 10,
+      "finite_losses": true,
+      "seconds_per_step": 0.13058695799554698,
+      "peak_memory_gb": 8.910971442
+    },
+    "reload": {
+      "job_id": "job-00006",
+      "simulated": false,
+      "exit_code": 0,
+      "stop_reason": null,
+      "elapsed_seconds": 25.035516023635864,
+      "okay": true,
+      "finite": true,
+      "adapter_effect_max_logit_delta": 1.40625,
+      "reload_max_logit_delta": 0.0,
+      "reload_verified": true,
+      "training_performed_by_reload_check": false
+    },
+    "length": {
+      "job_id": "job-00007",
+      "simulated": false,
+      "exit_code": 0,
+      "stop_reason": null,
+      "elapsed_seconds": 87.57693910598755,
+      "okay": true,
+      "completed_steps": 3,
+      "finite_losses": true,
+      "seconds_per_step": 22.631196292000823,
+      "peak_memory_gb": 51.254833898
+    }
+  },
+  "raw_control": "failed syntax, frozen; separately repaired diagnostic exported/reimported",
+  "diagnostic_glb": {
+    "bytes": 2040220,
+    "errors": 0,
+    "warnings": 0,
+    "meshes": 743,
+    "nodes": 869,
+    "materials": 45,
+    "animations": [
+      {
+        "name": "Villager_Trade_01",
+        "channels": 3
+      },
+      {
+        "name": "Villager_Trade_02",
+        "channels": 3
+      },
+      {
+        "name": "Villager_Trade_03",
+        "channels": 3
+      },
+      {
+        "name": "Villager_Trade_04",
+        "channels": 3
+      },
+      {
+        "name": "Villager_Trade_05",
+        "channels": 3
+      },
+      {
+        "name": "Villager_Trade_06",
+        "channels": 3
+      },
+      {
+        "name": "Date_Palm_Left_Front_Sway",
+        "channels": 1
+      },
+      {
+        "name": "Date_Palm_Left_Back_Sway",
+        "channels": 1
+      },
+      {
+        "name": "Date_Palm_Right_Back_Sway",
+        "channels": 1
+      },
+      {
+        "name": "Cloud_1_Drift",
+        "channels": 1
+      },
+      {
+        "name": "Cloud_2_Drift",
+        "channels": 1
+      },
+      {
+        "name": "Cloud_3_Drift",
+        "channels": 1
+      },
+      {
+        "name": "Water_Flow_Loop",
+        "channels": 11
+      }
+    ],
+    "extensionsUsed": [
+      "KHR_materials_emissive_strength",
+      "KHR_texture_transform"
+    ]
+  },
+  "main_first_segment": {
+    "iterations": 42,
+    "max_seconds": 1500
+  },
+  "comparison_result": "not yet evaluated; no improvement claim",
+  "scope_note": "Controller steps exclude six isolated one-step numerical-comparison branches. Earlier aborted long attempt had zero completed steps."
+}
