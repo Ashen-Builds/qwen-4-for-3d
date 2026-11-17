@@ -1,6 +1,24 @@
 # Astra 3D overnight experiment
 
-Updated November 17, 2026 at 06:52 EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR #1. **Training and model inference are stopped. Astra did not beat CCORE on the primary Babylon marketplace.** Final results are published, private backups are verified, and durable project knowledge is updated and synchronized. No further weight updates are authorized by this run.
+Updated November 17, 2026 at 11:48 EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR #1. **Previous experiment stopped; next eight-hour run is preparation only.** Astra did not beat CCORE on the Babylon marketplace. Results, exact raw/assisted outputs and private backups are preserved. Owner requested discussion notes and a pushed next-steps handoff, not another training launch.
+
+## Start here: next steps
+
+1. Read [the final experiment report](docs/overnight-final-20261117.md), [discussion notes](docs/next-eight-hour-discussion.md), and [original reply summary](docs/replies-summary.md). Keep untouched CCORE as the control. Do not treat the repaired Babylon files as raw successes.
+2. Inventory the acquired GLB and older Scenes data by source ID, program family, task type and token length. GLB replay supplied the previous candidate; Scenes was archived but not in its main mixture. Select candidate town/architecture/voxel examples and preserve provenance. Do not silently mix their different output interfaces.
+3. Build verified additions for layout, villagers/gait, path loops, water/cloud motion and export. Run source code, export/reopen GLBs and inspect motion before accepting targets. Existing CCORE replay alone is not a demonstrated improvement strategy. Keep Babylon and final-test outputs/repairs out of training; reserve new independent tests.
+4. Freeze a larger development panel and final evaluation set, with automatic syntax/runtime/export/motion checks and common viewing conditions. Bound review time and retain raw failures; avoid repairing each checkpoint preview during the training window.
+5. Settle one training recipe before the next clock: explicit thinking/chat-template/mask configuration, representative-length memory qualification, measured adapter coverage, save/reload and exact documented resume behavior. The previous one-layer adapter worked within measured memory limits; broader coverage remains unqualified. Do not restart old controllers.
+6. Prepare an eight-hour schedule with measured step/token/example-coverage targets, bounded evaluations, recovery checkpoints, memory/regression stops and explicit shutdown reserve. Most of the window should be training. This remains unbuilt and must not be described as ready.
+7. Wait for a new explicit owner instruction to start the next run. On that turn, recheck machine identity, live process ownership and GPU/streaming flags, then perform the required live checks inside the authorized scope.
+
+## Not done / limits
+
+- No accepted Astra replacement for CCORE and no raw successful Babylon GLB.
+- No newly curated full-scene dataset, broad independent evaluation suite, broader-layer training configuration, exact optimizer resume, or validated next eight-hour controller is complete.
+- Local GPU status at handoff has no holders/waiters/clients, but effective capture slots are zero and the watchdog is stale. Treat current guard/streaming state as a live boundary; never remove shared flags to make a run start.
+- No new training, inference, model download, spend, deployment, public weights or project-main merge is authorized by this handoff.
+
 
 ## Authority and deadline
 
@@ -11,7 +29,7 @@ Local training/evaluation, routine supervision, Astra pushes and private Drive b
 ## Current ownership and deliverable
 
 - All three controller roots are stopped: `astra-manual-20261116`, `astra-direct-20261116`, `astra-thinking-clean-20261117`. Private roots are under the workspace sibling `work/sprint-prep/overnight/`, outside this checkout. All final-test and paired-repair model jobs exited and released their GPU slots. Never restart these loops from stale status notes.
-- Final Chrome comparison: `http://localhost:8767/final-review/`, tab 911561089, marked deliverable. Actual GLBs were loaded and inspected. Default state is paused; idle rendering is on demand and playback is capped at 30 fps. The loopback server serves only sibling `outputs/babylon-comparison`; server exec 93118 remains intentionally available for the owner.
+- Comparison: `http://localhost:8767/final-review/`. Actual GLBs were inspected during the completed experiment; the browser was not re-tested during this documentation handoff. The server is currently listening on loopback port 8767 (PID 73893, started November 16 at 23:58:31, `scripts/serve_comparison.py --directory ../outputs/babylon-comparison --port 8767`). The viewer defaults to paused/on-demand rendering, with 30 fps playback. Recheck PID identity before managing it.
 - Final browser review lease exec 23876 was released after the paused display was verified. A previous review lease expired at 06:00:08 while fixture review continued until about 06:04; those tabs were then closed. This was a process-control gap, not a qualified GPU performance measurement. No model overlap or foreign interference was observed.
 - Hardware verified: M3 Ultra, Mac15,14, 256 GiB. Shared watchdog clamps GPU capacity to two. Preserve all flags and foreign sessions. The final owner display does not require any model to remain loaded.
 - Before any new run, inspect actual processes, shared GPU status, branch and receipts. No automatic overnight continuation is scheduled.
@@ -63,3 +81,24 @@ Recommended next experiment, requiring a new owner instruction: retain CCORE as 
 ## Discussion after the run — November 17
 
 Owner asked to keep talking and save preparation notes for a future eight-hour run, without starting training. [Discussion notes](docs/next-eight-hour-discussion.md) record the supplied CCORE collection, actual use of its GLB data, unused older Scenes data, and proposed preparation/verification changes. These are discussion priorities, not launch authorization or an accepted training recipe.
+
+## Reproduce the saved comparison
+
+With pinned Node dependencies installed (`npm ci`), use the CPU-only staging helper:
+
+```sh
+python3 scripts/build_final_review.py --out ../outputs/astra-final
+python3 scripts/serve_comparison.py --directory ../outputs/astra-final --port 8767
+```
+
+Do not start a second server while the existing port is occupied. Rendering/review on the Studio still follows the shared GPU guard. This command stages saved assets; it does not generate or train a model.
+
+## Cross-machine handoff
+
+Source branch: `origin/Astra`; draft PR https://github.com/Ashen-Builds/qwen-4-for-3d/pull/1 remains unmerged. Last discussion commit before this handoff: `6e55f9b` (dataset usage and preparation priorities). This checkout has one worktree and no stashes; no other checkout is claimed by this handoff.
+
+Git carries source, public evaluation GLBs/screenshots/patches and discussion notes. The sibling `work/` and `outputs/` directories are machine-local: original/derived weights, training corpora, adapters, environments, detailed receipts and served gallery do not travel with Git. Checkpoints/data/results were privately backed up through Drive; use its verified index and restore manifests. Keep the selected adapter and original CCORE preserved. Rebuild dependencies and the staged comparison on another machine; heavy model work belongs on the verified Studio. No credential values belong in the handoff; downloading public upstream data does not require a new project secret.
+
+Resume in a fresh session:
+
+> Work in the existing qwen-4-for-3d checkout on branch Astra. Read HANDOFF.md and docs/next-eight-hour-discussion.md, inspect current Git and process ownership, and continue at Start here: next steps. Prepare the next eight-hour experiment; do not start training until the owner explicitly requests it.
