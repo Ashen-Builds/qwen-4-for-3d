@@ -8,9 +8,10 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 
 - Branch: `Astra`. [Frozen visual comparison and GLBs](eval/baselines/babylon-20261116/README.md) include a reserved future result for our adapter.
 - Both original checkpoints were downloaded and hash-verified. Official Qwen original/Q8 copies were subsequently deleted at the owner’s request (18.44 GB logical bytes); CCORE stays available. [Acquisition receipt](configs/download-receipt.json), [removal receipt](configs/official-model-removal.json).
-- Comparison completed on M3 Ultra: both raw outputs failed. Separately labeled repaired GLBs load side by side; CCORE is visually richer but misses walking/full-town requirements. [Results and limitations](docs/comparison-results.md). No training started.
+- Comparison completed on M3 Ultra: both raw outputs failed. Separately labeled repaired GLBs load side by side; CCORE is visually richer but misses walking/full-town requirements. [Results and limitations](docs/comparison-results.md). These are historical repaired diagnostics.
 - First comparison: a detailed animated voxel Babylon-inspired marketplace, using identical prompts and conditions for CCORE, upstream Qwen and later our own adapter.
-- Preparation is staged: [archive verification](configs/archive-verification.json), [CPU preflight](configs/preflight.json), [48-hour runbook](docs/48-hour-pilot.md). Original CCORE and source datasets are archived through the direct Codex Drive connector. Live gradient/throughput/save-reload qualification intentionally remains unrun. No training, goal or automation is active.
+- An owner-authorized overnight experiment is active on Studio, with a fixed November17 07:42:39 EST stop. Live training/reload/length qualification passed. The initial42-step adapter produced incomplete showcase/probe responses; it is retained as a failed approach. A separately declared direct-code variant is training with stricter data exclusions and matched no-thinking controls. **No improved Astra asset has been demonstrated yet.** [Live experiment record](docs/overnight-run-20261116.md).
+- Source/data archives are complete through the direct Codex Drive connector. The earlier48-hour proposal is historical; the active manual run is capped at11hours. [Archive verification](configs/archive-verification.json), [current data variant](configs/direct-code-adoption.json).
 
 ## Pipeline
 
