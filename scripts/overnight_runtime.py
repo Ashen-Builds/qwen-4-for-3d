@@ -131,6 +131,7 @@ def command(repo,job,jobdir):
               '--card',str(repo.parent/'work/models/ccore--Qwen3.5-4B-GLB-3D-Coder/8f32a199f8b22fe3157b9c5c8b42b052a0750dd3/README.md'),
               '--max-tokens','49152','--seed','42']
         if job['kind']=='sample':args+=['--adapter',job['checkpoint']]
+        if not job.get('thinking',True):args+=['--no-thinking']
     else:args=[str(python),str(repo/'scripts/sprint_worker.py'),'--job',str(jobdir/'job.json'),'--execute-authorized']
     return ['python3',str(Path.home()/'.cache/gpu-slot/bin/gpu_slot.py'),'capture','--label','astra-'+job['id'],
             '--json',str(jobdir/'gpu.json'),'--timeout','180','--',*args]
@@ -141,7 +142,10 @@ def inputs_fingerprint(repo):
     paths+=list((repo/'viewer').glob('*'))+[repo/'eval/sprint-probes-v1.json',repo/'eval/prompts/babylon-marketplace-v3.txt',repo.parent/'work/sprint-prep/training-ready/DATA_MANIFEST.json']
     result={str(p.relative_to(repo.parent)):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths if p.is_file()}
     model=repo.parent/'work/models-derived/ccore-bf16'
-    data=repo.parent/'work/sprint-prep/training-ready'
+    import yaml
+    cfg=repo/'configs/lora-qualification.yaml'
+    source=yaml.safe_load(cfg.read_text()) if cfg.exists() else {}
+    data=(repo/source['data']).resolve().parent if source.get('data') else repo.parent/'work/sprint-prep/training-ready'
     manifest=data/'DATA_MANIFEST.json'
     if manifest.exists():
         for item in json.loads(manifest.read_text())['files']:

@@ -17,10 +17,12 @@ def inspect(repo):
     checks['external_reporting_disabled']=cfg.get('report_to') is None
     checks['model_present']=(repo/cfg['model']/'config.json').is_file()
     audit=json.loads((work/'adapter-setup-audit.json').read_text());checks['adapter_shape_check']=audit['trained_steps']==0 and audit['final_layer_full_attention'] and audit['adapted_last_layers']==cfg['num_layers'] and audit['trainable_parameters']>0
-    data=work/'training-ready';manifest=json.loads((data/'DATA_MANIFEST.json').read_text());checks['data_hashes']=all((data/f['path']).stat().st_size==f['bytes'] and hashlib.sha256((data/f['path']).read_bytes()).hexdigest()==f['sha256'] for f in manifest['files'])
+    data=(repo/cfg['data']).resolve().parent;manifest=json.loads((data/'DATA_MANIFEST.json').read_text());checks['data_hashes']=all((data/f['path']).stat().st_size==f['bytes'] and hashlib.sha256((data/f['path']).read_bytes()).hexdigest()==f['sha256'] for f in manifest['files'])
     checks['complete_targets']=all(not row['truncation'] for row in manifest['datasets'].values())
     checks['masks_and_lengths']=manifest['datasets']['repairs']['exact_mask_prefix'] and manifest['datasets']['repairs']['max_tokens']<=cfg['max_seq_length']
     checks['family_split']=manifest['family_overlap']==0
+    checks['all_phase_data_bound_to_manifest']=all((repo/c['data']).resolve().parent==data for c in phase_configs)
+    checks['mode_matches_data']=bool(cfg.get('response_only_training'))==bool(manifest.get('response_only_training',False) or manifest.get('enable_thinking') is False)
     tokenizer=json.loads((work/'tokenizer-equivalence.json').read_text())
     checks['actual_training_tokenizer_qualified']=all(tokenizer['checks'].values()) and tokenizer['actual_training_tokenizer_prefix_and_ids_match']
     probes=json.loads((repo/'eval/sprint-probes-v1.json').read_text());checks['frozen_probes']=len(probes['final'])==20 and len(probes['development'])==4 and probes['seeds']==[42,1234]

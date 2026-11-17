@@ -1,6 +1,6 @@
-# Prepared, unstarted. Requires successful short and length qualification plus owner start instruction.
+# Direct-code variant; no reasoning targets; same prompt/system for paired no-thinking evaluation.
 model: ../work/models-derived/ccore-bf16
-data: ../work/sprint-prep/training-ready/mixture
+data: ../work/sprint-prep/direct-code-proposal/data-v1/mixture
 train: false
 test: false
 fine_tune_type: lora
@@ -11,7 +11,7 @@ batch_size: 1
 grad_accumulation_steps: 1
 iters: 200
 learning_rate: 1.0e-05
-max_seq_length: 32768
+max_seq_length: 16384
 grad_checkpoint: false
 mask_prompt: true
 steps_per_report: 1
@@ -26,3 +26,4 @@ lora_parameters:
 trust_remote_code: false
 report_to: null
 frozen_prefix_inference: true
+response_only_training: true

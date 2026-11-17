@@ -1,0 +1,56 @@
+{
+  "variant": "direct-code-v1",
+  "enable_thinking": false,
+  "manifest_sha256": "c49f37efe977377c86f221a4579decc55b2841038230194504e6a91828703cb6",
+  "datasets": {
+    "replay": {
+      "count": 448,
+      "min_tokens": 5327,
+      "median_tokens": 9682.0,
+      "max_tokens": 15909,
+      "total_tokens": 4372206,
+      "cap": 16384,
+      "truncation": false,
+      "exact_mask_prefix": true,
+      "counts": {
+        "train": 401,
+        "valid": 47
+      }
+    },
+    "repairs": {
+      "count": 80,
+      "min_tokens": 92,
+      "median_tokens": 116.5,
+      "max_tokens": 165,
+      "total_tokens": 9330,
+      "cap": 16384,
+      "truncation": false,
+      "exact_mask_prefix": true,
+      "counts": {
+        "train": 64,
+        "valid": 16
+      }
+    }
+  },
+  "mixture": {
+    "mixing": "One copy per retained wording variant, balanced cap at15percent train examples",
+    "mixture_counts": {
+      "train": 465,
+      "valid": 63
+    },
+    "repair_train_fraction": 0.13763440860215054,
+    "length_probe_tokens": [
+      5327,
+      9648,
+      15909
+    ]
+  },
+  "family_overlap": 0,
+  "grouping_overlap_scope": "Algorithmic title/JS connected components only; not complete semantic independence",
+  "original_program_content_preserved": true,
+  "reasoning_fields_removed": true,
+  "source_html_independently_executed": false,
+  "provided_glbs": "Previously independent validator-pass, rehashed for provenance",
+  "original_goal_deadline": "2026-11-17T07:42:39-05:00",
+  "prior_approach": "Stopped; primary49k and diagnosticbellows32k evaluations incomplete; all results retained"
+}

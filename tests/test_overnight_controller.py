@@ -435,3 +435,19 @@ class LiveReviewRegressionTests(unittest.TestCase):
 
     def test_worker_budget_is_clamped_to_shutdown_reserve(self):
         cfg=copy.deepcopy(CONFIG);cfg['shutdown_reserve_seconds']=120;e=Engine(new_state(cfg,'clamp'),cfg,True);a=e.tick(e.s['deadline']-180,{'daytime_approved':True});self.assertEqual(a['max_seconds'],60)
+
+class DirectCodeModeTests(unittest.TestCase):
+    def test_direct_control_and_candidate_share_no_thinking_flag(self):
+        from unittest.mock import patch
+        from overnight_runtime import command
+        c=copy.deepcopy(CONFIG);c['evaluation_thinking']=False;e=Engine(new_state(c,'direct'),c,True)
+        baseline=e.launch(e.s['start'],'baseline');self.assertFalse(baseline['thinking'])
+        with tempfile.TemporaryDirectory() as temp,patch('overnight_runtime.verify_checkpoint'):
+            control=command(REPO,baseline,Path(temp)/'jobs/job-control')
+            candidate=command(REPO,{**baseline,'kind':'sample','checkpoint':'fixture-only'},Path(temp)/'jobs/job-candidate')
+            self.assertIn('--no-thinking',control);self.assertIn('--no-thinking',candidate)
+            self.assertEqual(control[control.index('--prompt')+1],candidate[candidate.index('--prompt')+1])
+            self.assertEqual(control[control.index('--seed')+1],candidate[candidate.index('--seed')+1])
+
+    def test_direct_variant_keeps_original_experiment_deadline(self):
+        new=json.loads((REPO/'configs/overnight-direct-code.json').read_text());original=json.loads((REPO/'configs/overnight-manual.json').read_text());self.assertEqual(new['hard_stop'],original['hard_stop']);self.assertEqual(new['start'],original['start'])

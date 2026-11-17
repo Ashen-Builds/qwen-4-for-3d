@@ -1,0 +1,20 @@
+{
+  "created_utc": "2026-11-17T03:07:06.101532+00:00",
+  "kind": "controller-dry-test; simulated time and fake CPU workers only",
+  "passed": true,
+  "tests_run": 67,
+  "failures": 0,
+  "errors": 0,
+  "real_model_workers_started": 0,
+  "real_training_steps": 0,
+  "mlx_imported": false,
+  "source_sha256": {
+    "scripts/overnight_controller.py": "faaa3497777440fcf4bc1cd5cadcce1d059022d68a4491f414b53686afbfdce6",
+    "scripts/overnight_runtime.py": "6f0cbbc4c6ce7397384052ce990fc31a9bd925bd7500777197ee02ccb9ef6eaa",
+    "scripts/sprint_worker.py": "c0d110a5dc8f0dd99e213385d268576940dfeb3ae4fa5abfaa93e62c522269ab",
+    "tests/test_overnight_controller.py": "da04b26387548b1376233ceb9ef35855200a0f30b5797270c92d3784ba8a59cf",
+    "tests/fixtures/fake_sprint_worker.py": "d6295c81e9b185d55ab00e57e1f9a2aca85353b361c16181fb918d752c88adbd"
+  },
+  "live_qualification_completed": false,
+  "remaining": "Actual training, memory/throughput, adapter effect/reload and GLB visual review require the later owner start instruction."
+}

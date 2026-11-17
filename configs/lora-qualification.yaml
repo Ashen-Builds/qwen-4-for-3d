@@ -1,6 +1,6 @@
-# Prepared only. Nothing starts from this file. Pilot after explicit owner instruction.
+# Direct-code variant; no reasoning targets; same prompt/system for paired no-thinking evaluation.
 model: ../work/models-derived/ccore-bf16
-data: ../work/sprint-prep/training-ready/repairs
+data: ../work/sprint-prep/direct-code-proposal/data-v1/repairs
 train: false
 test: false
 fine_tune_type: lora
@@ -10,7 +10,7 @@ num_layers: 1
 batch_size: 1
 grad_accumulation_steps: 1
 iters: 10
-learning_rate: 0.00001
+learning_rate: 1.0e-05
 max_seq_length: 4096
 grad_checkpoint: false
 mask_prompt: true
@@ -26,3 +26,4 @@ lora_parameters:
 trust_remote_code: false
 report_to: null
 frozen_prefix_inference: true
+response_only_training: true

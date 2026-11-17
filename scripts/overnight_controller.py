@@ -178,7 +178,7 @@ class Engine:
         limits = {'baseline': 1800, 'short': 600, 'reload': 600, 'length': 1500, 'sample': 1800, 'segment': 1500}
         job = {'action': 'launch', 'id': f"job-{self.s['job_number']:05d}",
                'kind': kind, 'started': now, 'max_seconds': limits[kind],
-               'checkpoint': self.s['latest_checkpoint'], 'simulated': self.simulated, **extra}
+               'checkpoint': self.s['latest_checkpoint'], 'simulated': self.simulated, 'thinking':self.config.get('evaluation_thinking',True), **extra}
         job['max_seconds']=min(job['max_seconds'],max(0,self.s['deadline']-now-self.config.get('shutdown_reserve_seconds',0)))
         self.s['active_job'] = job
         self.s['status'] = 'running'
