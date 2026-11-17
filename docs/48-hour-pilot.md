@@ -79,3 +79,10 @@ The inspected runtime switches Qwen3.5 recurrent layers to a sequential ops path
 Use `python scripts/training_preflight.py` in the task environment for a CPU-only check and `python scripts/run_qualification.py` for a plan-only command. Both are safe to inspect during preparation; neither trains by default. `configs/lora-length-qualification.yaml` and `configs/lora-main-draft.yaml` also ship with training disabled. The current inference helper accepts a frozen `--adapter` directory, records its file digests and explicitly sets evaluation mode. Always use the same frozen runtime/precision/prompt/dependencies for control and adapter, and exit the model process between arms.
 
 `viewer/sprint.html` is the prepared CCORE/Astra two-panel template. Stage actual exports under control/asset.glb and ours/asset.glb with per-arm result.json, preserving raw failures separately. The original historical Qwen/CCORE gallery remains unchanged and available at localhost:8767. A viewer template or a valid supplied training GLB is not evidence of a trained model gain.
+
+
+## Overnight coordinator dry-tested
+
+The [controller runbook](overnight-controller.md) now documents the implemented phase machine, lock/recovery rules, review protocol and stop conditions. [Dry-test receipt](../configs/controller-dry-test.json): 53 checks passed, including a full simulated 48-hour cycle using CPU-only fake subprocesses. No MLX import, model load, gradient or training step occurred. This tests scheduling/supervision, not trained output quality or hardware throughput.
+
+The current Codex supervisor is required for raw GLB export/playback/visual reviews and the fixed probes. The daemon waits at review gates if the supervisor is unavailable. It never substitutes a fake worker for a failed live model. Default operation prints a plan; no controller is active or scheduled. Live backward completion, finite loss/adapter tensors, adapter-effect/reload and long-example timing still require the later owner start instruction.

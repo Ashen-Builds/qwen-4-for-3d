@@ -2,6 +2,7 @@
   "status": "ready-for-authorized-qualification",
   "training_started": false,
   "checks": {
+    "all_phase_configs_safe": true,
     "training_disabled": true,
     "remote_code_disabled": true,
     "external_reporting_disabled": true,
@@ -48,7 +49,7 @@
     }
   },
   "remaining_live_gate": [
-    "actual backward/finite gradients",
+    "actual backward completion; finite losses and adapter weights",
     "representative-length memory and step time",
     "save/reload and restored adapter effect",
     "raw full-scene export and visual regression evaluation"

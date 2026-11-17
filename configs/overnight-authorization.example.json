@@ -1,0 +1,8 @@
+{
+  "owner_authorized": false,
+  "scope": "48-hour-sprint",
+  "run_id": "astra-sprint-01",
+  "config_sha256": "COPY_FROM_THE_PLAN_OUTPUT_AFTER_ACTUAL_OWNER_START_INSTRUCTION",
+  "allow_daytime_compute": false,
+  "note": "Example only. This file grants no authority and cannot start training."
+}

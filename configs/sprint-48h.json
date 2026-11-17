@@ -75,5 +75,12 @@
     "configs/lora-length-qualification.yaml",
     "configs/lora-main-draft.yaml"
   ],
-  "archive_receipt": "configs/archive-verification.json"
+  "archive_receipt": "configs/archive-verification.json",
+  "controller": {
+    "entrypoint": "scripts/overnight_controller.py",
+    "mode": "plan-only until explicit live authorization",
+    "reviewer": "Current Codex supervisor; wait safely if unavailable",
+    "schedule_safety": "8:58 a.m. drain, night window, fixed hard deadline",
+    "resume_semantics": "Adapter-weight warm restart; optimizer/data iterator are not bit-exact resumed"
+  }
 }

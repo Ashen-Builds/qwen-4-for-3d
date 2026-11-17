@@ -26,6 +26,7 @@ Target destinations: browsers, Godot, Unreal Engine, Unity and Roblox. Format su
 
 | File | Purpose |
 | --- | --- |
+| [Controller runbook](docs/overnight-controller.md) | Guarded scheduling, review protocol and dry tests |
 | [48-hour pilot proposal](docs/48-hour-pilot.md) | Scoped training/evaluation plan, no job started |
 | [Pipeline plan](docs/PIPELINE.md) | Fair A/B/C testing, rubric, critic roles and future overnight gates |
 | [Babylon marketplace prompt](eval/prompts/babylon-marketplace-v3.txt) | Shared request, held out from training |
