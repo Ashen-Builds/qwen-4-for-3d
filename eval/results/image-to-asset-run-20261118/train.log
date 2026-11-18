@@ -1,0 +1,289 @@
+{"event": "start", "segment": 0, "step": 0, "position": 0, "resumed": null, "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 1.5, "lr": 0.0001, "t": "19:41:02"}
+{"event": "dev", "step": 0, "loss": 0.8462, "each": [0.9754, 0.8045, 0.8413, 0.7634], "seconds": 30.1, "peak_gb": 32.2, "t": "19:41:32"}
+{"event": "step", "step": 1, "id": "asset-000779", "tokens": 17735, "loss": 0.856, "seconds": 108.8, "peak_gb": 86.84, "active_gb": 17.52, "t": "19:43:21"}
+{"event": "step", "step": 2, "id": "asset-001666", "tokens": 16846, "loss": 0.9131, "seconds": 100.6, "peak_gb": 86.84, "active_gb": 17.52, "t": "19:45:02"}
+{"event": "step", "step": 3, "id": "asset-000410", "tokens": 18196, "loss": 1.189, "seconds": 113.5, "peak_gb": 88.32, "active_gb": 17.52, "t": "19:46:55"}
+{"event": "step", "step": 4, "id": "asset-001331", "tokens": 17107, "loss": 0.9574, "seconds": 102.8, "peak_gb": 88.32, "active_gb": 17.52, "t": "19:48:38"}
+{"event": "step", "step": 5, "id": "asset-001916", "tokens": 22004, "loss": 0.8728, "seconds": 156.0, "peak_gb": 100.66, "active_gb": 17.52, "t": "19:51:14"}
+{"event": "step", "step": 6, "id": "asset-000687", "tokens": 12038, "loss": 0.9621, "seconds": 60.3, "peak_gb": 100.66, "active_gb": 17.52, "t": "19:52:15"}
+{"event": "step", "step": 7, "id": "asset-000382", "tokens": 22644, "loss": 1.01, "seconds": 161.5, "peak_gb": 102.74, "active_gb": 17.52, "t": "19:54:56"}
+{"event": "step", "step": 8, "id": "asset-000754", "tokens": 14844, "loss": 1.0591, "seconds": 84.6, "peak_gb": 102.74, "active_gb": 17.52, "t": "19:56:21"}
+{"event": "step", "step": 9, "id": "asset-003376", "tokens": 16261, "loss": 0.9494, "seconds": 95.8, "peak_gb": 102.74, "active_gb": 17.52, "t": "19:57:57"}
+{"event": "step", "step": 10, "id": "asset-000270", "tokens": 21088, "loss": 0.8257, "seconds": 143.1, "peak_gb": 102.74, "active_gb": 17.52, "t": "20:00:20"}
+{"event": "step", "step": 11, "id": "asset-001609", "tokens": 15011, "loss": 0.7665, "seconds": 83.8, "peak_gb": 102.74, "active_gb": 17.52, "t": "20:01:44"}
+{"event": "step", "step": 12, "id": "asset-002195", "tokens": 21391, "loss": 0.7212, "seconds": 148.0, "peak_gb": 102.74, "active_gb": 17.52, "t": "20:04:12"}
+{"event": "step", "step": 13, "id": "asset-003098", "tokens": 21655, "loss": 0.9458, "seconds": 150.5, "peak_gb": 102.74, "active_gb": 17.52, "t": "20:06:42"}
+{"event": "step", "step": 14, "id": "asset-000400", "tokens": 22034, "loss": 0.9725, "seconds": 153.5, "peak_gb": 102.74, "active_gb": 17.52, "t": "20:09:16"}
+{"event": "step", "step": 15, "id": "asset-002081", "tokens": 21250, "loss": 0.8227, "seconds": 144.8, "peak_gb": 102.74, "active_gb": 17.52, "t": "20:11:41"}
+{"event": "dev", "step": 15, "loss": 0.7246, "each": [0.8162, 0.7169, 0.6989, 0.6665], "seconds": 30.1, "t": "20:12:11"}
+{"event": "segment_end", "reason": "segment_time", "step": 15, "position": 15, "segment_steps": 15, "mean_loss": 0.9215, "train_minutes": 30.1, "tokens": 280104, "peak_gb": 102.74, "done": false, "t": "20:12:18"}
+{"event": "start", "segment": 1, "step": 15, "position": 15, "resumed": "checkpoint-000015", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 6.1, "lr": 0.0001, "t": "20:32:15"}
+{"event": "start", "segment": 1, "step": 15, "position": 15, "resumed": "checkpoint-000015", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 6.3, "lr": 0.0001, "t": "20:34:18"}
+{"event": "start", "segment": 1, "step": 15, "position": 15, "resumed": "checkpoint-000015", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 6.3, "lr": 0.0001, "t": "20:41:08"}
+{"event": "start", "segment": 1, "step": 15, "position": 15, "resumed": "checkpoint-000015", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 2.0, "lr": 0.0001, "t": "20:49:15"}
+{"event": "step", "step": 16, "id": "asset-003058", "tokens": 16551, "loss": 0.9674, "seconds": 111.8, "peak_gb": 82.94, "active_gb": 17.53, "t": "20:51:07"}
+{"event": "step", "step": 17, "id": "asset-000717", "tokens": 14444, "loss": 0.7044, "seconds": 81.1, "peak_gb": 82.94, "active_gb": 17.53, "t": "20:52:28"}
+{"event": "step", "step": 18, "id": "asset-000286", "tokens": 17984, "loss": 0.8838, "seconds": 114.0, "peak_gb": 87.56, "active_gb": 17.53, "t": "20:54:22"}
+{"event": "step", "step": 19, "id": "asset-002481", "tokens": 17645, "loss": 0.8314, "seconds": 112.2, "peak_gb": 87.56, "active_gb": 17.53, "t": "20:56:15"}
+{"event": "step", "step": 20, "id": "asset-001231", "tokens": 21100, "loss": 0.8845, "seconds": 147.6, "peak_gb": 97.74, "active_gb": 17.53, "t": "20:58:42"}
+{"event": "step", "step": 21, "id": "asset-001536", "tokens": 21011, "loss": 0.8277, "seconds": 147.1, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:01:09"}
+{"event": "step", "step": 22, "id": "asset-002828", "tokens": 17005, "loss": 1.0005, "seconds": 105.2, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:02:55"}
+{"event": "step", "step": 23, "id": "asset-000720", "tokens": 17427, "loss": 0.7999, "seconds": 108.5, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:04:43"}
+{"event": "step", "step": 24, "id": "asset-001732", "tokens": 17032, "loss": 0.7814, "seconds": 105.0, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:06:28"}
+{"event": "step", "step": 25, "id": "asset-001982", "tokens": 20323, "loss": 0.9671, "seconds": 138.6, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:08:47"}
+{"event": "step", "step": 26, "id": "asset-002181", "tokens": 18149, "loss": 0.6437, "seconds": 115.6, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:10:42"}
+{"event": "step", "step": 27, "id": "asset-000193", "tokens": 20085, "loss": 0.8624, "seconds": 135.5, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:12:58"}
+{"event": "step", "step": 28, "id": "asset-000135", "tokens": 16410, "loss": 0.7078, "seconds": 98.9, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:14:37"}
+{"event": "step", "step": 29, "id": "asset-000087", "tokens": 12935, "loss": 0.9092, "seconds": 68.4, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:15:45"}
+{"event": "step", "step": 30, "id": "asset-000269", "tokens": 15707, "loss": 0.6065, "seconds": 92.1, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:17:18"}
+{"event": "step", "step": 31, "id": "asset-003118", "tokens": 15171, "loss": 0.855, "seconds": 87.9, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:18:46"}
+{"event": "step", "step": 32, "id": "asset-002535", "tokens": 15715, "loss": 0.5808, "seconds": 92.4, "peak_gb": 97.74, "active_gb": 17.53, "t": "21:20:18"}
+{"event": "dev", "step": 32, "loss": 0.6439, "each": [0.7151, 0.6468, 0.6114, 0.6023], "seconds": 30.9, "t": "21:20:49"}
+{"event": "segment_end", "reason": "segment_time", "step": 32, "position": 32, "segment_steps": 17, "mean_loss": 0.8126, "train_minutes": 61.2, "tokens": 574798, "peak_gb": 97.74, "done": false, "t": "21:20:59"}
+{"event": "start", "segment": 2, "step": 32, "position": 32, "resumed": "checkpoint-000032", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 3.9, "lr": 0.0001, "t": "21:21:25"}
+{"event": "step", "step": 33, "id": "asset-002272", "tokens": 22181, "loss": 0.8205, "seconds": 159.9, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:24:05"}
+{"event": "step", "step": 34, "id": "asset-000615", "tokens": 11368, "loss": 0.7434, "seconds": 55.7, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:25:01"}
+{"event": "step", "step": 35, "id": "asset-000474", "tokens": 19229, "loss": 0.86, "seconds": 127.2, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:27:08"}
+{"event": "step", "step": 36, "id": "asset-003310", "tokens": 17174, "loss": 0.9297, "seconds": 105.5, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:28:54"}
+{"event": "step", "step": 37, "id": "asset-003564", "tokens": 21574, "loss": 1.2758, "seconds": 153.2, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:31:27"}
+{"event": "step", "step": 38, "id": "asset-002332", "tokens": 21340, "loss": 0.8359, "seconds": 148.8, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:33:56"}
+{"event": "step", "step": 39, "id": "asset-000534", "tokens": 20009, "loss": 0.9094, "seconds": 134.3, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:36:10"}
+{"event": "step", "step": 40, "id": "asset-002947", "tokens": 21547, "loss": 1.1542, "seconds": 151.2, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:38:41"}
+{"event": "step", "step": 41, "id": "asset-001953", "tokens": 20846, "loss": 0.7621, "seconds": 143.7, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:41:05"}
+{"event": "step", "step": 42, "id": "asset-003365", "tokens": 18916, "loss": 1.0305, "seconds": 122.5, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:43:08"}
+{"event": "step", "step": 43, "id": "asset-002929", "tokens": 20506, "loss": 0.8918, "seconds": 140.0, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:45:28"}
+{"event": "step", "step": 44, "id": "asset-000129", "tokens": 16222, "loss": 0.6675, "seconds": 96.8, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:47:05"}
+{"event": "step", "step": 45, "id": "asset-000392", "tokens": 20009, "loss": 0.8255, "seconds": 134.5, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:49:19"}
+{"event": "step", "step": 46, "id": "asset-001410", "tokens": 13762, "loss": 0.64, "seconds": 75.1, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:50:34"}
+{"event": "step", "step": 47, "id": "asset-002824", "tokens": 20531, "loss": 0.8981, "seconds": 139.8, "peak_gb": 101.28, "active_gb": 17.53, "t": "21:52:54"}
+{"event": "dev", "step": 47, "loss": 0.6356, "each": [0.7055, 0.6404, 0.6011, 0.5955], "seconds": 30.8, "t": "21:53:25"}
+{"event": "segment_end", "reason": "segment_time", "step": 47, "position": 47, "segment_steps": 15, "mean_loss": 0.883, "train_minutes": 92.7, "tokens": 860012, "peak_gb": 101.28, "done": false, "t": "21:53:35"}
+{"event": "start", "segment": 3, "step": 47, "position": 47, "resumed": "checkpoint-000047", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 2.2, "lr": 0.0001, "t": "21:54:00"}
+{"event": "step", "step": 48, "id": "asset-001540", "tokens": 17310, "loss": 0.6935, "seconds": 107.3, "peak_gb": 85.43, "active_gb": 17.53, "t": "21:55:47"}
+{"event": "step", "step": 49, "id": "asset-000451", "tokens": 22402, "loss": 0.9417, "seconds": 161.8, "peak_gb": 102.06, "active_gb": 17.53, "t": "21:58:29"}
+{"event": "step", "step": 50, "id": "asset-003097", "tokens": 20042, "loss": 0.8241, "seconds": 134.9, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:00:44"}
+{"event": "step", "step": 51, "id": "asset-002565", "tokens": 13694, "loss": 0.838, "seconds": 74.1, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:01:58"}
+{"event": "step", "step": 52, "id": "asset-001767", "tokens": 19035, "loss": 0.752, "seconds": 123.8, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:04:02"}
+{"event": "step", "step": 53, "id": "asset-001752", "tokens": 18043, "loss": 0.6633, "seconds": 113.5, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:05:55"}
+{"event": "step", "step": 54, "id": "asset-001510", "tokens": 19041, "loss": 0.7358, "seconds": 123.7, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:07:59"}
+{"event": "step", "step": 55, "id": "asset-000239", "tokens": 17277, "loss": 0.6219, "seconds": 106.2, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:09:45"}
+{"event": "step", "step": 56, "id": "asset-003832", "tokens": 18943, "loss": 0.9363, "seconds": 122.3, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:11:48"}
+{"event": "step", "step": 57, "id": "asset-002832", "tokens": 10328, "loss": 0.7858, "seconds": 47.2, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:12:35"}
+{"event": "step", "step": 58, "id": "asset-000385", "tokens": 16289, "loss": 0.6504, "seconds": 96.6, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:14:11"}
+{"event": "step", "step": 59, "id": "asset-001402", "tokens": 15568, "loss": 0.7049, "seconds": 90.8, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:15:42"}
+{"event": "step", "step": 60, "id": "asset-003627", "tokens": 19443, "loss": 0.8869, "seconds": 128.0, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:17:50"}
+{"event": "step", "step": 61, "id": "asset-001213", "tokens": 21237, "loss": 0.9364, "seconds": 147.5, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:20:18"}
+{"event": "step", "step": 62, "id": "asset-000412", "tokens": 16568, "loss": 0.7315, "seconds": 99.3, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:21:57"}
+{"event": "step", "step": 63, "id": "asset-003669", "tokens": 20711, "loss": 1.054, "seconds": 141.9, "peak_gb": 102.06, "active_gb": 17.53, "t": "22:24:19"}
+{"event": "dev", "step": 63, "loss": 0.6322, "each": [0.7007, 0.6376, 0.5978, 0.5927], "seconds": 30.8, "t": "22:24:50"}
+{"event": "segment_end", "reason": "segment_time", "step": 63, "position": 63, "segment_steps": 16, "mean_loss": 0.7973, "train_minutes": 123.0, "tokens": 1145943, "peak_gb": 102.06, "done": false, "t": "22:24:54"}
+{"event": "start", "segment": 4, "step": 63, "position": 63, "resumed": "checkpoint-000063", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 2.2, "lr": 0.0001, "t": "22:25:19"}
+{"event": "step", "step": 64, "id": "asset-000688", "tokens": 18547, "loss": 0.8002, "seconds": 118.7, "peak_gb": 89.42, "active_gb": 17.53, "t": "22:27:18"}
+{"event": "step", "step": 65, "id": "asset-000707", "tokens": 12180, "loss": 0.6123, "seconds": 61.7, "peak_gb": 89.42, "active_gb": 17.53, "t": "22:28:20"}
+{"event": "step", "step": 66, "id": "asset-003370", "tokens": 18763, "loss": 0.8976, "seconds": 121.3, "peak_gb": 90.19, "active_gb": 17.53, "t": "22:30:21"}
+{"event": "step", "step": 67, "id": "asset-000369", "tokens": 21547, "loss": 0.697, "seconds": 151.2, "peak_gb": 99.2, "active_gb": 17.53, "t": "22:32:52"}
+{"event": "step", "step": 68, "id": "asset-001695", "tokens": 20915, "loss": 0.734, "seconds": 143.9, "peak_gb": 99.2, "active_gb": 17.53, "t": "22:35:16"}
+{"event": "step", "step": 69, "id": "asset-002279", "tokens": 20309, "loss": 0.7132, "seconds": 137.5, "peak_gb": 99.2, "active_gb": 17.53, "t": "22:37:34"}
+{"event": "step", "step": 70, "id": "asset-000164", "tokens": 14192, "loss": 0.9845, "seconds": 78.3, "peak_gb": 99.2, "active_gb": 17.53, "t": "22:38:52"}
+{"event": "step", "step": 71, "id": "asset-002810", "tokens": 16467, "loss": 0.8389, "seconds": 98.8, "peak_gb": 99.2, "active_gb": 17.53, "t": "22:40:31"}
+{"event": "step", "step": 72, "id": "asset-003194", "tokens": 18745, "loss": 0.7431, "seconds": 120.7, "peak_gb": 99.2, "active_gb": 17.53, "t": "22:42:32"}
+{"event": "step", "step": 73, "id": "asset-000362", "tokens": 22117, "loss": 0.7776, "seconds": 158.3, "peak_gb": 101.07, "active_gb": 17.53, "t": "22:45:10"}
+{"event": "step", "step": 74, "id": "asset-002718", "tokens": 15467, "loss": 0.8621, "seconds": 89.4, "peak_gb": 101.07, "active_gb": 17.53, "t": "22:46:40"}
+{"event": "step", "step": 75, "id": "asset-001931", "tokens": 21005, "loss": 0.7544, "seconds": 145.3, "peak_gb": 101.07, "active_gb": 17.53, "t": "22:49:05"}
+{"event": "step", "step": 76, "id": "asset-002537", "tokens": 6962, "loss": 0.6616, "seconds": 26.4, "peak_gb": 101.07, "active_gb": 17.53, "t": "22:49:31"}
+{"event": "step", "step": 77, "id": "asset-003609", "tokens": 17789, "loss": 0.8623, "seconds": 111.3, "peak_gb": 101.07, "active_gb": 17.53, "t": "22:51:23"}
+{"event": "step", "step": 78, "id": "asset-000130", "tokens": 12828, "loss": 0.3504, "seconds": 66.7, "peak_gb": 101.07, "active_gb": 17.53, "t": "22:52:29"}
+{"event": "step", "step": 79, "id": "asset-002232", "tokens": 15660, "loss": 0.7145, "seconds": 91.4, "peak_gb": 101.07, "active_gb": 17.53, "t": "22:54:01"}
+{"event": "step", "step": 80, "id": "asset-000021", "tokens": 15380, "loss": 0.6801, "seconds": 88.9, "peak_gb": 101.07, "active_gb": 17.53, "t": "22:55:30"}
+{"event": "dev", "step": 80, "loss": 0.63, "each": [0.6992, 0.6347, 0.5956, 0.5905], "seconds": 30.8, "t": "22:56:01"}
+{"event": "segment_end", "reason": "segment_time", "step": 80, "position": 80, "segment_steps": 17, "mean_loss": 0.7461, "train_minutes": 153.2, "tokens": 1434816, "peak_gb": 101.07, "done": false, "t": "22:56:06"}
+{"event": "start", "segment": 5, "step": 80, "position": 80, "resumed": "checkpoint-000080", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 2.2, "lr": 0.0001, "t": "22:56:30"}
+{"event": "step", "step": 81, "id": "asset-002549", "tokens": 18720, "loss": 0.6826, "seconds": 120.5, "peak_gb": 90.02, "active_gb": 17.53, "t": "22:58:31"}
+{"event": "step", "step": 82, "id": "asset-002594", "tokens": 13880, "loss": 0.6394, "seconds": 75.7, "peak_gb": 90.02, "active_gb": 17.53, "t": "22:59:47"}
+{"event": "step", "step": 83, "id": "asset-003851", "tokens": 17603, "loss": 0.9835, "seconds": 109.8, "peak_gb": 90.02, "active_gb": 17.53, "t": "23:01:37"}
+{"event": "step", "step": 84, "id": "asset-000145", "tokens": 16756, "loss": 0.6946, "seconds": 101.1, "peak_gb": 90.02, "active_gb": 17.53, "t": "23:03:18"}
+{"event": "step", "step": 85, "id": "asset-003103", "tokens": 19822, "loss": 0.8264, "seconds": 132.4, "peak_gb": 93.58, "active_gb": 17.53, "t": "23:05:30"}
+{"event": "step", "step": 86, "id": "asset-000593", "tokens": 11499, "loss": 0.6252, "seconds": 56.1, "peak_gb": 93.58, "active_gb": 17.53, "t": "23:06:26"}
+{"event": "step", "step": 87, "id": "asset-001073", "tokens": 19244, "loss": 0.8392, "seconds": 125.9, "peak_gb": 93.58, "active_gb": 17.53, "t": "23:08:32"}
+{"event": "step", "step": 88, "id": "asset-001336", "tokens": 14449, "loss": 0.6242, "seconds": 80.3, "peak_gb": 93.58, "active_gb": 17.53, "t": "23:09:53"}
+{"event": "step", "step": 89, "id": "asset-001009", "tokens": 6195, "loss": 0.7915, "seconds": 22.5, "peak_gb": 93.58, "active_gb": 17.53, "t": "23:10:15"}
+{"event": "step", "step": 90, "id": "asset-000735", "tokens": 13188, "loss": 0.5049, "seconds": 70.2, "peak_gb": 93.58, "active_gb": 17.53, "t": "23:11:25"}
+{"event": "step", "step": 91, "id": "asset-003543", "tokens": 15846, "loss": 1.0608, "seconds": 93.0, "peak_gb": 93.58, "active_gb": 17.53, "t": "23:12:58"}
+{"event": "step", "step": 92, "id": "asset-002238", "tokens": 18094, "loss": 0.7578, "seconds": 114.5, "peak_gb": 93.58, "active_gb": 17.53, "t": "23:14:53"}
+{"event": "step", "step": 93, "id": "asset-003715", "tokens": 21393, "loss": 0.8109, "seconds": 150.5, "peak_gb": 98.75, "active_gb": 17.53, "t": "23:17:23"}
+{"event": "step", "step": 94, "id": "asset-002885", "tokens": 17734, "loss": 0.7655, "seconds": 111.2, "peak_gb": 98.75, "active_gb": 17.53, "t": "23:19:15"}
+{"event": "step", "step": 95, "id": "asset-002469", "tokens": 15344, "loss": 0.9187, "seconds": 88.4, "peak_gb": 98.75, "active_gb": 17.53, "t": "23:20:43"}
+{"event": "step", "step": 96, "id": "asset-003030", "tokens": 17486, "loss": 0.8768, "seconds": 108.5, "peak_gb": 98.75, "active_gb": 17.53, "t": "23:22:32"}
+{"event": "step", "step": 97, "id": "asset-003631", "tokens": 18615, "loss": 1.006, "seconds": 119.6, "peak_gb": 98.75, "active_gb": 17.53, "t": "23:24:31"}
+{"event": "step", "step": 98, "id": "asset-002551", "tokens": 14675, "loss": 0.8547, "seconds": 82.7, "peak_gb": 98.75, "active_gb": 17.53, "t": "23:25:54"}
+{"event": "step", "step": 99, "id": "asset-003116", "tokens": 15789, "loss": 0.8894, "seconds": 92.2, "peak_gb": 98.75, "active_gb": 17.53, "t": "23:27:26"}
+{"event": "dev", "step": 99, "loss": 0.6286, "each": [0.6975, 0.6338, 0.5945, 0.5885], "seconds": 30.9, "t": "23:27:57"}
+{"event": "segment_end", "reason": "segment_time", "step": 99, "position": 99, "segment_steps": 19, "mean_loss": 0.7975, "train_minutes": 184.1, "tokens": 1741148, "peak_gb": 98.75, "done": false, "t": "23:28:05"}
+{"event": "start", "segment": 6, "step": 99, "position": 99, "resumed": "checkpoint-000099", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 2.1, "lr": 0.0001, "t": "23:28:29"}
+{"event": "step", "step": 100, "id": "asset-000375", "tokens": 16205, "loss": 0.668, "seconds": 96.3, "peak_gb": 81.86, "active_gb": 17.53, "t": "23:30:06"}
+{"event": "step", "step": 101, "id": "asset-000379", "tokens": 21250, "loss": 0.7089, "seconds": 148.2, "peak_gb": 98.31, "active_gb": 17.53, "t": "23:32:34"}
+{"event": "step", "step": 102, "id": "asset-000744", "tokens": 7790, "loss": 0.7622, "seconds": 30.7, "peak_gb": 98.31, "active_gb": 17.53, "t": "23:33:05"}
+{"event": "step", "step": 103, "id": "asset-000853", "tokens": 14115, "loss": 0.6638, "seconds": 77.7, "peak_gb": 98.31, "active_gb": 17.53, "t": "23:34:23"}
+{"event": "step", "step": 104, "id": "asset-003527", "tokens": 14325, "loss": 0.961, "seconds": 79.7, "peak_gb": 98.31, "active_gb": 17.53, "t": "23:35:42"}
+{"event": "step", "step": 105, "id": "asset-003605", "tokens": 16949, "loss": 0.8219, "seconds": 102.9, "peak_gb": 98.31, "active_gb": 17.53, "t": "23:37:25"}
+{"event": "step", "step": 106, "id": "asset-003159", "tokens": 20168, "loss": 0.9559, "seconds": 136.4, "peak_gb": 98.31, "active_gb": 17.53, "t": "23:39:42"}
+{"event": "step", "step": 107, "id": "asset-002010", "tokens": 22488, "loss": 0.7872, "seconds": 162.1, "peak_gb": 102.3, "active_gb": 17.53, "t": "23:42:24"}
+{"event": "step", "step": 108, "id": "asset-000267", "tokens": 17794, "loss": 0.9712, "seconds": 111.7, "peak_gb": 102.3, "active_gb": 17.53, "t": "23:44:16"}
+{"event": "step", "step": 109, "id": "asset-000789", "tokens": 16649, "loss": 0.7432, "seconds": 100.4, "peak_gb": 102.3, "active_gb": 17.53, "t": "23:45:56"}
+{"event": "step", "step": 110, "id": "asset-002317", "tokens": 20938, "loss": 0.702, "seconds": 144.9, "peak_gb": 102.3, "active_gb": 17.53, "t": "23:48:21"}
+{"event": "step", "step": 111, "id": "asset-003719", "tokens": 21269, "loss": 0.9895, "seconds": 148.2, "peak_gb": 102.3, "active_gb": 17.53, "t": "23:50:49"}
+{"event": "step", "step": 112, "id": "asset-001961", "tokens": 18315, "loss": 0.604, "seconds": 116.6, "peak_gb": 102.3, "active_gb": 17.53, "t": "23:52:46"}
+{"event": "step", "step": 113, "id": "asset-002660", "tokens": 20069, "loss": 0.855, "seconds": 135.5, "peak_gb": 102.3, "active_gb": 17.53, "t": "23:55:01"}
+{"event": "step", "step": 114, "id": "asset-000149", "tokens": 22308, "loss": 0.7169, "seconds": 160.3, "peak_gb": 102.3, "active_gb": 17.53, "t": "23:57:42"}
+{"event": "step", "step": 115, "id": "asset-002877", "tokens": 20367, "loss": 0.9185, "seconds": 138.3, "peak_gb": 102.3, "active_gb": 17.53, "t": "00:00:00"}
+{"event": "dev", "step": 115, "loss": 0.6278, "each": [0.6971, 0.6327, 0.5933, 0.5882], "seconds": 30.9, "t": "00:00:31"}
+{"event": "segment_end", "reason": "segment_time", "step": 115, "position": 115, "segment_steps": 16, "mean_loss": 0.8018, "train_minutes": 215.6, "tokens": 2032147, "peak_gb": 102.3, "done": false, "t": "00:00:35"}
+{"event": "start", "segment": 7, "step": 115, "position": 115, "resumed": "checkpoint-000115", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 3.0, "lr": 0.0001, "t": "00:01:01"}
+{"event": "step", "step": 116, "id": "asset-000420", "tokens": 20812, "loss": 0.7336, "seconds": 143.3, "peak_gb": 96.86, "active_gb": 17.53, "t": "00:03:24"}
+{"event": "step", "step": 117, "id": "asset-001995", "tokens": 21625, "loss": 0.8011, "seconds": 152.2, "peak_gb": 99.43, "active_gb": 17.53, "t": "00:05:56"}
+{"event": "step", "step": 118, "id": "asset-003565", "tokens": 16795, "loss": 0.888, "seconds": 101.6, "peak_gb": 99.43, "active_gb": 17.53, "t": "00:07:38"}
+{"event": "step", "step": 119, "id": "asset-000697", "tokens": 16932, "loss": 0.7922, "seconds": 103.0, "peak_gb": 99.43, "active_gb": 17.53, "t": "00:09:21"}
+{"event": "step", "step": 120, "id": "asset-002253", "tokens": 20027, "loss": 0.7883, "seconds": 134.2, "peak_gb": 99.43, "active_gb": 17.53, "t": "00:11:35"}
+{"event": "step", "step": 121, "id": "asset-002607", "tokens": 18012, "loss": 0.6685, "seconds": 113.6, "peak_gb": 99.43, "active_gb": 17.53, "t": "00:13:29"}
+{"event": "step", "step": 122, "id": "asset-000150", "tokens": 19167, "loss": 0.6171, "seconds": 125.5, "peak_gb": 99.43, "active_gb": 17.53, "t": "00:15:35"}
+{"event": "step", "step": 123, "id": "asset-002247", "tokens": 22115, "loss": 0.7348, "seconds": 157.6, "peak_gb": 101.06, "active_gb": 17.53, "t": "00:18:12"}
+{"event": "step", "step": 124, "id": "asset-000276", "tokens": 15093, "loss": 0.8557, "seconds": 86.2, "peak_gb": 101.06, "active_gb": 17.53, "t": "00:19:39"}
+{"event": "step", "step": 125, "id": "asset-000296", "tokens": 14860, "loss": 0.6842, "seconds": 84.5, "peak_gb": 101.06, "active_gb": 17.53, "t": "00:21:03"}
+{"event": "step", "step": 126, "id": "asset-002699", "tokens": 18739, "loss": 0.8594, "seconds": 120.4, "peak_gb": 101.06, "active_gb": 17.53, "t": "00:23:04"}
+{"event": "step", "step": 127, "id": "asset-003453", "tokens": 15054, "loss": 0.7616, "seconds": 86.1, "peak_gb": 101.06, "active_gb": 17.53, "t": "00:24:30"}
+{"event": "step", "step": 128, "id": "asset-000849", "tokens": 17624, "loss": 0.8676, "seconds": 109.8, "peak_gb": 101.06, "active_gb": 17.53, "t": "00:26:20"}
+{"event": "step", "step": 129, "id": "asset-003120", "tokens": 15253, "loss": 0.9113, "seconds": 87.7, "peak_gb": 101.06, "active_gb": 17.53, "t": "00:27:47"}
+{"event": "step", "step": 130, "id": "asset-002142", "tokens": 11727, "loss": 0.7757, "seconds": 58.2, "peak_gb": 101.06, "active_gb": 17.53, "t": "00:28:46"}
+{"event": "step", "step": 131, "id": "asset-002025", "tokens": 21218, "loss": 0.6947, "seconds": 148.1, "peak_gb": 101.06, "active_gb": 17.53, "t": "00:31:14"}
+{"event": "dev", "step": 131, "loss": 0.6265, "each": [0.6946, 0.6319, 0.5927, 0.5868], "seconds": 30.9, "t": "00:31:45"}
+{"event": "segment_end", "reason": "segment_time", "step": 131, "position": 131, "segment_steps": 16, "mean_loss": 0.7771, "train_minutes": 245.8, "tokens": 2317200, "peak_gb": 101.06, "done": false, "t": "00:31:50"}
+{"event": "start", "segment": 8, "step": 131, "position": 131, "resumed": "checkpoint-000131", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 2.6, "lr": 0.0001, "t": "00:32:15"}
+{"event": "step", "step": 132, "id": "asset-000759", "tokens": 12580, "loss": 0.5805, "seconds": 64.7, "peak_gb": 70.23, "active_gb": 17.53, "t": "00:33:20"}
+{"event": "step", "step": 133, "id": "asset-003541", "tokens": 19848, "loss": 0.9279, "seconds": 133.0, "peak_gb": 93.73, "active_gb": 17.53, "t": "00:35:33"}
+{"event": "step", "step": 134, "id": "asset-000441", "tokens": 20864, "loss": 0.9941, "seconds": 143.7, "peak_gb": 96.94, "active_gb": 17.53, "t": "00:37:57"}
+{"event": "step", "step": 135, "id": "asset-000845", "tokens": 11346, "loss": 0.6059, "seconds": 55.4, "peak_gb": 96.94, "active_gb": 17.53, "t": "00:38:52"}
+{"event": "step", "step": 136, "id": "asset-002957", "tokens": 20351, "loss": 0.8518, "seconds": 138.5, "peak_gb": 96.94, "active_gb": 17.53, "t": "00:41:11"}
+{"event": "step", "step": 137, "id": "asset-000740", "tokens": 17192, "loss": 0.7211, "seconds": 106.1, "peak_gb": 96.94, "active_gb": 17.53, "t": "00:42:57"}
+{"event": "step", "step": 138, "id": "asset-000277", "tokens": 13302, "loss": 0.6727, "seconds": 70.8, "peak_gb": 96.94, "active_gb": 17.53, "t": "00:44:08"}
+{"event": "step", "step": 139, "id": "asset-002393", "tokens": 21693, "loss": 0.7332, "seconds": 152.8, "peak_gb": 99.64, "active_gb": 17.53, "t": "00:46:41"}
+{"event": "step", "step": 140, "id": "asset-001138", "tokens": 20676, "loss": 0.8778, "seconds": 142.6, "peak_gb": 99.64, "active_gb": 17.53, "t": "00:49:03"}
+{"event": "step", "step": 141, "id": "asset-000605", "tokens": 15091, "loss": 0.9387, "seconds": 86.8, "peak_gb": 99.64, "active_gb": 17.53, "t": "00:50:30"}
+{"event": "step", "step": 142, "id": "asset-003758", "tokens": 20523, "loss": 0.9551, "seconds": 140.4, "peak_gb": 99.64, "active_gb": 17.53, "t": "00:52:51"}
+{"event": "step", "step": 143, "id": "asset-002761", "tokens": 21184, "loss": 1.0446, "seconds": 147.4, "peak_gb": 99.64, "active_gb": 17.53, "t": "00:55:18"}
+{"event": "step", "step": 144, "id": "asset-001029", "tokens": 17313, "loss": 0.7773, "seconds": 106.3, "peak_gb": 99.64, "active_gb": 17.53, "t": "00:57:04"}
+{"event": "step", "step": 145, "id": "asset-000730", "tokens": 13288, "loss": 0.689, "seconds": 71.7, "peak_gb": 99.64, "active_gb": 17.53, "t": "00:58:16"}
+{"event": "step", "step": 146, "id": "asset-002830", "tokens": 20050, "loss": 0.9162, "seconds": 136.6, "peak_gb": 99.64, "active_gb": 17.53, "t": "01:00:33"}
+{"event": "step", "step": 147, "id": "asset-003277", "tokens": 18970, "loss": 1.0388, "seconds": 124.4, "peak_gb": 99.64, "active_gb": 17.53, "t": "01:02:37"}
+{"event": "dev", "step": 147, "loss": 0.6263, "each": [0.6944, 0.6324, 0.5916, 0.587], "seconds": 30.9, "t": "01:03:08"}
+{"event": "segment_end", "reason": "segment_time", "step": 147, "position": 147, "segment_steps": 16, "mean_loss": 0.8328, "train_minutes": 276.2, "tokens": 2601471, "peak_gb": 99.64, "done": false, "t": "01:03:14"}
+{"event": "start", "segment": 9, "step": 147, "position": 147, "resumed": "checkpoint-000147", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 2.8, "lr": 0.0001, "t": "01:03:39"}
+{"event": "step", "step": 148, "id": "asset-002309", "tokens": 20104, "loss": 0.7491, "seconds": 136.2, "peak_gb": 94.57, "active_gb": 17.53, "t": "01:05:56"}
+{"event": "step", "step": 149, "id": "asset-002294", "tokens": 17299, "loss": 0.694, "seconds": 107.1, "peak_gb": 94.57, "active_gb": 17.53, "t": "01:07:43"}
+{"event": "step", "step": 150, "id": "asset-000259", "tokens": 16298, "loss": 0.6143, "seconds": 97.5, "peak_gb": 94.57, "active_gb": 17.53, "t": "01:09:20"}
+{"event": "step", "step": 151, "id": "asset-000247", "tokens": 16595, "loss": 0.7981, "seconds": 100.3, "peak_gb": 94.57, "active_gb": 17.53, "t": "01:11:01"}
+{"event": "step", "step": 152, "id": "asset-003666", "tokens": 19663, "loss": 0.9322, "seconds": 132.4, "peak_gb": 94.57, "active_gb": 17.53, "t": "01:13:13"}
+{"event": "step", "step": 153, "id": "asset-001247", "tokens": 18846, "loss": 0.843, "seconds": 124.5, "peak_gb": 94.57, "active_gb": 17.53, "t": "01:15:18"}
+{"event": "step", "step": 154, "id": "asset-000359", "tokens": 18714, "loss": 0.704, "seconds": 123.4, "peak_gb": 94.57, "active_gb": 17.53, "t": "01:17:21"}
+{"event": "step", "step": 155, "id": "asset-000994", "tokens": 21252, "loss": 0.9321, "seconds": 149.2, "peak_gb": 98.31, "active_gb": 17.53, "t": "01:19:50"}
+{"event": "step", "step": 156, "id": "asset-000430", "tokens": 20754, "loss": 0.7014, "seconds": 146.6, "peak_gb": 98.31, "active_gb": 17.53, "t": "01:22:17"}
+{"event": "step", "step": 157, "id": "asset-003114", "tokens": 19731, "loss": 0.9408, "seconds": 134.8, "peak_gb": 98.31, "active_gb": 17.53, "t": "01:24:32"}
+{"event": "step", "step": 158, "id": "asset-003372", "tokens": 13740, "loss": 0.884, "seconds": 75.7, "peak_gb": 98.31, "active_gb": 17.53, "t": "01:25:48"}
+{"event": "step", "step": 159, "id": "asset-003309", "tokens": 20922, "loss": 1.0842, "seconds": 144.4, "peak_gb": 98.31, "active_gb": 17.53, "t": "01:28:12"}
+{"event": "step", "step": 160, "id": "asset-002762", "tokens": 13268, "loss": 0.8126, "seconds": 71.2, "peak_gb": 98.31, "active_gb": 17.53, "t": "01:29:24"}
+{"event": "step", "step": 161, "id": "asset-003346", "tokens": 21601, "loss": 0.9958, "seconds": 151.7, "peak_gb": 99.39, "active_gb": 17.53, "t": "01:31:55"}
+{"event": "step", "step": 162, "id": "asset-003411", "tokens": 20301, "loss": 0.8845, "seconds": 140.0, "peak_gb": 99.39, "active_gb": 17.53, "t": "01:34:15"}
+{"event": "dev", "step": 162, "loss": 0.6263, "each": [0.6946, 0.6324, 0.5912, 0.5869], "seconds": 30.9, "t": "01:34:46"}
+{"event": "segment_end", "reason": "segment_time", "step": 162, "position": 162, "segment_steps": 15, "mean_loss": 0.838, "train_minutes": 306.8, "tokens": 2880559, "peak_gb": 99.39, "done": false, "t": "01:34:57"}
+{"event": "start", "segment": 10, "step": 162, "position": 162, "resumed": "checkpoint-000162", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 3.9, "lr": 0.0001, "t": "01:35:24"}
+{"event": "step", "step": 163, "id": "asset-003477", "tokens": 18352, "loss": 0.9202, "seconds": 117.4, "peak_gb": 88.79, "active_gb": 17.53, "t": "01:37:21"}
+{"event": "step", "step": 164, "id": "asset-002097", "tokens": 9343, "loss": 0.6575, "seconds": 39.9, "peak_gb": 88.79, "active_gb": 17.53, "t": "01:38:01"}
+{"event": "step", "step": 165, "id": "asset-000204", "tokens": 16072, "loss": 0.8554, "seconds": 95.8, "peak_gb": 88.79, "active_gb": 17.53, "t": "01:39:37"}
+{"event": "step", "step": 166, "id": "asset-000107", "tokens": 14904, "loss": 0.8283, "seconds": 84.8, "peak_gb": 88.79, "active_gb": 17.53, "t": "01:41:02"}
+{"event": "step", "step": 167, "id": "asset-003471", "tokens": 21258, "loss": 1.0207, "seconds": 149.3, "peak_gb": 98.32, "active_gb": 17.53, "t": "01:43:31"}
+{"event": "step", "step": 168, "id": "asset-003777", "tokens": 20869, "loss": 0.9459, "seconds": 146.1, "peak_gb": 98.32, "active_gb": 17.53, "t": "01:45:57"}
+{"event": "step", "step": 169, "id": "asset-000315", "tokens": 16143, "loss": 0.6032, "seconds": 96.1, "peak_gb": 98.32, "active_gb": 17.53, "t": "01:47:33"}
+{"event": "step", "step": 170, "id": "asset-003057", "tokens": 19317, "loss": 1.0383, "seconds": 128.2, "peak_gb": 98.32, "active_gb": 17.53, "t": "01:49:42"}
+{"event": "step", "step": 171, "id": "asset-000956", "tokens": 18504, "loss": 0.9971, "seconds": 118.9, "peak_gb": 98.32, "active_gb": 17.53, "t": "01:51:41"}
+{"event": "step", "step": 172, "id": "asset-000691", "tokens": 18982, "loss": 0.6619, "seconds": 124.7, "peak_gb": 98.32, "active_gb": 17.53, "t": "01:53:45"}
+{"event": "step", "step": 173, "id": "asset-000965", "tokens": 19557, "loss": 0.7999, "seconds": 132.7, "peak_gb": 98.32, "active_gb": 17.53, "t": "01:55:58"}
+{"event": "step", "step": 174, "id": "asset-000183", "tokens": 17795, "loss": 0.8363, "seconds": 114.1, "peak_gb": 98.32, "active_gb": 17.53, "t": "01:57:52"}
+{"event": "step", "step": 175, "id": "asset-000214", "tokens": 15306, "loss": 0.7014, "seconds": 88.8, "peak_gb": 98.32, "active_gb": 17.53, "t": "01:59:21"}
+{"event": "step", "step": 176, "id": "asset-003414", "tokens": 15108, "loss": 0.8135, "seconds": 86.8, "peak_gb": 98.32, "active_gb": 17.53, "t": "02:00:48"}
+{"event": "step", "step": 177, "id": "asset-001066", "tokens": 21768, "loss": 0.9359, "seconds": 157.5, "peak_gb": 99.98, "active_gb": 20.08, "t": "02:03:26"}
+{"event": "step", "step": 178, "id": "asset-002324", "tokens": 19071, "loss": 0.72, "seconds": 126.3, "peak_gb": 99.98, "active_gb": 17.53, "t": "02:05:32"}
+{"event": "dev", "step": 178, "loss": 0.6253, "each": [0.6931, 0.6311, 0.5899, 0.5873], "seconds": 30.9, "t": "02:06:03"}
+{"event": "segment_end", "reason": "segment_time", "step": 178, "position": 178, "segment_steps": 16, "mean_loss": 0.8335, "train_minutes": 336.9, "tokens": 3162908, "peak_gb": 99.98, "done": false, "t": "02:06:09"}
+{"event": "start", "segment": 11, "step": 178, "position": 178, "resumed": "checkpoint-000178", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 3.8, "lr": 0.0001, "t": "02:06:35"}
+{"event": "step", "step": 179, "id": "asset-002012", "tokens": 16219, "loss": 0.8623, "seconds": 97.8, "peak_gb": 81.88, "active_gb": 20.08, "t": "02:08:13"}
+{"event": "step", "step": 180, "id": "asset-000031", "tokens": 16497, "loss": 0.5618, "seconds": 100.6, "peak_gb": 82.75, "active_gb": 17.53, "t": "02:09:54"}
+{"event": "step", "step": 181, "id": "asset-000305", "tokens": 11358, "loss": 0.6912, "seconds": 56.9, "peak_gb": 82.75, "active_gb": 17.53, "t": "02:10:50"}
+{"event": "step", "step": 182, "id": "asset-003162", "tokens": 22337, "loss": 1.0334, "seconds": 160.5, "peak_gb": 95.75, "active_gb": 17.53, "t": "02:13:31"}
+{"event": "step", "step": 183, "id": "asset-000524", "tokens": 12447, "loss": 0.9009, "seconds": 64.1, "peak_gb": 95.75, "active_gb": 17.53, "t": "02:14:35"}
+{"event": "step", "step": 184, "id": "asset-001563", "tokens": 18449, "loss": 0.7337, "seconds": 119.0, "peak_gb": 95.75, "active_gb": 17.53, "t": "02:16:34"}
+{"event": "step", "step": 185, "id": "asset-001468", "tokens": 20637, "loss": 0.691, "seconds": 144.5, "peak_gb": 96.26, "active_gb": 17.53, "t": "02:18:59"}
+{"event": "step", "step": 186, "id": "asset-000750", "tokens": 19645, "loss": 0.7832, "seconds": 133.5, "peak_gb": 96.26, "active_gb": 17.53, "t": "02:21:12"}
+{"event": "step", "step": 187, "id": "asset-002382", "tokens": 21360, "loss": 0.7096, "seconds": 149.2, "peak_gb": 98.58, "active_gb": 17.53, "t": "02:23:42"}
+{"event": "step", "step": 188, "id": "asset-000125", "tokens": 7396, "loss": 0.4022, "seconds": 29.0, "peak_gb": 98.58, "active_gb": 17.53, "t": "02:24:11"}
+{"event": "step", "step": 189, "id": "asset-001938", "tokens": 20912, "loss": 0.7581, "seconds": 147.3, "peak_gb": 98.58, "active_gb": 17.53, "t": "02:26:38"}
+{"event": "step", "step": 190, "id": "asset-002880", "tokens": 19665, "loss": 0.967, "seconds": 132.9, "peak_gb": 98.58, "active_gb": 17.53, "t": "02:28:51"}
+{"event": "step", "step": 191, "id": "asset-000257", "tokens": 18232, "loss": 0.8422, "seconds": 116.5, "peak_gb": 98.58, "active_gb": 17.53, "t": "02:30:48"}
+{"event": "step", "step": 192, "id": "asset-000097", "tokens": 14065, "loss": 0.8498, "seconds": 79.6, "peak_gb": 98.58, "active_gb": 17.53, "t": "02:32:07"}
+{"event": "step", "step": 193, "id": "asset-001997", "tokens": 14165, "loss": 0.7705, "seconds": 79.3, "peak_gb": 98.58, "active_gb": 17.53, "t": "02:33:26"}
+{"event": "step", "step": 194, "id": "asset-000836", "tokens": 13669, "loss": 0.7497, "seconds": 76.2, "peak_gb": 98.58, "active_gb": 17.53, "t": "02:34:43"}
+{"event": "step", "step": 195, "id": "asset-003853", "tokens": 19754, "loss": 0.9322, "seconds": 134.0, "peak_gb": 98.58, "active_gb": 17.53, "t": "02:36:57"}
+{"event": "dev", "step": 195, "loss": 0.6243, "each": [0.6916, 0.6302, 0.5902, 0.5854], "seconds": 30.9, "t": "02:37:28"}
+{"event": "segment_end", "reason": "segment_time", "step": 195, "position": 195, "segment_steps": 17, "mean_loss": 0.7788, "train_minutes": 367.3, "tokens": 3449715, "peak_gb": 98.58, "done": false, "t": "02:37:35"}
+{"event": "start", "segment": 12, "step": 195, "position": 195, "resumed": "checkpoint-000195", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 4.0, "lr": 0.0001, "t": "02:38:01"}
+{"event": "step", "step": 196, "id": "asset-002287", "tokens": 18230, "loss": 0.7152, "seconds": 117.3, "peak_gb": 88.38, "active_gb": 17.53, "t": "02:39:59"}
+{"event": "step", "step": 197, "id": "asset-003635", "tokens": 17788, "loss": 0.908, "seconds": 115.2, "peak_gb": 88.38, "active_gb": 17.53, "t": "02:41:54"}
+{"event": "step", "step": 198, "id": "asset-003127", "tokens": 14914, "loss": 0.9123, "seconds": 88.0, "peak_gb": 88.38, "active_gb": 17.53, "t": "02:43:22"}
+{"event": "step", "step": 199, "id": "asset-000250", "tokens": 19830, "loss": 0.6558, "seconds": 135.4, "peak_gb": 93.59, "active_gb": 17.53, "t": "02:45:38"}
+{"event": "step", "step": 200, "id": "asset-003014", "tokens": 17276, "loss": 1.0334, "seconds": 109.2, "peak_gb": 93.59, "active_gb": 17.53, "t": "02:47:27"}
+{"event": "step", "step": 201, "id": "asset-002727", "tokens": 15570, "loss": 0.7972, "seconds": 93.1, "peak_gb": 93.59, "active_gb": 17.53, "t": "02:49:00"}
+{"event": "step", "step": 202, "id": "asset-000306", "tokens": 11162, "loss": 0.8539, "seconds": 55.1, "peak_gb": 93.59, "active_gb": 17.53, "t": "02:49:55"}
+{"event": "step", "step": 203, "id": "asset-002438", "tokens": 20879, "loss": 0.6353, "seconds": 145.7, "peak_gb": 97.08, "active_gb": 17.53, "t": "02:52:21"}
+{"event": "step", "step": 204, "id": "asset-002112", "tokens": 18400, "loss": 0.801, "seconds": 120.6, "peak_gb": 97.08, "active_gb": 17.53, "t": "02:54:21"}
+{"event": "step", "step": 205, "id": "asset-003860", "tokens": 20948, "loss": 1.0748, "seconds": 148.7, "peak_gb": 97.29, "active_gb": 17.53, "t": "02:56:50"}
+{"event": "step", "step": 206, "id": "asset-002563", "tokens": 20740, "loss": 0.7173, "seconds": 144.3, "peak_gb": 97.29, "active_gb": 17.53, "t": "02:59:15"}
+{"event": "step", "step": 207, "id": "asset-001551", "tokens": 22076, "loss": 0.8081, "seconds": 160.9, "peak_gb": 100.89, "active_gb": 17.53, "t": "03:01:55"}
+{"event": "step", "step": 208, "id": "asset-001579", "tokens": 14483, "loss": 0.6603, "seconds": 83.3, "peak_gb": 100.89, "active_gb": 17.53, "t": "03:03:19"}
+{"event": "step", "step": 209, "id": "asset-000316", "tokens": 12749, "loss": 0.8427, "seconds": 67.2, "peak_gb": 100.89, "active_gb": 17.53, "t": "03:04:26"}
+{"event": "step", "step": 210, "id": "asset-000862", "tokens": 17367, "loss": 0.6293, "seconds": 108.0, "peak_gb": 100.89, "active_gb": 17.53, "t": "03:06:14"}
+{"event": "step", "step": 211, "id": "asset-002805", "tokens": 20293, "loss": 0.8976, "seconds": 140.3, "peak_gb": 100.89, "active_gb": 17.53, "t": "03:08:34"}
+{"event": "dev", "step": 211, "loss": 0.6245, "each": [0.6926, 0.6303, 0.5894, 0.5856], "seconds": 31.0, "t": "03:09:05"}
+{"event": "segment_end", "reason": "segment_time", "step": 211, "position": 211, "segment_steps": 16, "mean_loss": 0.8089, "train_minutes": 397.8, "tokens": 3732420, "peak_gb": 100.89, "done": false, "t": "03:09:12"}
+{"event": "start", "segment": 13, "step": 211, "position": 211, "resumed": "checkpoint-000211", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 4.0, "lr": 0.0001, "t": "03:09:38"}
+{"event": "step", "step": 212, "id": "asset-002127", "tokens": 12437, "loss": 0.7397, "seconds": 65.2, "peak_gb": 69.79, "active_gb": 17.53, "t": "03:10:44"}
+{"event": "step", "step": 213, "id": "asset-002217", "tokens": 18315, "loss": 0.7228, "seconds": 117.8, "peak_gb": 88.74, "active_gb": 17.53, "t": "03:12:41"}
+{"event": "step", "step": 214, "id": "asset-001252", "tokens": 16219, "loss": 0.7109, "seconds": 98.6, "peak_gb": 88.74, "active_gb": 17.53, "t": "03:14:20"}
+{"event": "step", "step": 215, "id": "asset-001495", "tokens": 20375, "loss": 0.7067, "seconds": 141.6, "peak_gb": 95.42, "active_gb": 17.53, "t": "03:16:42"}
+{"event": "step", "step": 216, "id": "asset-000124", "tokens": 9918, "loss": 0.669, "seconds": 44.5, "peak_gb": 95.42, "active_gb": 17.53, "t": "03:17:26"}
+{"event": "step", "step": 217, "id": "asset-003834", "tokens": 18951, "loss": 0.8421, "seconds": 124.8, "peak_gb": 95.42, "active_gb": 17.53, "t": "03:19:31"}
+{"event": "step", "step": 218, "id": "asset-000117", "tokens": 19444, "loss": 0.8153, "seconds": 130.5, "peak_gb": 95.42, "active_gb": 17.53, "t": "03:21:42"}
+{"event": "step", "step": 219, "id": "asset-000725", "tokens": 10350, "loss": 0.6709, "seconds": 47.8, "peak_gb": 95.42, "active_gb": 17.53, "t": "03:22:30"}
+{"event": "step", "step": 220, "id": "asset-001183", "tokens": 17605, "loss": 0.69, "seconds": 111.3, "peak_gb": 95.42, "active_gb": 17.53, "t": "03:24:21"}
+{"event": "step", "step": 221, "id": "asset-002052", "tokens": 22052, "loss": 0.7621, "seconds": 159.4, "peak_gb": 100.86, "active_gb": 17.53, "t": "03:27:00"}
+{"event": "step", "step": 222, "id": "asset-000798", "tokens": 20538, "loss": 0.898, "seconds": 141.6, "peak_gb": 100.86, "active_gb": 17.53, "t": "03:29:22"}
+{"event": "step", "step": 223, "id": "asset-000857", "tokens": 21850, "loss": 0.8735, "seconds": 156.4, "peak_gb": 100.86, "active_gb": 17.53, "t": "03:31:59"}
+{"event": "step", "step": 224, "id": "asset-001242", "tokens": 19465, "loss": 0.7552, "seconds": 129.4, "peak_gb": 100.86, "active_gb": 17.53, "t": "03:34:08"}
+{"event": "step", "step": 225, "id": "asset-003290", "tokens": 20327, "loss": 0.8247, "seconds": 138.6, "peak_gb": 100.86, "active_gb": 17.53, "t": "03:36:27"}
+{"event": "step", "step": 226, "id": "asset-000438", "tokens": 16524, "loss": 0.825, "seconds": 100.0, "peak_gb": 100.86, "active_gb": 17.53, "t": "03:38:07"}
+{"event": "step", "step": 227, "id": "asset-002734", "tokens": 17992, "loss": 0.8566, "seconds": 114.1, "peak_gb": 100.86, "active_gb": 17.53, "t": "03:40:01"}
+{"event": "dev", "step": 227, "loss": 0.6243, "each": [0.692, 0.6301, 0.5885, 0.5866], "seconds": 31.1, "t": "03:40:32"}
+{"event": "segment_end", "reason": "segment_time", "step": 227, "position": 227, "segment_steps": 16, "mean_loss": 0.7727, "train_minutes": 428.2, "tokens": 4014782, "peak_gb": 100.86, "done": false, "t": "03:40:43"}
+{"event": "start", "segment": 14, "step": 227, "position": 227, "resumed": "checkpoint-000227", "trainable_params": 4205751296, "lm_dtypes": ["mlx.core.float32"], "compute": "float32", "load_seconds": 4.0, "lr": 0.0001, "t": "03:41:10"}
+{"event": "step", "step": 228, "id": "asset-002496", "tokens": 13971, "loss": 0.7254, "seconds": 90.7, "peak_gb": 74.58, "active_gb": 17.53, "t": "03:42:41"}
+{"event": "step", "step": 229, "id": "asset-002808", "tokens": 14393, "loss": 0.9256, "seconds": 89.1, "peak_gb": 75.88, "active_gb": 17.53, "t": "03:44:10"}
+{"event": "step", "step": 230, "id": "asset-002377", "tokens": 13803, "loss": 0.6433, "seconds": 75.7, "peak_gb": 75.88, "active_gb": 17.53, "t": "03:45:26"}
+{"event": "step", "step": 231, "id": "asset-002503", "tokens": 15756, "loss": 0.5886, "seconds": 93.9, "peak_gb": 80.4, "active_gb": 17.53, "t": "03:47:00"}
+{"event": "step", "step": 232, "id": "asset-001521", "tokens": 17583, "loss": 0.7592, "seconds": 110.6, "peak_gb": 86.29, "active_gb": 17.53, "t": "03:48:51"}
+{"event": "step", "step": 233, "id": "asset-001680", "tokens": 18520, "loss": 0.6642, "seconds": 120.7, "peak_gb": 89.38, "active_gb": 17.53, "t": "03:50:52"}
+{"event": "step", "step": 234, "id": "asset-000745", "tokens": 20188, "loss": 0.6801, "seconds": 141.1, "peak_gb": 94.8, "active_gb": 17.53, "t": "03:53:13"}
+{"event": "step", "step": 235, "id": "asset-001651", "tokens": 20415, "loss": 0.8883, "seconds": 139.6, "peak_gb": 95.48, "active_gb": 17.53, "t": "03:55:32"}
+{"event": "step", "step": 236, "id": "asset-001621", "tokens": 17788, "loss": 0.8158, "seconds": 112.5, "peak_gb": 95.48, "active_gb": 17.53, "t": "03:57:25"}
+{"event": "step", "step": 237, "id": "asset-000625", "tokens": 18898, "loss": 0.6938, "seconds": 123.2, "peak_gb": 95.48, "active_gb": 17.53, "t": "03:59:28"}
+{"event": "step", "step": 238, "id": "asset-002268", "tokens": 16988, "loss": 0.8272, "seconds": 103.9, "peak_gb": 95.48, "active_gb": 17.53, "t": "04:01:12"}
+{"event": "step", "step": 239, "id": "asset-003625", "tokens": 17042, "loss": 0.8497, "seconds": 104.4, "peak_gb": 95.48, "active_gb": 17.53, "t": "04:02:56"}
+{"event": "step", "step": 240, "id": "asset-002423", "tokens": 15584, "loss": 0.5854, "seconds": 91.1, "peak_gb": 95.48, "active_gb": 17.53, "t": "04:04:28"}
+{"event": "dev", "step": 240, "loss": 0.6234, "each": [0.6907, 0.6293, 0.5878, 0.5858], "seconds": 30.9, "t": "04:04:58"}
+{"event": "segment_end", "reason": "budget", "step": 240, "position": 240, "segment_steps": 13, "mean_loss": 0.742, "train_minutes": 451.5, "tokens": 4235711, "peak_gb": 95.48, "done": false, "t": "04:05:03"}

@@ -1,115 +1,118 @@
-# Astra 3D overnight experiment
+# HANDOFF — qwen-4-for-3d (Astra, image-to-3D)
 
-Updated November 18, 2026 at 11:20 EST. Repository `Ashen-Builds/qwen-4-for-3d`, branch `Astra`, draft PR #1. **Direction changed on November 17: image-to-3D single assets.** Read [docs/image-to-3d-plan.md](docs/image-to-3d-plan.md) first; it has the goal, stages, resume commands and the Haiku manager brief. The sections below it in this file describe the stopped November 16 to 17 experiment and remain accurate history.
+Date: 2026-11-18 · Branch: `Astra` · Host: Mac Studio (M3 Ultra, Mac15,14, 256 GiB) · Status: **paused until Qwen 4 is released**
 
-## Current state (November 18, 11:20 EST)
+## What this is
 
-- Goal: a local model turns one concept-art image into a GLB asset (characters first) that a laptop can produce overnight for free. Base is CCORE `Qwen3.5-4B-GLB-3D-Coder`; the scene model is downloaded but parked.
-- First training run is done and reported in [docs/image-to-3d-result-20261118.md](docs/image-to-3d-result-20261118.md). The owner started it with a session goal on November 17. Full fine-tune (Adafactor, float32, no LoRA) on 240 image-to-program pairs CCORE had never seen, 451.5 training minutes. **Ours did not clearly beat CCORE**: one try per image, working GLBs were original Qwen 1 of 5, CCORE 4 of 5, ours 3 of 5; over three tries per image CCORE 7 of 15, ours 10 of 15, which is within noise. Evidence: `eval/five-asset-20261118/`.
-- **Scoring panel v1 is built and running** (owner request, November 18): `eval/panel-v1/` holds 30 images (5 concept, 25 held-out renders); `scripts/run_panel.py` runs CCORE and ours on the 25 held-out renders with seeds 42, 43 and 44 (150 generations, started 08:42 EST, 43 done at 10:54). Runs in `~/work/runs/panel-v1/` (log `panel.log`, ends with `ALLDONE`; a `STOP` file there ends it), results in `~/work/outputs/panel-v1/`. When it ends: `scripts/score_likeness.py`, then `scripts/score_panel.py`, then write up. The panel still needs 30 concept-art images, listed in `eval/panel-v1/concept-requests.md`; who makes them is an open owner question (paid generation needs an explicit yes).
-- **Description test is queued** (November 18, after feedback from the CCORE author: the model was trained on written requests only and does better from a detailed description than from an image). `eval/five-asset-described/` has a detailed written request per test image (`prompts-written/`, written by the session's cloud model) and a locally written one (`prompts-local/`, base Qwen 3.5 4B reading the image via `scripts/describe_images_llama.py`; only the first two existed at this commit). CCORE then builds from each, three seeds, through `scripts/run_panel.py --arm-prompts`; runs in `~/work/runs/five-asset-described/`, results in `~/work/outputs/five-asset-described/`. Compare against CCORE's 7 of 15 from images. No result yet.
-- Still open: get more pairs that are new to CCORE (its training split is memorized and its 417-pair validation split is nearly used up); ask the CCORE author for his full fine-tune settings. No further training is authorized.
-- Machine-local, not in Git: our model at `~/work/models-native/a3d/ours-Q8_0.gguf` and `~/work/models/a3d-ours-hf`; training environment `~/work/envs/a3d`; data and captions `~/work/data/a3d/`; run log and state `~/work/runs/a3d-main3/` (checkpoints deleted after export); original Qwen and vision projector GGUF in `~/work/models-native/lmstudio-community--Qwen3.5-4B-GGUF/`; test runs in `~/work/runs/five-asset-*` and outputs in `~/work/outputs/five-asset-*`. Last night's workspace with the CCORE copies, llama.cpp build (`4ddf2b9`, accepts `--image`), convert environment and datasets is `~/Documents/Codex/2026-11-16/hey-buddy-we-re-going-to/work/`.
-- Known traps: resuming must fill `optimizer.state` in place (replacing it doubled memory and got segments killed); a second GPU job cannot start while training holds utilization above 85 %, so tests run between segments or after; the GPU watchdog status file has been stale since November 14, which caps slots at two.
-- Running at this commit: the panel runner and the description test, each taking the GPU slot one generation at a time, supervised by a Haiku subagent of the owning session. Both wait while the stream guard flag exists. A later session must not restart or take them over without a handoff. Preserve all shared flags.
+A local model turns one reference image into a GLB asset (characters first) that a 16 GB laptop can produce overnight for free. The model does not output a shape: it writes a Three.js program, and running that program builds and exports the GLB. The work so far used CCORE's `Qwen3.5-4B-GLB-3D-Coder` as the base. On November 18 the owner paused the project until Qwen 4 is out, and had every local model on the Studio deleted. The earlier handoff, with the full history of the November 16 to 18 runs, is archived at [docs/handoffs/HANDOFF-astra-20261118.md](docs/handoffs/HANDOFF-astra-20261118.md).
 
-## Previous experiment: next steps as written at 11:48 EST
+## Repo / branch map
 
-1. Read [the final experiment report](docs/overnight-final-20261117.md), [discussion notes](docs/next-eight-hour-discussion.md), and [original reply summary](docs/replies-summary.md). Keep untouched CCORE as the control. Do not treat the repaired Babylon files as raw successes.
-2. Inventory the acquired GLB and older Scenes data by source ID, program family, task type and token length. GLB replay supplied the previous candidate; Scenes was archived but not in its main mixture. Select candidate town/architecture/voxel examples and preserve provenance. Do not silently mix their different output interfaces.
-3. Build verified additions for layout, villagers/gait, path loops, water/cloud motion and export. Run source code, export/reopen GLBs and inspect motion before accepting targets. Existing CCORE replay alone is not a demonstrated improvement strategy. Keep Babylon and final-test outputs/repairs out of training; reserve new independent tests.
-4. Freeze a larger development panel and final evaluation set, with automatic syntax/runtime/export/motion checks and common viewing conditions. Bound review time and retain raw failures; avoid repairing each checkpoint preview during the training window.
-5. Settle one training recipe before the next clock: explicit thinking/chat-template/mask configuration, representative-length memory qualification, measured adapter coverage, save/reload and exact documented resume behavior. The previous one-layer adapter worked within measured memory limits; broader coverage remains unqualified. Do not restart old controllers.
-6. Prepare an eight-hour schedule with measured step/token/example-coverage targets, bounded evaluations, recovery checkpoints, memory/regression stops and explicit shutdown reserve. Most of the window should be training. This remains unbuilt and must not be described as ready.
-7. Wait for a new explicit owner instruction to start the next run. On that turn, recheck machine identity, live process ownership and GPU/streaming flags, then perform the required live checks inside the authorized scope.
+| Repo | Checkout | Branch |
+|---|---|---|
+| `Ashen-Builds/qwen-4-for-3d` (public) | `~/work/qwen-4-for-3d` | `Astra` (draft PR #1, unmerged) |
 
-## Not done / limits
+One worktree, no stashes, no sibling checkouts.
 
-- No accepted Astra replacement for CCORE and no raw successful Babylon GLB.
-- No newly curated full-scene dataset, broad independent evaluation suite, broader-layer training configuration, exact optimizer resume, or validated next eight-hour controller is complete.
-- Local GPU status at handoff has no holders/waiters/clients, but effective capture slots are zero and the watchdog is stale. Treat current guard/streaming state as a live boundary; never remove shared flags to make a run start.
-- No new training, inference, model download, spend, deployment, public weights or project-main merge is authorized by this handoff.
+## Where things stand
 
+- **First full fine-tune did not clearly beat CCORE.** 240 image-to-program pairs CCORE had never seen, one pass, 451.5 training minutes. Five concept images, three tries each: CCORE 7 of 15 working GLBs, ours 10 of 15, within noise. Report: [docs/image-to-3d-result-20261118.md](docs/image-to-3d-result-20261118.md).
+- **Scoring panel, partial.** Stopped at 44 of 150 generations. On the 22 held-out renders that both models finished (seed 42 only): CCORE 15 working, ours 16; five worked only on CCORE, six only on ours. No difference. Evidence and scores: `eval/panel-v1/partial-20261118/`.
+- **Description test, not finished.** Two of five locally written descriptions exist (`eval/five-asset-described/prompts-local/`). No asset was built from any description, so "description beats image" is still only the CCORE author's statement.
+- **Held-out loss during the fine-tune:** 0.846 at the start, 0.725 after 15 examples, 0.644 after 32, 0.623 after 240. Almost all of the gain came from the first 32 examples. Log and loss record: `eval/results/image-to-asset-run-20261118/`.
+- **How tries fail:** every generation wrote a complete program. Of 17 failed tries in the five-image test (all three models), 14 stopped while running on a slip such as a name that was never defined, 2 failed in the export step and 1 exported an invalid file. Training on token loss does not target this.
 
-## Authority and deadline
+## Owner decisions (November 18)
 
-Owner's “Start now as requested” overrode stale 9 p.m. wording. The actual start was November 16 at 20:42:39 EST. Hard stop November 17 at 07:42:39; shutdown reserve 07:40:39. Intermediate report was written at 04:56:02, after the derived 04:42 milestone but before the original 5 a.m. requirement. Do not reset or extend this window.
+- Pause until Qwen 4 is released. No training, inference or downloads until then.
+- Stop the panel run and the description test before they finished.
+- Delete all local models, including our own fine-tuned model. It existed nowhere else and is gone; only its test results remain in this repo.
+- Direction agreed in discussion, not yet a committed plan: keep the reference image, but use it around the model rather than feeding it straight in. A describe step turns the image into a detailed written request, and each try's render is scored against the image so the loop keeps the best of many tries. Train once on Qwen 4, on CCORE's 3,918 public examples plus our own new pairs.
 
-Local training/evaluation, routine supervision, Astra pushes and private Drive backup were authorized. No spend, public model weights, deployment, project-main merge or foreign-session takeover. The project PR remains draft and unmerged. Optional critics were restricted to verified free Devin SWE2 or Gemini Hydrogen 4; no substitute model is authorized.
+## What happened this session
 
-## Current ownership and deliverable
+- `9bab2f3`: partial panel evidence and scores added under `eval/panel-v1/partial-20261118/` (local run paths removed from the result files).
+- This commit: fine-tune training log and loss record added, previous handoff archived, this file written.
+- Stopped the two background jobs left by the previous session (`scripts/run_panel.py` and `scripts/describe_images_llama.py`) with SIGTERM; both were idle in the stream-guard wait and exited in one second. A `STOP` file is in `~/work/runs/panel-v1/`.
+- Deleted nine model folders, 75 GB (free space 139 GiB to 214 GiB):
+  - `~/work/models/`: original `Qwen/Qwen3.5-4B`, CCORE scene model `ccore/Qwen3.5-4B-3D-Coder`, our fine-tune in Hugging Face layout.
+  - `~/work/models-native/`: original Qwen Q8 GGUF with its vision projector, our fine-tune as Q8 GGUF.
+  - In the November 16 Codex workspace: CCORE asset model `ccore/Qwen3.5-4B-GLB-3D-Coder` and its three converted copies (BF16, two Q8).
 
-- All three controller roots are stopped: `astra-manual-20261116`, `astra-direct-20261116`, `astra-thinking-clean-20261117`. Private roots are under the workspace sibling `work/sprint-prep/overnight/`, outside this checkout. All final-test and paired-repair model jobs exited and released their GPU slots. Never restart these loops from stale status notes.
-- Comparison: `http://localhost:8767/final-review/`. Actual GLBs were inspected during the completed experiment; the browser was not re-tested during this documentation handoff. The server is currently listening on loopback port 8767 (PID 73893, started November 16 at 23:58:31, `scripts/serve_comparison.py --directory ../outputs/babylon-comparison --port 8767`). The viewer defaults to paused/on-demand rendering, with 30 fps playback. Recheck PID identity before managing it.
-- Final browser review lease exec 23876 was released after the paused display was verified. A previous review lease expired at 06:00:08 while fixture review continued until about 06:04; those tabs were then closed. This was a process-control gap, not a qualified GPU performance measurement. No model overlap or foreign interference was observed.
-- Hardware verified: M3 Ultra, Mac15,14, 256 GiB. Shared watchdog clamps GPU capacity to two. Preserve all flags and foreign sessions. The final owner display does not require any model to remain loaded.
-- Before any new run, inspect actual processes, shared GPU status, branch and receipts. No automatic overnight continuation is scheduled.
+## Verification done
 
-## Outcome and evidence
+- `git rev-list --left-right --count Astra...origin/Astra` printed `0 0` after the first push.
+- Staged secret scan (Gitleaks 8.30.1 with the shared custom rules) found no leaks; GLB JSON chunks and PNG text chunks checked for local paths, none found.
+- After deletion, a search of `~/work` and the Codex workspace for `.gguf` and `.safetensors` files over 50 MB returned nothing, and no process was reading a model file.
+- `scripts/score_panel.py` produced the partial scores from the committed files.
 
-Read [the final report](docs/overnight-final-20261117.md) and [sanitized results](eval/results/overnight-20261117.json). Raw responses, source failures and patches remain separate from diagnostic assets. Babylon prompts, outputs and scene-specific repairs were excluded from training. Recorded full-field lexical and family grouping checks found no reserved-task overlap; they do not prove complete semantic independence.
+## Not done / explicitly out of scope
 
-- **Primary Babylon: no improvement.** Fresh CCORE and Astra raw programs failed. Thinking48 passed syntax but failed at runtime. Its mechanical diagnostic exports 2,198,120 bytes, 16 actors and one 106-channel clip, but has static legs, path snaps, sparse composition and a collapsed canal. More clips, actors or geometry are not quality acceptance.
-- Thinking72 regressed to a syntax error; its assisted diagnostic also looked worse. It was rejected, and this training variant stopped after two reviewed regressions. No accepted raw Babylon checkpoint exists.
-- The original, richer CCORE reference the owner saw remains in the comparison, explicitly labeled repair-assisted. The matched BF16 control is also retained; its repaired file has six villagers and no convincing walking.
-- **Final waterwheel, raw outputs:** both export valid animated GLBs. CCORE rotates the wheel about the wrong axis; Astra48 preserves axle rotation. This is a narrow functional win on one task and seed.
-- **Final orrery, raw outputs:** CCORE exports a static file with no clips. Astra48 throws `ReferenceError: duration is not defined` before export. Neither fulfills the animated request; Astra regresses export reliability.
-- Final tasks and seed were fixed before generation. Both arms used identical input JSON, original thinking mode, BF16 runtime, seed 42, temperature 0.8, top-p 0.95, top-k 40 and 32,768-token cap. Candidate weights were frozen before tests; no training or candidate reselection used final results. Upstream pretraining exposure is unknown.
-- A separate one-round FloorSwitch repair development probe used direct C10, **not Thinking48**. CCORE redeclared `exportButton` and failed syntax. C10 passed syntax but preserved `binary:false`; an actual Chrome download was 15 bytes containing `[object Object]`. Both repair attempts failed. No second round or Codex source repair was performed; historical/upstream exposure caveats prevent independent-test claims.
+- No clear win over CCORE exists. No model of ours exists any more.
+- The panel is 22 of 25 held-out images on one seed, with no likeness scores. The 30 concept-art images it still needs (`eval/panel-v1/concept-requests.md`) were never made.
+- The description test produced no result.
+- The per-example review page and the overnight generate-and-check loop are not built.
+- The CCORE author has not been asked for his full fine-tune settings, his teacher model, or what he rejects by eye.
+- Nothing is known here about Qwen 4 itself: size, licence, vision support, or whether the MLX trainer can load it.
+- Draft PR #1 is unmerged and its description predates the image-to-3D work.
 
-## Checkpoint, data and runtime
+## Next steps (when Qwen 4 is released)
 
-Base: `ccore/Qwen3.5-4B-GLB-3D-Coder@8f32a199f8b22fe3157b9c5c8b42b052a0750dd3`; derived BF16 text weights in sibling `work/models-derived/ccore-bf16`. Original CCORE stays preserved. Official Qwen original/Q8 weights were deleted at the owner's request; historical outputs remain.
+1. Check that a small Qwen 4 can be loaded and fine-tuned locally, and that `scripts/train_image_to_asset.py` still applies (it depends on the `mlx-vlm` Qwen3.5 model class).
+2. Download the base model and CCORE's dataset `ccore/ThreeJS-3D-GLB-Assets`. Run the raw model through the panel first; that pass rate is the number to beat.
+3. Finish the panel before any training: add the concept-art images and likeness scoring, three tries per image.
+4. Run the description test properly: image, then description, then build, against building straight from the image.
+5. Fine-tune on all 3,918 CCORE examples (they are new to Qwen 4, unlike on CCORE). Gate the long run on a short pilot that passes the behaviour check on held-out images, not on loss alone.
+6. To go beyond CCORE, build new verified pairs: generate tries overnight, keep those that pass the automatic checks, and add a keep-or-reject review page for the owner.
 
-Final evaluation candidate: `astra-thinking-clean-20261117/checkpoints/job-00005`, SHA256 `553644f2a1d85c06642484f327b657eca0cf8e7516a874ca1182ed6b9720ab66`. It inherits **48 main updates only**, covering 987,295 real target-token exposures. This is a retained candidate, not an accepted replacement for CCORE.
+## Key files
 
-Thinking data manifest `e8404afb752910be8e0ca7e1242d3d62e32fa6f5a31740ae6b0e40d1f8d1acdd`: 399 original reasoning-plus-code replay training rows, 47 replay development rows; fixed ten-row panel and full development pool retained. Helpers were separate qualification work. Original code/reasoning is byte-exact; all 526 unique original rows passed explicit thinking-mode prefix checks without truncation. Six empty-reasoning corrections were excluded from this variant.
+- `docs/image-to-3d-plan.md`: goal, stages, pilot history.
+- `docs/image-to-3d-result-20261118.md`: three-way result and what was trained.
+- `scripts/train_image_to_asset.py`, `scripts/run_training_segments.sh`: full fine-tune trainer (Adafactor, float32) and its segment driver.
+- `scripts/run_panel.py`, `scripts/score_panel.py`, `scripts/score_likeness.py`: panel runner and scorers.
+- `scripts/describe_images_llama.py`: image-to-description step.
+- `scripts/export_and_render.mjs`: runs a generated page, exports and validates the GLB, renders two views.
+- `eval/panel-v1/`: panel images, manifest and partial results.
 
-Python 3.12, MLX 0.32.4, MLX-LM 0.32.2, Transformers 5.23.0. Final full-attention layer 31 only, rank 16, scale 20, dropout zero, 958,464 trainable parameters, learning rate 3e-6. Frozen prefix stays in evaluation mode and gradients detach at layer 31. Segments warm-start adapter weights but restart Adam and sampling; this is not exact optimizer continuation.
+## How to run it
 
-The corrected `exclusive_end_v1` loss excludes one synthetic padding label that the native inclusive-end mask selected. Short and long numerical comparisons passed the declared loss/gradient/update/reload gates. This fix is not established as the cause of earlier degeneration. The two-layer alternative failed system-memory qualification and was rejected. The cached-prefix alternative passed its declared checks but was not adopted; ordinary evaluation and autodiff distinctions remain documented.
+Nothing runs without models. To restore the Qwen 3.5 setup for a comparison:
 
-## Accounting erratum
-
-Earlier operator notes incorrectly counted ordinary length qualification as inherited main training. `Engine.acknowledge()` clears the warm parent after qualification. Thinking48 therefore inherits 48 main updates, Thinking72 inherits 72, and the initial manual candidate inherits 42. Their qualification weights are separate, discarded work. Frozen final plan v2 is preserved with a separate [accounting correction](eval/final-evaluation-accounting-correction.json).
-
-Direct C10 is different: it inherits 200 main + 3 explicitly adopted external rank-expansion qualification + 99 replay + 12 targeted correction updates = **314**, not 317.
-
-The three controller roots completed **574 optimizer updates** across all attempts and qualification jobs, with **5,353,558 real target-token exposures** after subtracting 477 legacy padding labels. This is total experimental work, not one model's lineage. Successful training-job wall time was 74.65 minutes; failed attempts added 6.19 minutes. The remainder of the night included generation, inspection, data/runtime qualification and publication. At least 19 external numerical-probe updates were separately receipted; that inventory is explicitly nonexhaustive.
-
-Maximum accepted training-job reported MLX memory was 51.269 GB. The rejected two-layer attempt caused substantially greater system memory pressure before being stopped; 51.269 GB is not the experiment's maximum physical-memory usage.
-
-## Validation, publication and next work
-
-Final CPU suite: 98 tests run, 96 passed and two MLX-dependent tests skipped under system Python; Node verifier 8/8 passed. Live MLX numerical/training checks are separate receipts, not inferred from skipped CPU tests. Viewer source syntax and actual four-case Chrome loading/seek/play/pause checks passed; no viewer error was observed beyond an unrelated injected browser-extension error. No engine import certification is claimed.
-
-Final report, artifact evidence and viewer source were pushed to `Astra` at `76ad04ae1a5f70f0c361687bd8572623c682dd90`; local and remote heads matched. Draft PR #1 title/body were updated and read back. Project main remains unmerged. Staged and full 34-commit history custom secret scans passed. The final private wiki update and dated accounting erratum were merged at the checked head. Strict shared-brain sync verified the published revision and byte equality of all four updated pages; lint and staged/full-history/custom secret checks passed. Detailed receipts remain outside the public repository at sibling `work/wiki-final-audit-20261117/publication-receipt.json`. The advisory lock was removed and the authoring checkout is clean.
-
-Private Drive backup is complete: 17 new objects including the index total 425,362,407 bytes. Four archives preserve thinking data/checkpoints/evidence, the failed paired repair, viewer/GLBs/screenshots and operational receipts. Exact remote names, sizes, expected parents and private access were verified. Status Markdown exact text readback passed; JSON index content was unavailable through text extraction, so its verification is metadata-only. Local multipart restoration and the selected adapter hash passed; no remote-byte redownload is claimed. See [sanitized archive verification](configs/overnight-final-archive.json). Private IDs/receipts remain under sibling `work/sprint-prep/final-archive`. The original six-package source archive (216 canonical payloads / 21,484,759,314 bytes) is retained without base duplication; deleted official weights are not claimed present.
-
-Recommended next experiment, requiring a new owner instruction: retain CCORE as the control, curate representative full-scene examples with actual source/export/playback verification, and revisit training coverage/backend within measured memory limits. This run does not prove that a larger dataset dump or more iterations will fix scene quality. Do not train on the final tests or the Babylon evidence.
-
-## Discussion after the run — November 17
-
-Owner asked to keep talking and save preparation notes for a future eight-hour run, without starting training. [Discussion notes](docs/next-eight-hour-discussion.md) record the supplied CCORE collection, actual use of its GLB data, unused older Scenes data, and proposed preparation/verification changes. These are discussion priorities, not launch authorization or an accepted training recipe.
-
-## Reproduce the saved comparison
-
-With pinned Node dependencies installed (`npm ci`), use the CPU-only staging helper:
-
-```sh
-python3 scripts/build_final_review.py --out ../outputs/astra-final
-python3 scripts/serve_comparison.py --directory ../outputs/astra-final --port 8767
+```bash
+hf download ccore/Qwen3.5-4B-GLB-3D-Coder --revision 8f32a199f8b22fe3157b9c5c8b42b052a0750dd3
+hf download Qwen/Qwen3.5-4B --revision 851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a
+hf download lmstudio-community/Qwen3.5-4B-GGUF Qwen3.5-4B-Q8_0.gguf mmproj-Qwen3.5-4B-BF16.gguf
 ```
 
-Do not start a second server while the existing port is occupied. Rendering/review on the Studio still follows the shared GPU guard. This command stages saved assets; it does not generate or train a model.
+CCORE also publishes quantized files on its model page. Panel and test commands are in `docs/image-to-3d-plan.md` and `eval/panel-v1/README.md`.
 
-## Cross-machine handoff
+## Running processes / infra
 
-Source branch: `origin/Astra`; draft PR https://github.com/Ashen-Builds/qwen-4-for-3d/pull/1 remains unmerged. Last discussion commit before this handoff: `6e55f9b` (dataset usage and preparation priorities). This checkout has one worktree and no stashes; no other checkout is claimed by this handoff.
+None. No LaunchAgent, port or background job belongs to this project. Every GPU job must go through `gpu_slot`, and nothing may start while the stream guard flag exists.
 
-Git carries source, public evaluation GLBs/screenshots/patches and discussion notes. The sibling `work/` and `outputs/` directories are machine-local: original/derived weights, training corpora, adapters, environments, detailed receipts and served gallery do not travel with Git. Checkpoints/data/results were privately backed up through Drive; use its verified index and restore manifests. Keep the selected adapter and original CCORE preserved. Rebuild dependencies and the staged comparison on another machine; heavy model work belongs on the verified Studio. No credential values belong in the handoff; downloading public upstream data does not require a new project secret.
+## Picking this up on the other machine
 
-Resume in a fresh session:
+- Branch is pushed to `origin/Astra`; pull with `git fetch origin && git switch Astra && git pull`.
+- Written on: Studio.
+- **Local-only, did NOT travel:** `~/work/data/a3d` (training pairs and captions, 1.3 GB), `~/work/envs/a3d` (training environment), `~/work/runs` and `~/work/outputs` (raw runs), and the November 16 Codex workspace (9.9 GB: datasets, earlier run's adapters and archives, llama.cpp build `4ddf2b9`, convert environment).
+- **Needs rebuilding there:** `node_modules` (`npm ci`), the training environment (`mlx==0.32.4 mlx-lm==0.32.2 mlx-vlm==0.8.0 pyarrow pillow safetensors numpy`), all models.
+- **Studio-only:** training and generation.
 
-> Work in the existing qwen-4-for-3d checkout on branch Astra. Read HANDOFF.md and docs/next-eight-hour-discussion.md, inspect current Git and process ownership, and continue at Start here: next steps. Prepare the next eight-hour experiment; do not start training until the owner explicitly requests it.
+## Secrets
+
+None. The models and datasets used are public downloads.
+
+## Gotchas
+
+- CCORE has memorized its own training split, so on CCORE only its 417 validation pairs teach anything. On a new base model all 3,918 are usable.
+- Loss alone hid two pilots that stopped following the image. Always check behaviour on held-out images against the untouched base.
+- Resuming training must fill `optimizer.state` in place; replacing it doubled memory.
+- One try per image is too noisy to read: the same model went 4, 1 and 2 of 5 across three seeds.
+- A page staged with a 60 fps cap can starve a program's export handler and record a correct program as "nothing exported". The harness was fixed for this on November 18; keep that fix.
+
+## Resume command
+
+```
+Work in ~/work/qwen-4-for-3d on branch Astra. Read HANDOFF.md and docs/image-to-3d-plan.md. Qwen 4 is out: start at "Next steps", step 1, and do not download or train anything until I say go.
+```
