@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "external_requests": [],
+  "export_buttons": 1,
+  "glb": {
+    "suggested_name": "low-poly-snare-drum.glb",
+    "bytes": 160812,
+    "sha256": "75ccb217b0812d2cfa40da52dfb3a0e073dc6e18b8ee0fbaf0482a1125e641ba",
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "meshes": 41,
+    "nodes": 60,
+    "materials": 8,
+    "skins": 0,
+    "textures": 0,
+    "triangles": 2880,
+    "animations": [],
+    "size_xyz": [
+      2.8000000029802323,
+      3.0074999997764826,
+      2.8100000032782555
+    ]
+  }
+}

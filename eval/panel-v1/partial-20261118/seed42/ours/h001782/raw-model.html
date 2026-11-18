@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Transit Terminal</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #090d12;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      border: 1px solid rgba(153, 210, 226, 0.18);
+      background: rgba(10, 17, 24, 0.82);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+    }
+
+    #title {
+      top: 20px;
+      left: 20px;
+      padding: 14px 17px;
+      border-radius: 12px;
+      pointer-events: none;
+    }
+
+    #title h1 {
+      margin: 0 0 4px;
+      color: #e8f7fa;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    #title p {
+      margin: 0;
+      color: #89a8b3;
+      font-size: 12px;
+    }
+
+    #actions {
+      top: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border-radius: 12px;
+    }
+
+    #exportButton {
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 16px;
+      background: #17aebd;
+      color: #041116;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    #exportButton:hover {
+      background: #35d5e7;
+      transform: translateY(-1px);
+    }
+
+    #exportButton:disabled {
+      opacity: 0.55;
+      cursor: wait;
+      transform: none;
+    }
+
+    #status {
+      max-width: 220px;
+      color: #89a8b3;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    #hint {
+      position: fixed;
+      z-index: 10;
+      bottom: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: #809ba5;
+      background: rgba(9, 14, 19, 0.68);
+      border: 1px solid rgba(149, 192, 205, 0.13);
+      font-size: 11px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      #title {
+        top: 12px;
+        left: 12px;
+        padding: 10px 12px;
+      }
+
+      #title p {
+        display: none;
+      }
+
+      #actions {
+        top: 12px;
+        right: 12px;
+      }
+
+      #status {
+        display: none;
+      }
+
+      #hint {
+        bottom: 10px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div id="title" class="panel">
+    <h1>Transit Terminal</h1>
+    <p>Static low-poly game asset · GLB export</p>
+  </div>
+
+  <div id="actions" class="panel">
+    <button id="exportButton">Export GLB</button>
+    <div id="status">Ready to export.</div>
+  </div>
+
+  <div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const viewport = document.getElementById("viewport");
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x090d12, 10, 22);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(5.2, 3.7, 6.4);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.35, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 4;
+    controls.maxDistance = 12;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // -------------------------------------------------------------------------
+    // Lighting
+    // -------------------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(
+      0xb9e7ff,
+      0x17202a,
+      2.0
+    );
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    keyLight.position.set(4.5, 8, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x31d9ee, 2.0);
+    rimLight.position.set(-5, 4, -4);
+    scene.add(rimLight);
+
+    const warmLight = new THREE.PointLight(0xff8d65, 1.3, 8, 2);
+    warmLight.position.set(-3.5, 2.5, 3.2);
+    scene.add(warmLight);
+
+    // -------------------------------------------------------------------------
+    // Presentation ground, excluded from the exported asset
+    // -------------------------------------------------------------------------
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({
+        color: 0x111922,
+        roughness: 0.94,
+        metalness: 0.04
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(28, 28, 0x28404a, 0x1b2932);
+    grid.position.y = 0.002;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.45;
+    scene.add(grid);
+
+    // -------------------------------------------------------------------------
+    // Asset root: only this hierarchy is exported
+    // -------------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "TransitTerminal";
+    asset.userData = {
+      assetType: "Static transit terminal",
+      units: "meters",
+      palette: "charcoal, blue-gray, cyan",
+      intendedEngine: "Godot"
+    };
+    scene.add(asset);
+
+    const materials = {
+      body: new THREE.MeshStandardMaterial({
+        color: 0x202a32,
+        roughness: 0.48,
+        metalness: 0.48
+      }),
+      bodyDark: new THREE.MeshStandardMaterial({
+        color: 0x111820,
+        roughness: 0.56,
+        metalness: 0.42
+      }),
+      panel: new THREE.MeshStandardMaterial({
+        color: 0x28343d,
+        roughness: 0.42,
+        metalness: 0.58
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x090e13,
+        roughness: 0.86,
+        metalness: 0.05
+      }),
+      metal: new THREE.MeshStandardMaterial({
+        color: 0x788b94,
+        roughness: 0.32,
+        metalness: 0.78
+      }),
+      darkMetal: new THREE.MeshStandardMaterial({
+        color: 0x394851,
+        roughness: 0.38,
+        metalness: 0.72
+      }),
+      cyan: new THREE.MeshStandardMaterial({
+        color: 0x39d8ed,
+        emissive: 0x0b8795,
+        emissiveIntensity: 1.8,
+        roughness: 0.28,
+        metalness: 0.18
+      }),
+      cyanDim: new THREE.MeshStandardMaterial({
+        color: 0x126672,
+        emissive: 0x063e47,
+        emissiveIntensity: 0.85,
+        roughness: 0.4,
+        metalness: 0.2
+      }),
+      solar: new THREE.MeshStandardMaterial({
+        color: 0x123d60,
+        roughness: 0.25,
+        metalness: 0.72
+      }),
+      solarGrid: new THREE.MeshBasicMaterial({
+        color: 0x3f89a8,
+        transparent: true,
+        opacity: 0.45
+      })
+    };
+
+    function roundedBox(width, height, depth, radius = 0.04) {
+      const safeRadius = Math.min(
+        radius,
+        width * 0.45,
+        height * 0.45,
+        depth * 0.45
+      );
+
+      return new RoundedBoxGeometry(
+        width,
+        height,
+        depth,
+        2,
+        safeRadius
+      );
+    }
+
+    function addRoundedBox(
+      parent,
+      width,
+      height,
+      depth,
+      radius,
+      position,
+      material,
+      name = ""
+    ) {
+      const mesh = new THREE.Mesh(
+        roundedBox(width, height, depth, radius),
+        material
+      );
+
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      if (name) {
+        mesh.name = name;
+      }
+
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(parent, width, height, depth, position, material, name = "") {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(width, height, depth),
+        material
+      );
+
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      if (name) {
+        mesh.name = name;
+      }
+
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addCylinder(
+      parent,
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      segments = 12,
+      name = ""
+    ) {
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments
+        ),
+        material
+      );
+
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      if (name) {
+        mesh.name = name;
+      }
+
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addSphere(parent, radius, position, material, name = "") {
+      const mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(radius, 10, 7),
+        material
+      );
+
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.castShadow = true;
+
+      if (name) {
+        mesh.name = name;
+      }
+
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function createCanvasTexture(canvas) {
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = Math.min(
+        8,
+        renderer.capabilities.getMaxAnisotropy()
+      );
+      return texture;
+    }
+
+    // -------------------------------------------------------------------------
+    // Screen display
+    // -------------------------------------------------------------------------
+
+    const screenCanvas = document.createElement("canvas");
+    screenCanvas.width = 768;
+    screenCanvas.height = 432;
+
+    const screenContext = screenCanvas.getContext("2d");
+
+    const screenGradient = screenContext.createLinearGradient(0, 0, 0, 432);
+    screenGradient.addColorStop(0, "#081c25");
+    screenGradient.addColorStop(1, "#030b12");
+    screenContext.fillStyle = screenGradient;
+    screenContext.fillRect(0, 0, 768, 432);
+
+    screenContext.strokeStyle = "#174550";
+    screenContext.lineWidth = 5;
+    screenContext.strokeRect(8, 8, 752, 416);
+
+    screenContext.fillStyle = "#61e7ef";
+    screenContext.fillRect(18, 18, 91, 62);
+
+    screenContext.fillStyle = "#e9fbff";
+    screenContext.font = "bold 30px Arial";
+    screenContext.textAlign = "center";
+    screenContext.fillText("CITY TRANSIT", 52, 35);
+
+    screenContext.fillStyle = "#7ba8b3";
+    screenContext.font = "20px Arial";
+    screenContext.fillText("ROUTE INFORMATION • LIVE", 52, 72);
+
+    screenContext.fillStyle = "#39d8ed";
+    screenContext.font = "bold 23px Arial";
+    screenContext.fillText("12", 64, 112);
+    screenContext.fillStyle = "#d9eff4";
+    screenContext.font = "22px Arial";
+    screenContext.fillText("EASTBOUND", 108, 112);
+
+    screenContext.fillStyle = "#39d8ed";
+    screenContext.fillRect(18, 146, 732, 3);
+
+    screenContext.fillStyle = "#d9eff4";
+    screenContext.font = "bold 23px Arial";
+    screenContext.fillText("READY", 74, 215);
+
+    screenContext.fillStyle = "#789ba6";
+    screenContext.font = "19px Arial";
+    screenContext.fillText("NEXT STOP", 475, 212);
+
+    screenContext.fillStyle = "#3d91a3";
+    screenContext.font = "bold 20px Arial";
+    screenContext.fillText("4 MIN", 475, 247);
+
+    screenContext.fillStyle = "#85e5ef";
+    screenContext.beginPath();
+    screenContext.arc(695, 252, 8, 0, Math.PI * 2);
+    screenContext.fill();
+
+    screenContext.fillStyle = "#24474f";
+    screenContext.font = "bold 20px Arial";
+    screenContext.fillText("TOWNTOWN", 695, 288);
+
+    // Stylized transit map.
+    screenContext.strokeStyle = "#183f48";
+    screenContext.lineWidth = 3;
+
+    screenContext.beginPath();
+    screenContext.moveTo(74, 395);
+    screenContext.lineTo(185, 345);
+    screenContext.lineTo(300, 370);
+    screenContext.lineTo(425, 310);
+    screenContext.lineTo(565, 280);
+    screenContext.lineTo(715, 340);
+    screenContext.lineTo(715, 130);
+    screenContext.moveTo(74, 395);
+    screenContext.lineTo(715, 395);
+    screenContext.closePath();
+    screenContext.stroke();
+
+    screenContext.strokeStyle = "#39d8ed";
+    screenContext.lineWidth = 5;
+    screenContext.beginPath();
+    screenContext.moveTo(75, 395);
+    screenContext.lineTo(185, 345);
+    screenContext.lineTo(300, 370);
+    screenContext.lineTo(425, 310);
+    screenContext.lineTo(565, 280);
+    screenContext.lineTo(715, 340);
+    screenContext.stroke();
+
+    screenContext.fillStyle = "#39d8ed";
+    screenContext.beginPath();
+    screenContext.arc(75, 395, 11, 0, Math.PI * 2);
+    screenContext.fill();
+
+    screenContext.fillStyle = "#39d8ed";
+    screenContext.font = "bold 18px Arial";
+    screenContext.fillText("TOWN", 75, 412);
+
+    screenContext.strokeStyle = "#367580";
+    screenContext.lineWidth = 2;
+    screenContext.beginPath();
+    screenContext.moveTo(75, 220);
+    screenContext.lineTo(185, 160);
+    screenContext.lineTo(300, 190);
+    screenContext.lineTo(425, 130);
+    screenContext.lineTo(565, 100);
+    screenContext.lineTo(715, 160);
+    screenContext.stroke();
+
+    screenContext.fillStyle = "#a9d8df";
+    screenContext.font = "bold 17px Arial";
+    screenContext.fillText("MUNICIPAL DISTRICT", 425, 362);
+    screenContext.fillText("TOWN", 555, 362);
+
+    screenContext.fillStyle = "#39d8ed";
+    screenContext.fillRect(47, 404, 674, 3);
+    screenContext.fillStyle = "#163c44";
+    screenContext.fillRect(67, 424, 634, 18);
+
+    screenContext.fillStyle = "#39d8ed";
+    screenContext.fillRect(122, 438, 30, 8);
+    screenContext.fillStyle = "#87e5ed";
+    screenContext.font = "bold 15px Arial";
+    screenContext.fillText("4 MIN", 157, 446);
+
+    screenContext.fillStyle = "#87e5ed";
+    screenContext.font = "bold 15px Arial";
+    screenContext.fillText("4 MIN", 570, 446);
+
+    const screenTexture = createCanvasTexture(screenCanvas);
+
+    const screenFrame = addRoundedBox(
+      asset,
+      1.58,
+      0.84,
+      0.11,
+      0.075,
+      [-0.36, 1.89, 0.69],
+      materials.rubber,
+      "DisplayBezel"
+    );
+
+    const screen = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.39, 0.69),
+      new THREE.MeshBasicMaterial({
+        map: screenTexture,
+        toneMapped: false
+      })
+    );
+
+    screen.position.set(-0.36, 1.89, 0.751);
+    screen.name = "TransitDisplay";
+    asset.add(screen);
+
+    // -------------------------------------------------------------------------
+    // Header, service modules, keypad and speaker
+    // -------------------------------------------------------------------------
+
+    const headerTexture = document.createElement("canvas");
+    headerTexture.width = 1024;
+    headerTexture.height = 160;
+
+    const headerContext = headerTexture.getContext("2d");
+    headerContext.fillStyle = "#101c23";
+    headerContext.fillRect(0, 0, 1024, 160);
+
+    headerContext.fillStyle = "#39d8ed";
+    headerContext.fillRect(0, 0, 22, 160);
+
+    headerContext.fillStyle = "#dff8fb";
+    headerContext.font = "bold 42px Arial";
+    headerContext.textAlign = "center";
+    headerContext.fillText("CITY SERVICE", 512, 73);
+
+    headerContext.fillStyle = "#789ba5";
+    headerContext.font = "22px Arial";
+    headerContext.fillText("24 / 7  •  INFORMATION", 512, 126);
+
+    const headerTextureCanvas = createCanvasTexture(headerTexture);
+
+    addRoundedBox(
+      asset,
+      1.96,
+      0.27,
+      0.10,
+      0.055,
+      [-0.05, 2.56, 0.67],
+      materials.bodyDark,
+      "HeaderHousing"
+    );
+
+    const header = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.82, 0.21),
+      new THREE.MeshBasicMaterial({
+        map: headerTextureCanvas,
+        toneMapped: false
+      })
+    );
+    header.position.set(-0.05, 2.56, 0.726);
+    header.name = "HeaderDisplay";
+    asset.add(header);
+
+    // Card reader.
+    addRoundedBox(
+      asset,
+      0.54,
+      0.78,
+      0.14,
+      0.055,
+      [0.72, 1.34, 0.68],
+      materials.panel,
+      "CardReaderHousing"
+    );
+
+    addRoundedBox(
+      asset,
+      0.39,
+      0.12,
+      0.045,
+      0.018,
+      [0.72, 1.57, 0.77],
+      materials.rubber,
+      "CardReaderSlot"
+    );
+
+    addRoundedBox(
+      asset,
+      0.27,
+      0.025,
+      0.018,
+      0.008,
+      [0.72, 1.43, 0.77],
+      materials.cyan,
+      "CardReaderIndicator"
+    );
+
+    // Keypad.
+    addRoundedBox(
+      asset,
+      0.49,
+      0.49,
+      0.06,
+      0.035,
+      [0.72, 0.91, 0.69],
+      materials.rubber,
+      "KeypadPanel"
+    );
+
+    const keyPositions = [
+      [0.57, 1.03],
+      [0.72, 1.03],
+      [0.87, 1.03],
+      [0.57, 0.88],
+      [0.72, 0.88],
+      [0.87, 0.88],
+      [0.57, 0.73],
+      [0.72, 0.73],
+      [0.87, 0.73]
+    ];
+
+    keyPositions.forEach(([x, y], index) => {
+      addRoundedBox(
+        asset,
+        0.105,
+        0.087,
+        0.025,
+        0.012,
+        [x, y, 0.734],
+        index === 4 ? materials.cyan : materials.metal,
+        `KeypadKey_${index + 1}`
+      );
+    });
+
+    // Speaker grille.
+    addRoundedBox(
+      asset,
+      0.36,
+      0.37,
+      0.065,
+      0.035,
+      [0.55, 1.19, 0.68],
+      materials.rubber,
+      "SpeakerGrille"
+    );
+
+    for (let i = 0; i < 5; i++) {
+      addRoundedBox(
+        asset,
+        0.24,
+        0.018,
+        0.018,
+        0.006,
+        [0.55, 1.04 + i * 0.065, 0.723],
+        materials.darkMetal,
+        `SpeakerSlot_${i + 1}`
+      );
+    }
+
+    // Lower access door.
+    addRoundedBox(
+      asset,
+      1.29,
+      0.48,
+      0.075,
+      0.035,
+      [-0.51, 0.80, 0.68],
+      materials.bodyDark,
+      "AccessDoor"
+    );
+
+    const screwPositions = [
+      [-1.05, 0.94],
+      [0.03, 0.94],
+      [-1.05, 0.66],
+      [0.03, 0.66]
+    ];
+
+    screwPositions.forEach(([x, y], index) => {
+      addCylinder(
+        asset,
+        0.026,
+        0.026,
+        0.018,
+        [x, y, 0.725],
+        materials.metal,
+        8,
+        `AccessScrew_${index + 1}`
+      ).rotation.x = Math.PI / 2;
+    });
+
+    // Side service panel and handle.
+    addRoundedBox(
+      asset,
+      0.075,
+      1.40,
+      0.98,
+      0.025,
+      [1.115, 1.35, -0.04],
+      materials.panel,
+      "SideServicePanel"
+    );
+
+    for (let i = 0; i < 5; i++) {
+      addBox(
+        asset,
+        0.025,
+        0.035,
+        0.58,
+        [1.158, 1.12 + i * 0.18, -0.05],
+        materials.darkMetal,
+        `SideVent_${i + 1}`
+      );
+    }
+
+    addRoundedBox(
+      asset,
+      0.10,
+      0.52,
+      0.69,
+      0.035,
+      [1.18, 1.28, -0.10],
+      materials.darkMetal,
+      "SideHandle"
+    );
+
+    addRoundedBox(
+      asset,
+      0.08,
+      0.055,
+      0.69,
+      0.018,
+      [1.235, 1.28, -0.10],
+      materials.metal,
+      "SideHandleGrip"
+    );
+
+    // Side status lights.
+    addSphere(
+      asset,
+      0.055,
+      [1.17, 0.58, 0.35],
+      materials.cyan,
+      "SideStatusLight"
+    );
+
+    // -------------------------------------------------------------------------
+    // Base, lower edge and fasteners
+    // -------------------------------------------------------------------------
+
+    addRoundedBox(
+      asset,
+      2.68,
+      0.22,
+      1.86,
+      0.09,
+      [0, 0.11, 0],
+      materials.bodyDark,
+      "LowerPlinth"
+    );
+
+    addRoundedBox(
+      asset,
+      2.43,
+      0.18,
+      1.63,
+      0.075,
+      [0, 0.29, 0],
+      materials.rubber,
+      "RubberBumper"
+    );
+
+    addRoundedBox(
+      asset,
+      2.24,
+      0.16,
+      1.34,
+      0.065,
+      [0, 0.46, 0],
+      materials.bodyDark,
+      "BaseTransition"
+    );
+
+    // Front bumper lights.
+    addRoundedBox(
+      asset,
+      0.18,
+      0.075,
+      0.025,
+      0.012,
+      [-0.91, 0.39, 0.705],
+      materials.cyan,
+      "FrontStatusLight"
+    );
+
+    addRoundedBox(
+      asset,
+      0.18,
+      0.075,
+      0.025,
+      0.012,
+      [0.91, 0.39, 0.705],
+      materials.cyan,
+      "FrontStatusLight"
+    );
+
+    // -------------------------------------------------------------------------
+    // Roof solar panel and antenna
+    // -------------------------------------------------------------------------
+
+    const solarGroup = new THREE.Group();
+    solarGroup.name = "SolarPanelAssembly";
+    solarGroup.position.set(0.56, 2.46, -0.03);
+    solarGroup.rotation.x = -0.18;
+    asset.add(solarGroup);
+
+    addRoundedBox(
+      solarGroup,
+      1.08,
+      0.08,
+      1.30,
+      0.035,
+      [0, 0, 0],
+      materials.darkMetal,
+      "SolarPanelFrame"
+    );
+
+    addRoundedBox(
+      solarGroup,
+      0.93,
+      0.022,
+      1.15,
+      0.012,
+      [0, 0.05, 0],
+      materials.solar,
+      "SolarPanel"
+    );
+
+    for (let i = -2; i <= 2; i++) {
+      addBox(
+        solarGroup,
+        0.012,
+        0.008,
+        1.12,
+        [i * 0.17, 0.065, 0],
+        materials.solarGrid,
+        `SolarGridVertical_${i + 3}`
+      );
+    }
+
+    addBox(
+      solarGroup,
+      0.90,
+      0.008,
+      0.012,
+      [0, 0.065, 0],
+      materials.solarGrid,
+      "SolarGridHorizontal"
+    );
+
+    addCylinder(
+      asset,
+      0.06,
+      0.075,
+      0.12,
+      [1.09, 2.52, -0.24],
+      materials.darkMetal,
+      10,
+      "AntennaBase"
+    );
+
+    addCylinder(
+      asset,
+      0.038,
+      0.052,
+      0.70,
+      [1.09, 2.95, -0.24],
+      materials.darkMetal,
+      10,
+      "AntennaMast"
+    );
+
+    addSphere(
+      asset,
+      0.065,
+      [1.09, 3.32, -0.24],
+      materials.cyan,
+      "AntennaTip"
+    );
+
+    // -------------------------------------------------------------------------
+    // Small utility details
+    // -------------------------------------------------------------------------
+
+    // Rear service vents, visible from an oblique view.
+    for (let i = 0; i < 6; i++) {
+      addBox(
+        asset,
+        0.50,
+        0.035,
+        0.025,
+        [-0.55, 1.10 + i * 0.075, -0.625],
+        materials.rubber,
+        `RearVent_${i + 1}`
+      );
+    }
+
+    // Small lower-right service module.
+    addRoundedBox(
+      asset,
+      0.42,
+      0.42,
+      0.08,
+      0.025,
+      [0.67, 0.76, 0.68],
+      materials.panel,
+      "LowerServiceModule"
+    );
+
+    addRoundedBox(
+      asset,
+      0.25,
+      0.055,
+      0.018,
+      0.007,
+      [0.67, 0.84, 0.726],
+      materials.cyan,
+      "LowerServiceIndicator"
+    );
+
+    // -------------------------------------------------------------------------
+    // Export GLB
+    // -------------------------------------------------------------------------
+
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building GLB…";
+
+      // Ensure all transforms are current before export.
+      asset.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        asset,
+        (result) => {
+          try {
+            const blob = new Blob([result], {
+              type: "model/gltf-binary"
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+
+            link.href = url;
+            link.download = "transit-terral.glb";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(() => {
+              URL.revokeObjectURL(url);
+            }, 1500);
+
+            status.textContent = "Exported transit-terral.glb.";
+          } catch (error) {
+            console.error(error);
+            status.textContent = "Export failed. See console.";
+          } finally {
+            exportButton.disabled = false;
+          }
+        },
+        (error) => {
+          console.error(error);
+          status.textContent = "Export failed. See console.";
+          exportButton.disabled = false;
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          truncateDrawRange: true
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    function onResize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", onResize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

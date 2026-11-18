@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "external_requests": [],
+  "export_buttons": 1,
+  "glb": {
+    "suggested_name": "low-poly-wizard.glb",
+    "bytes": 169452,
+    "sha256": "d52feea1a9d647ec329492becbcc2212011013e7d4d59a097d09843369d76f28",
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "meshes": 51,
+    "nodes": 52,
+    "materials": 16,
+    "skins": 0,
+    "textures": 0,
+    "triangles": 2408,
+    "animations": [],
+    "size_xyz": [
+      3.6697542298126367,
+      4.710173472258369,
+      2.059999942779541
+    ]
+  }
+}

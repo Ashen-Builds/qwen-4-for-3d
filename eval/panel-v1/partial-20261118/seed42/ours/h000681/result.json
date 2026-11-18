@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "external_requests": [],
+  "export_buttons": 1,
+  "glb": {
+    "suggested_name": "industrial_steampunk_automaton.glb",
+    "bytes": 319760,
+    "sha256": "613362e42b26e7a164a7b2bf48e51222da3c28d01a919b031216040356c44dee",
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "meshes": 81,
+    "nodes": 89,
+    "materials": 7,
+    "skins": 0,
+    "textures": 0,
+    "triangles": 4044,
+    "animations": [],
+    "size_xyz": [
+      1.7516789330600409,
+      2.671999997645617,
+      1.1500000017881393
+    ]
+  }
+}

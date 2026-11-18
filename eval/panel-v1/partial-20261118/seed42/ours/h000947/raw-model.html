@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Muddy Puddle</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #101817;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      top: 20px;
+      left: 20px;
+      padding: 16px 18px;
+      min-width: 240px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      color: #e9f0ec;
+      background: rgba(16, 24, 23, 0.82);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: #aebdb8;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px 14px;
+      border: 0;
+      border-radius: 9px;
+      color: #14201c;
+      background: #a8c49a;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    button:hover {
+      background: #c0d9b1;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: wait;
+      transform: none;
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="viewport"></div>
+
+  <div class="panel">
+    <h1>Muddy Puddle</h1>
+    <p>
+      Static low-poly asset with a shallow muddy water surface,
+      muddy rim, and small rocks.
+    </p>
+    <button id="exportButton">Export GLB</button>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+
+    // -------------------------------------------------------------------------
+    // Renderer, scene, camera, and controls
+    // -------------------------------------------------------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x101817);
+    scene.fog = new THREE.Fog(0x101817, 7, 16);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(3.8, 3.0, 4.8);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.target.set(0, 0.1, 0);
+    controls.minDistance = 3.2;
+    controls.maxDistance = 10;
+    controls.maxPolarAngle = Math.PI * 0.48;
+
+    // -------------------------------------------------------------------------
+    // Lighting
+    // -------------------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(
+      0xb8d0c8,
+      0x263027,
+      1.8
+    );
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffe5bd, 3.1);
+    keyLight.position.set(-3.5, 5.5, 2.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 4;
+    keyLight.shadow.camera.bottom = -4;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 15;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x7fa6a0, 1.0);
+    fillLight.position.set(4, 2, -3);
+    scene.add(fillLight);
+
+    // -------------------------------------------------------------------------
+    // Exportable asset group. The floor is intentionally outside the export.
+    // -------------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "MudPuddle";
+    scene.add(asset);
+
+    const puddleMaterial = new THREE.MeshStandardMaterial({
+      color: 0x38231b,
+      roughness: 0.78,
+      metalness: 0.0,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+
+    const mudMaterial = new THREE.MeshStandardMaterial({
+      color: 0x563322,
+      roughness: 0.96,
+      metalness: 0.0,
+      flatShading: true,
+      side: THREE.DoubleSide
+    });
+
+    const rockMaterial = new THREE.MeshStandardMaterial({
+      color: 0x5d6058,
+      roughness: 0.98,
+      metalness: 0.0,
+      flatShading: true
+    });
+
+    // -------------------------------------------------------------------------
+    // Low-poly puddle geometry
+    // -------------------------------------------------------------------------
+
+    function createPuddleGeometry() {
+      const segments = 28;
+
+      const rings = [
+        { scale: 0.72, height: 0.035 },
+        { scale: 1.0, height: 0.0 }
+      ];
+
+      const positions = [];
+      const colors = [];
+      const indices = [];
+
+      // Center of the shallow puddle.
+      positions.push(0, 0.18, 0);
+
+      const centerColor = new THREE.Color(0x3a261d);
+      colors.push(centerColor.r, centerColor.g, centerColor.b);
+
+      for (let ringIndex = 0; ringIndex < rings.length; ringIndex++) {
+        const ring = rings[ringIndex];
+
+        for (let i = 0; i < segments; i++) {
+          const angle = (i / segments) * Math.PI * 2;
+
+          // Irregular radial variation keeps the silhouette organic.
+          const variation =
+            1 +
+            0.075 * Math.sin(angle * 5 + 0.4) +
+            0.035 * Math.cos(angle * 3 - 0.8) +
+            0.022 * Math.sin(angle * 9 + 0.2);
+
+          const radius = 1.18 * ring.scale * variation;
+          const height = ring.height + (i % 3) * 0.003;
+
+          positions.push(
+            Math.cos(angle) * radius,
+            height,
+            Math.sin(angle) * radius
+          );
+
+          const color = new THREE.Color();
+          color.setHSL(
+            0.055 + (i % 4) * 0.004,
+            0.42,
+            0.12 + ((i % 5) % 3) * 0.018
+          );
+          colors.push(color.r, color.g, color.b);
+        }
+      }
+
+      // Triangles for the shallow top surface.
+      for (let i = 0; i < segments; i++) {
+        const next = (i + 1) % segments;
+
+        indices.push(0, 1 + next, 1 + i);
+
+        const innerA = 1 + i;
+        const innerB = 1 + next;
+        const outerA = 1 + segments + i;
+        const outerB = 1 + segments + next;
+
+        indices.push(innerA, outerB, outerA);
+        indices.push(innerA, innerB, outerB);
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.setAttribute(
+        "color",
+        new THREE.Float32BufferAttribute(colors, 3)
+      );
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      return geometry;
+    }
+
+    const puddleTop = new THREE.Mesh(
+      createPuddleGeometry(),
+      puddleMaterial
+    );
+    puddleTop.name = "MuddyPuddleSurface";
+    puddleTop.castShadow = true;
+    puddleTop.receiveShadow = true;
+    asset.add(puddleTop);
+
+    // -------------------------------------------------------------------------
+    // Vertical muddy rim
+    // -------------------------------------------------------------------------
+
+    function createMudSkirtGeometry() {
+      const segments = 28;
+      const positions = [];
+      const indices = [];
+
+      const outerRadius = 1.18;
+
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const variation =
+          1 +
+          0.075 * Math.sin(angle * 5 + 0.4) +
+          0.035 * Math.cos(angle * 3 - 0.8) +
+          0.022 * Math.sin(angle * 9 + 0.2);
+
+        const x = Math.cos(angle) * outerRadius * variation;
+        const z = Math.sin(angle) * outerRadius * variation;
+
+        positions.push(x, 0.025, z);
+      }
+
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const variation =
+          1 +
+          0.075 * Math.sin(angle * 5 + 0.4) +
+          0.035 * Math.cos(angle * 3 - 0.8) +
+          0.022 * Math.sin(angle * 9 + 0.2);
+
+        const x = Math.cos(angle) * outerRadius * variation * 0.92;
+        const z = Math.sin(angle) * outerRadius * variation * 0.92;
+
+        positions.push(x, -0.17, z);
+      }
+
+      for (let i = 0; i < segments; i++) {
+        const next = (i + 1) % segments;
+
+        // Top index.
+        const topI = i;
+        const topNext = next;
+
+        // Bottom index.
+        const bottomI = segments + i;
+        const bottomNext = segments + next;
+
+        // First side triangle, outward-facing.
+        indices.push(topI, topNext, bottomI);
+
+        // Second side triangle.
+        indices.push(topI, bottomI, bottomNext);
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      return geometry;
+    }
+
+    const mudSkirt = new THREE.Mesh(
+      createMudSkirtGeometry(),
+      mudMaterial
+    );
+    mudSkirt.name = "MuddyOuterRim";
+    mudSkirt.castShadow = true;
+    mudSkirt.receiveShadow = true;
+    asset.add(mudSkirt);
+
+    // -------------------------------------------------------------------------
+    // Small low-poly rocks
+    // -------------------------------------------------------------------------
+
+    const rockGeometry = new THREE.DodecahedronGeometry(1, 0);
+
+    function addRock(x, z, scale, rotation) {
+      const rock = new THREE.Mesh(rockGeometry, rockMaterial);
+      rock.position.set(x, 0.12, z);
+      rock.scale.set(
+        scale,
+        scale * 0.58,
+        scale * 0.88
+      );
+      rock.rotation.set(
+        0.08 * Math.sin(rotation),
+        rotation,
+        0.06 * Math.cos(rotation)
+      );
+      rock.castShadow = true;
+      rock.receiveShadow = true;
+
+      asset.add(rock);
+    }
+
+    const rockData = [
+      { angle: 0.18, radius: 1.12, scale: 0.22 },
+      { angle: 0.72, radius: 1.04, scale: 0.17 },
+      { angle: 1.28, radius: 1.18, scale: 0.20 },
+      { angle: 2.02, radius: 1.06, scale: 0.15 },
+      { angle: 2.72, radius: 1.13, scale: 0.19 },
+      { angle: 3.26, radius: 1.02, scale: 0.14 },
+      { angle: 3.86, radius: 1.16, scale: 0.18 }
+    ];
+
+    rockData.forEach((data, index) => {
+      addRock(
+        Math.cos(data.angle) * data.radius,
+        Math.sin(data.angle) * data.radius,
+        data.scale,
+        data.angle + index * 0.31
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Viewer-only ground plane
+    // -------------------------------------------------------------------------
+
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(20, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x18211e,
+        roughness: 1,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.19;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting…";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        asset,
+        (result) => {
+          let blob;
+
+          if (result instanceof ArrayBuffer) {
+            blob = new Blob([result], {
+              type: "model/gltf-binary"
+            });
+          } else {
+            blob = new Blob([JSON.stringify(result)], {
+              type: "model/gltf+json"
+            });
+          }
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "muddy-puddle.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+        },
+        (error) => {
+          console.error("GLB export failed:", error);
+          exportButton.disabled = false;
+          exportButton.textContent = "Export Failed";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Render loop
+    // -------------------------------------------------------------------------
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+  </script>
+</body>
+</html>

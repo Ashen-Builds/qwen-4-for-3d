@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "external_requests": [],
+  "export_buttons": 1,
+  "glb": {
+    "suggested_name": "rowing-exercise-machine.glb",
+    "bytes": 1546112,
+    "sha256": "b2f407ae1d5e9ea2bbd45400f039757d43063c8ee11fef0966687fa913b68c53",
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "meshes": 64,
+    "nodes": 65,
+    "materials": 9,
+    "skins": 0,
+    "textures": 0,
+    "triangles": 17272,
+    "animations": [],
+    "size_xyz": [
+      5.340000001788139,
+      1.617901729197641,
+      2.221999996304512
+    ]
+  }
+}

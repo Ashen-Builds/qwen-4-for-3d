@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Explorer</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --panel: rgba(255, 255, 255, 0.86);
+      --border: rgba(31, 45, 39, 0.14);
+      --text: #26372f;
+      --accent: #b75f3e;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 50% 30%, #f7fbf7 0%, #e3eee9 50%, #cbd7d0 100%);
+      color: var(--text);
+    }
+
+    #viewport {
+      position: absolute;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .panel {
+      position: absolute;
+      z-index: 2;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      box-shadow: 0 12px 35px rgba(34, 51, 43, 0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    #info {
+      top: 22px;
+      left: 22px;
+      padding: 16px 18px;
+      border-radius: 16px;
+      pointer-events: none;
+    }
+
+    #info h1 {
+      margin: 0 0 5px;
+      font-size: 19px;
+      letter-spacing: -0.02em;
+    }
+
+    #info p {
+      margin: 0;
+      color: #617169;
+      font-size: 12px;
+    }
+
+    #export-panel {
+      right: 22px;
+      bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 16px;
+    }
+
+    #export {
+      appearance: none;
+      border: 0;
+      border-radius: 11px;
+      padding: 12px 17px;
+      background: var(--accent);
+      color: white;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      box-shadow: 0 6px 14px rgba(183, 95, 62, 0.28);
+      transition: transform 140ms ease, background 140ms ease, opacity 140ms ease;
+    }
+
+    #export:hover {
+      background: #9f4e31;
+      transform: translateY(-1px);
+    }
+
+    #export:active {
+      transform: translateY(1px);
+    }
+
+    #export:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #hint {
+      max-width: 150px;
+      color: #617169;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 600px) {
+      #info {
+        top: 12px;
+        left: 12px;
+        right: 12px;
+      }
+
+      #export-panel {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        justify-content: space-between;
+      }
+
+      #hint {
+        max-width: 120px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section id="info" class="panel">
+    <h1>Low-Poly Explorer</h1>
+    <p>Static game-ready character asset</p>
+  </section>
+
+  <section id="export-panel" class="panel">
+    <button id="export" type="button">Export GLB</button>
+    <div id="hint">Drag to orbit<br />Scroll to zoom</div>
+  </section>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("export");
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.domElement.setAttribute("aria-label", "Low-poly explorer character");
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(
+      34,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(5.4, 3.65, 7.1);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.85, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 4;
+    controls.maxDistance = 12;
+    controls.minPolarAngle = Math.PI * 0.12;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    const hemisphere = new THREE.HemisphereLight(0xf5fff8, 0x647268, 2.1);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xfff1d5, 3.2);
+    keyLight.position.set(4.5, 7.5, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 18;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xbad7e5, 1.15);
+    fillLight.position.set(-5, 3.5, 2);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffc990, 1.35);
+    rimLight.position.set(1, 4, -5);
+    scene.add(rimLight);
+
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(6, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0xb9c8be,
+        roughness: 1,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const model = new THREE.Group();
+    model.name = "LowPolyExplorer";
+    scene.add(model);
+
+    function material(color, roughness = 0.82, metalness = 0) {
+      return new THREE.MeshStandardMaterial({
+        color,
+        roughness,
+        metalness,
+        flatShading: true
+      });
+    }
+
+    const M = {
+      skin: material(0xc78b65, 0.9),
+      skinDark: material(0xa96f4f, 0.92),
+      shirt: material(0xd7b56f, 0.92),
+      shirtDark: material(0xb58b50, 0.94),
+      vest: material(0x76503a, 0.9),
+      vestLight: material(0x986643, 0.88),
+      vestDark: material(0x51382b, 0.94),
+      pants: material(0x6c695c, 0.96),
+      pantsDark: material(0x514f47, 0.97),
+      boot: material(0x4c3028, 0.95),
+      sole: material(0x2c2925, 0.98),
+      hat: material(0xc5a16a, 0.95),
+      hatLight: material(0xd3b37d, 0.94),
+      band: material(0x704932, 0.93),
+      black: material(0x222827, 0.75),
+      lens: material(0x193c43, 0.25, 0.18),
+      metal: material(0x9ba8a4, 0.32, 0.72),
+      metalDark: material(0x5d6b68, 0.42, 0.65),
+      paper: material(0xe5d29b, 0.98),
+      paperDark: material(0xbd9f61, 0.98),
+      scarf: material(0xb65c42, 0.94),
+      green: material(0x607662, 0.92),
+      gold: material(0xc39a4e, 0.4, 0.55),
+      strap: material(0x3c2c24, 0.94)
+    };
+
+    function addMesh(
+      parent,
+      geometry,
+      mat,
+      name,
+      position = [0, 0, 0],
+      rotation = [0, 0, 0],
+      scale = [1, 1, 1]
+    ) {
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.name = name;
+      mesh.position.set(...position);
+      mesh.rotation.set(...rotation);
+      mesh.scale.set(...scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function box(parent, name, size, position, mat, rotation = [0, 0, 0]) {
+      return addMesh(
+        parent,
+        new THREE.BoxGeometry(...size),
+        mat,
+        name,
+        position,
+        rotation
+      );
+    }
+
+    function cylinder(
+      parent,
+      name,
+      radiusTop,
+      radiusBottom,
+      height,
+      segments,
+      position,
+      mat,
+      rotation = [0, 0, 0]
+    ) {
+      return addMesh(
+        parent,
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments,
+          1,
+          false
+        ),
+        mat,
+        name,
+        position,
+        rotation
+      );
+    }
+
+    function sphere(
+      parent,
+      name,
+      radius,
+      position,
+      mat,
+      scale = [1, 1, 1]
+    ) {
+      return addMesh(
+        parent,
+        new THREE.SphereGeometry(radius, 10, 6),
+        mat,
+        name,
+        position,
+        [0, 0, 0],
+        scale
+      );
+    }
+
+    function torus(
+      parent,
+      name,
+      radius,
+      tube,
+      position,
+      mat,
+      rotation = [0, 0, 0],
+      tubularSegments = 12
+    ) {
+      return addMesh(
+        parent,
+        new THREE.TorusGeometry(radius, tube, 5, tubularSegments),
+        mat,
+        name,
+        position,
+        rotation
+      );
+    }
+
+    function segment(parent, name, start, end, radius, mat) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+      const midpoint = a.clone().add(b).multiplyScalar(0.5);
+
+      const mesh = addMesh(
+        parent,
+        new THREE.CylinderGeometry(radius, radius, length, 8, 1, false),
+        mat,
+        name,
+        midpoint.toArray()
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    // ------------------------------------------------------------------
+    // Legs and boots
+    // ------------------------------------------------------------------
+
+    box(model, "Pelvis", [0.87, 0.34, 0.57], [0, 1.45, 0], M.pantsDark);
+
+    for (const side of [-1, 1]) {
+      const label = side < 0 ? "Left" : "Right";
+
+      segment(
+        model,
+        `${label} Trouser Leg`,
+        [side * 0.32, 0.5, 0],
+        [side * 0.34, 1.37, 0],
+        0.185,
+        M.pants
+      );
+
+      cylinder(
+        model,
+        `${label} Boot Shaft`,
+        0.205,
+        0.185,
+        0.43,
+        8,
+        [side * 0.34, 0.56, 0.015],
+        M.boot
+      );
+
+      box(
+        model,
+        `${label} Boot Foot`,
+        [0.49, 0.35, 0.73],
+        [side * 0.34, 0.23, 0.13],
+        M.boot
+      );
+
+      box(
+        model,
+        `${label} Boot Sole`,
+        [0.53, 0.09, 0.79],
+        [side * 0.34, 0.055, 0.14],
+        M.sole
+      );
+
+      box(
+        model,
+        `${label} Boot Toe Cap`,
+        [0.45, 0.23, 0.18],
+        [side * 0.34, 0.28, 0.48],
+        M.vestDark
+      );
+
+      box(
+        model,
+        `${label} Knee Patch`,
+        [0.27, 0.25, 0.065],
+        [side * 0.34, 0.96, 0.17],
+        M.vestLight
+      );
+    }
+
+    // ------------------------------------------------------------------
+    // Torso, vest, and belt
+    // ------------------------------------------------------------------
+
+    cylinder(
+      model,
+      "Explorer Torso",
+      0.56,
+      0.47,
+      1.15,
+      8,
+      [0, 2.05, 0],
+      M.shirt
+    );
+
+    box(model, "Left Vest Panel", [0.29, 0.82, 0.09], [-0.235, 2.11, 0.43], M.vest);
+    box(model, "Right Vest Panel", [0.29, 0.82, 0.09], [0.235, 2.11, 0.43], M.vest);
+
+    box(model, "Left Vest Flap", [0.31, 0.18, 0.1], [-0.235, 2.37, 0.475], M.vestLight);
+    box(model, "Right Vest Flap", [0.31, 0.18, 0.1], [0.235, 2.37, 0.475], M.vestLight);
+
+    box(model, "Left Vest Pocket", [0.22, 0.19, 0.07], [-0.24, 1.94, 0.49], M.vestDark);
+    box(model, "Right Vest Pocket", [0.22, 0.19, 0.07], [0.24, 1.94, 0.49], M.vestDark);
+
+    box(
+      model,
+      "Diagonal Shoulder Strap",
+      [0.095, 0.95, 0.055],
+      [0.07, 2.12, 0.505],
+      M.strap,
+      [0, 0, -0.43]
+    );
+
+    box(model, "Left Shoulder Strap", [0.085, 0.72, 0.05], [-0.29, 2.24, 0.475], M.strap, [0, 0, 0.12]);
+    box(model, "Right Shoulder Strap", [0.085, 0.72, 0.05], [0.29, 2.24, 0.475], M.strap, [0, 0, -0.12]);
+
+    box(model, "Belt", [0.94, 0.12, 0.6], [0, 1.49, 0], M.strap);
+    box(model, "Belt Buckle", [0.15, 0.13, 0.07], [0, 1.49, 0.335], M.gold);
+    box(model, "Belt Loop Left", [0.09, 0.17, 0.055], [-0.3, 1.5, 0.33], M.gold);
+    box(model, "Belt Loop Right", [0.09, 0.17, 0.055], [0.3, 1.5, 0.33], M.gold);
+
+    box(model, "Left Hip Pouch", [0.33, 0.34, 0.27], [-0.52, 1.42, 0.08], M.vestDark);
+    box(model, "Left Hip Pouch Flap", [0.35, 0.15, 0.29], [-0.52, 1.57, 0.09], M.vest);
+    sphere(model, "Pouch Button", 0.035, [-0.52, 1.46, 0.245], M.gold);
+
+    cylinder(
+      model,
+      "Compass Case",
+      0.105,
+      0.105,
+      0.055,
+      10,
+      [0.29, 2.12, 0.52],
+      M.gold,
+      [Math.PI / 2, 0, 0]
+    );
+
+    // ------------------------------------------------------------------
+    // Backpack and rolled sleeping mat
+    // ------------------------------------------------------------------
+
+    box(model, "Backpack Body", [0.88, 0.98, 0.34], [0, 2.2, -0.55], M.vestDark);
+    box(model, "Backpack Flap", [0.91, 0.3, 0.37], [0, 2.49, -0.59], M.vest);
+    box(model, "Backpack Lower Pocket", [0.58, 0.33, 0.18], [0, 1.82, -0.75], M.vestLight);
+
+    box(model, "Left Backpack Strap", [0.1, 0.82, 0.06], [-0.29, 2.2, 0.47], M.strap);
+    box(model, "Right Backpack Strap", [0.1, 0.82, 0.06], [0.29, 2.2, 0.47], M.strap);
+    box(model, "Left Backpack Buckle", [0.14, 0.11, 0.07], [-0.29, 2.05, 0.515], M.gold);
+    box(model, "Right Backpack Buckle", [0.14, 0.11, 0.07], [0.29, 2.05, 0.515], M.gold);
+
+    cylinder(
+      model,
+      "Rolled Sleeping Mat",
+      0.135,
+      0.135,
+      0.87,
+      10,
+      [0, 2.79, -0.63],
+      M.green,
+      [0, 0, Math.PI / 2]
+    );
+
+    cylinder(
+      model,
+      "Sleeping Mat Left End",
+      0.145,
+      0.145,
+      0.065,
+      10,
+      [-0.45, 2.79, -0.63],
+      M.paperDark,
+      [0, 0, Math.PI / 2]
+    );
+
+    cylinder(
+      model,
+      "Sleeping Mat Right End",
+      0.145,
+      0.145,
+      0.065,
+      10,
+      [0.45, 2.79, -0.63],
+      M.paperDark,
+      [0, 0, Math.PI / 2]
+    );
+
+    // ------------------------------------------------------------------
+    // Arms and hands
+    // ------------------------------------------------------------------
+
+    const leftShoulder = [-0.47, 2.53, 0];
+    const leftElbow = [-0.72, 2.16, 0.04];
+    const leftHand = [-0.83, 1.72, 0.2];
+
+    const rightShoulder = [0.47, 2.53, 0];
+    const rightElbow = [0.74, 2.17, 0.04];
+    const rightHand = [0.76, 1.72, 0.25];
+
+    segment(model, "Left Upper Sleeve", leftShoulder, leftElbow, 0.18, M.shirt);
+    segment(model, "Left Forearm Sleeve", leftElbow, leftHand, 0.135, M.shirt);
+    sphere(model, "Left Hand", 0.145, leftHand, M.skin, [0.9, 1.05, 0.85]);
+
+    segment(model, "Right Upper Sleeve", rightShoulder, rightElbow, 0.18, M.shirt);
+    segment(model, "Right Forearm Sleeve", rightElbow, rightHand, 0.135, M.shirt);
+    sphere(model, "Right Hand", 0.145, rightHand, M.skin, [0.9, 1.05, 0.85]);
+
+    // Rolled map held in the left hand
+    cylinder(
+      model,
+      "Rolled Map",
+      0.1,
+      0.1,
+      0.57,
+      10,
+      [-0.85, 1.73, 0.25],
+      M.paper,
+      [0, 0, Math.PI / 2]
+    );
+
+    cylinder(
+      model,
+      "Map Left Tie",
+      0.108,
+      0.108,
+      0.045,
+      10,
+      [-1.11, 1.73, 0.25],
+      M.strap,
+      [0, 0, Math.PI / 2]
+    );
+
+    cylinder(
+      model,
+      "Map Right Tie",
+      0.108,
+      0.108,
+      0.045,
+      10,
+      [-0.59, 1.73, 0.25],
+      M.strap,
+      [0, 0, Math.PI / 2]
+    );
+
+    // Trowel held in the right hand
+    const trowel = new THREE.Group();
+    trowel.name = "Trowel";
+    trowel.position.set(0.86, 1.29, 0.43);
+    trowel.rotation.z = -0.12;
+    model.add(trowel);
+
+    segment(
+      trowel,
+      "Trowel Handle",
+      [0.77, 1.68, 0.26],
+      [0, 0, 0],
+      0.045,
+      M.wood
+    );
+
+    const bladeShape = new THREE.Shape();
+    bladeShape.moveTo(0, 0);
+    bladeShape.lineTo(0.23, -0.16);
+    bladeShape.lineTo(0, -0.28);
+    bladeShape.closePath();
+
+    const bladeGeometry = new THREE.ExtrudeGeometry(bladeShape, {
+      depth: 0.045,
+      bevelEnabled: false
+    });
+    bladeGeometry.translate(0, 0, -0.0225);
+
+    addMesh(
+      trowel,
+      bladeGeometry,
+      M.metal,
+      "Trowel Blade"
+    );
+
+    // ------------------------------------------------------------------
+    // Neck, scarf, and head
+    // ------------------------------------------------------------------
+
+    cylinder(
+      model,
+      "Neck",
+      0.17,
+      0.18,
+      0.25,
+      8,
+      [0, 2.69, 0],
+      M.skinDark
+    );
+
+    torus(
+      model,
+      "Scarf Collar",
+      0.31,
+      0.085,
+      [0, 2.7, 0.015],
+      M.scarf,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    box(
+      model,
+      "Scarf Tail",
+      [0.19, 0.48, 0.09],
+      [0.15, 2.43, 0.365],
+      M.scarf,
+      [0.04, 0.05, -0.14]
+    );
+
+    sphere(model, "Head", 0.37, [0, 3.02, 0], M.skin, [1, 1.08, 0.92]);
+    sphere(model, "Left Ear", 0.105, [-0.365, 3.01, 0], M.skin, [0.55, 1, 0.75]);
+    sphere(model, "Right Ear", 0.105, [0.365, 3.01, 0], M.skin, [0.55, 1, 0.75]);
+
+    addMesh(
+      model,
+      new THREE.ConeGeometry(0.075, 0.17, 4),
+      M.skin,
+      "Nose",
+      [0, 2.98, 0.36],
+      [Math.PI / 2, 0, 0]
+    );
+
+    sphere(model, "Left Eye", 0.04, [-0.145, 3.075, 0.325], M.black);
+    sphere(model, "Right Eye", 0.04, [0.145, 3.075, 0.325], M.black);
+
+    box(model, "Mouth", [0.16, 0.035, 0.04], [0, 2.88, 0.34], M.skinDark);
+
+    torus(
+      model,
+      "Goggle Strap",
+      0.375,
+      0.035,
+      [0, 3.145, 0],
+      M.black,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    torus(
+      model,
+      "Left Goggle Frame",
+      0.135,
+      0.026,
+      [-0.145, 3.12, 0.35],
+      M.black,
+      [0, 0, 0],
+      10
+    );
+
+    torus(
+      model,
+      "Right Goggle Frame",
+      0.135,
+      0.026,
+      [0.145, 3.12, 0.35],
+      M.black,
+      [0, 0, 0],
+      10
+    );
+
+    addMesh(
+      model,
+      new THREE.CircleGeometry(0.112, 10),
+      M.lens,
+      "Left Goggle Lens",
+      [-0.145, 3.12, 0.346]
+    );
+
+    addMesh(
+      model,
+      new THREE.CircleGeometry(0.112, 10),
+      M.lens,
+      "Right Goggle Lens",
+      [0.145, 3.12, 0.346]
+    );
+
+    box(model, "Goggle Bridge", [0.14, 0.045, 0.055], [0, 3.12, 0.36], M.black);
+
+    // ------------------------------------------------------------------
+    // Explorer hat
+    // ------------------------------------------------------------------
+
+    const hat = new THREE.Group();
+    hat.name = "Explorer Hat";
+    hat.position.set(0, 3.39, 0);
+    hat.rotation.z = -0.045;
+    model.add(hat);
+
+    cylinder(
+      hat,
+      "Hat Brim",
+      0.67,
+      0.67,
+      0.075,
+      12,
+      [0, 0, 0],
+      M.hat
+    );
+
+    cylinder(
+      hat,
+      "Hat Crown",
+      0.38,
+      0.46,
+      0.42,
+      10,
+      [0, 0.25, 0],
+      M.hatLight
+    );
+
+    cylinder(
+      hat,
+      "Hat Band",
+      0.465,
+      0.465,
+      0.105,
+      10,
+      [0, 0.09, 0],
+      M.band
+    );
+
+    // A subtle crease gives the crown a faceted, hand-crafted appearance.
+    box(
+      hat,
+      "Hat Crown Crease",
+      [0.035, 0.26, 0.035],
+      [0, 0.29, 0.37],
+      M.band,
+      [0, 0, -0.08]
+    );
+
+    // ------------------------------------------------------------------
+    // Final asset setup
+    // ------------------------------------------------------------------
+
+    model.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
+
+    model.updateMatrixWorld(true);
+
+    // ------------------------------------------------------------------
+    // GLB export
+    // ------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting…";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        model,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low-poly-explorer.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+        },
+        (error) => {
+          console.error("GLB export failed:", error);
+          exportButton.disabled = false;
+          exportButton.textContent = "Export Failed";
+          setTimeout(() => {
+            exportButton.textContent = "Export GLB";
+          }, 2200);
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          includeCustomExtensions: false
+        }
+      );
+    });
+
+    // ------------------------------------------------------------------
+    // Render loop and responsive resize
+    // ------------------------------------------------------------------
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

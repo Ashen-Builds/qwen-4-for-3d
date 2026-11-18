@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alien Saucer — Three.js GLB Creator</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #071116;
+      color: #e9fbf7;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .ui {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .title-panel {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      padding: 16px 18px;
+      border: 1px solid rgba(125, 230, 213, 0.25);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(7, 22, 27, 0.88), rgba(10, 30, 34, 0.68));
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(12px);
+    }
+
+    .eyebrow {
+      color: #63e6d5;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 5px 0 3px;
+      font-size: 24px;
+      font-weight: 750;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      color: #92b4b0;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .controls {
+      position: absolute;
+      right: 24px;
+      bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      pointer-events: auto;
+    }
+
+    .hint {
+      color: #7e9d9c;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      text-shadow: 0 1px 3px #000;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 13px 18px;
+      color: #04211e;
+      background: linear-gradient(135deg, #83f6df, #43c9c1);
+      box-shadow:
+        0 8px 24px rgba(35, 210, 192, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 160ms ease, filter 160ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #status {
+      position: absolute;
+      left: 24px;
+      bottom: 24px;
+      max-width: min(430px, calc(100vw - 48px));
+      color: #8eb2af;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+
+    @media (max-width: 620px) {
+      .title-panel {
+        top: 12px;
+        left: 12px;
+      }
+
+      .controls {
+        right: 12px;
+        bottom: 12px;
+      }
+
+      .hint {
+        display: none;
+      }
+
+      #status {
+        left: 12px;
+        bottom: 12px;
+        max-width: calc(100vw - 24px);
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="ui">
+      <section class="title-panel">
+        <div class="eyebrow">Low-poly craft asset</div>
+        <h1>Alien Saucer</h1>
+        <div class="subtitle">
+          A faceted alien boarding craft with a concave dish, armored hull,
+          thruster pods, and cyan energy accents.
+        </div>
+      </section>
+
+      <div id="status">Preparing asset…</div>
+
+      <div class="controls">
+        <span class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</span>
+        <button id="exportButton" type="button">Export GLB</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const app = document.getElementById("app");
+    const status = document.getElementById("status");
+    const exportButton = document.getElementById("exportButton");
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x071116);
+    scene.fog = new THREE.FogExp2(0x071116, 0.032);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(5.8, 3.25, 6.8);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    app.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.05, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 4;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.87;
+
+    scene.add(new THREE.HemisphereLight(0x9ad9d8, 0x182029, 1.45));
+
+    const keyLight = new THREE.DirectionalLight(0xc9f7ef, 3.5);
+    keyLight.position.set(4, 7, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -6;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 20;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x35d8c6, 2.1);
+    rimLight.position.set(-5, 3, -4);
+    scene.add(rimLight);
+
+    const blueLight = new THREE.PointLight(0x267cff, 1.25, 12);
+    blueLight.position.set(-3, 2, 3);
+    scene.add(blueLight);
+
+    // -------------------------------------------------------------------------
+    // Presentation floor and grid
+    // -------------------------------------------------------------------------
+
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(18, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x09151a,
+        roughness: 0.95,
+        metalness: 0.05
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -1.68;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(24, 24, 0x245b5a, 0x153035);
+    grid.position.y = -1.665;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.28;
+    scene.add(grid);
+
+    // -------------------------------------------------------------------------
+    // Asset materials
+    // -------------------------------------------------------------------------
+
+    const materials = {
+      hull: new THREE.MeshStandardMaterial({
+        name: "Alien Hull",
+        color: 0x9db6ad,
+        roughness: 0.58,
+        metalness: 0.18,
+        flatShading: true
+      }),
+      hullLight: new THREE.MeshStandardMaterial({
+        name: "Light Armor",
+        color: 0xc8d8d2,
+        roughness: 0.5,
+        metalness: 0.24,
+        flatShading: true
+      }),
+      dark: new THREE.MeshStandardMaterial({
+        name: "Deep Graphite",
+        color: 0x172b30,
+        roughness: 0.48,
+        metalness: 0.58,
+        flatShading: true
+      }),
+      teal: new THREE.MeshStandardMaterial({
+        name: "Cerquoise Armor",
+        color: 0x176e6c,
+        roughness: 0.46,
+        metalness: 0.32,
+        flatShading: true
+      }),
+      glass: new THREE.MeshStandardMaterial({
+        name: "Cockpit Glass",
+        color: 0x071d25,
+        roughness: 0.18,
+        metalness: 0.58,
+        flatShading: true
+      }),
+      copper: new THREE.MeshStandardMaterial({
+        name: "Bronze Accents",
+        color: 0xa86b3d,
+        roughness: 0.42,
+        metalness: 0.68,
+        flatShading: true
+      }),
+      glow: new THREE.MeshStandardMaterial({
+        name: "Energy Cyan",
+        color: 0x79fff0,
+        emissive: 0x24d8c6,
+        emissiveIntensity: 2.8,
+        roughness: 0.25,
+        metalness: 0.08,
+        flatShading: true
+      }),
+      glowDim: new THREE.MeshStandardMaterial({
+        name: "Energy Blue",
+        color: 0x377e9c,
+        emissive: 0x12647f,
+        emissiveIntensity: 1.15,
+        roughness: 0.35,
+        metalness: 0.18,
+        flatShading: true
+      })
+    };
+
+    // Only this group is exported.
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "Alien_Saucer";
+    scene.add(assetRoot);
+
+    function mesh(geometry, material, name, position = null, rotation = null, scale = null) {
+      const object = new THREE.Mesh(geometry, material);
+      object.name = name;
+      if (position) object.position.copy(position);
+      if (rotation) object.rotation.set(rotation.x, rotation.y, rotation.z);
+      if (scale) object.scale.copy(scale);
+      object.castShadow = true;
+      object.receiveShadow = true;
+      assetRoot.add(object);
+      return object;
+    }
+
+    // -------------------------------------------------------------------------
+    // Main faceted hull
+    // -------------------------------------------------------------------------
+
+    const hullProfile = [
+      new THREE.Vector2(0.58, -1.55),
+      new THREE.Vector2(0.92, -1.43),
+      new THREE.Vector2(1.18, -1.16),
+      new THREE.Vector2(1.38, -0.67),
+      new THREE.Vector2(1.44, -0.1),
+      new THREE.Vector2(1.3, 0.42),
+      new THREE.Vector2(1.04, 0.82),
+      new THREE.Vector2(0.72, 1.03),
+      new THREE.Vector2(0.42, 1.12),
+      new THREE.Vector2(0.0, 1.14)
+    ];
+
+    const mainHull = mesh(
+      new THREE.LatheGeometry(hullProfile, 12),
+      materials.hull,
+      "Faceted_Main_Hull"
+    );
+    mainHull.rotation.y = Math.PI / 12;
+
+    // Lower armored keel.
+    mesh(
+      new THREE.CylinderGeometry(0.62, 0.88, 0.42, 10),
+      materials.dark,
+      "Lower_Armored_Keel",
+      new THREE.Vector3(0, -1.32, 0)
+    );
+
+    // Horizontal structural rings.
+    mesh(
+      new THREE.TorusGeometry(1.34, 0.035, 5, 12),
+      materials.dark,
+      "Upper_Structural_Ring",
+      new THREE.Vector3(0, -0.18, 0),
+      new THREE.Euler(Math.PI / 2, 0, 0)
+    );
+
+    mesh(
+      new THREE.TorusGeometry(1.14, 0.025, 5, 12),
+      materials.copper,
+      "Lower_Copper_Band",
+      new THREE.Vector3(0, -0.63, 0),
+      new THREE.Euler(Math.PI / 2, 0, 0)
+    );
+
+    // Front hex energy emblem.
+    mesh(
+      new THREE.CircleGeometry(0.17, 6),
+      materials.glow,
+      "Front_Hex_Emitter",
+      new THREE.Vector3(0, -0.25, 1.435)
+    );
+
+    // -------------------------------------------------------------------------
+    // Concave dish and support
+    // -------------------------------------------------------------------------
+
+    mesh(
+      new THREE.CylinderGeometry(0.16, 0.21, 0.34, 10),
+      materials.dark,
+      "Dish_Support_Stem",
+      new THREE.Vector3(0, 1.18, 0)
+    );
+
+    const dishProfile = [
+      new THREE.Vector2(0.0, 0.08),
+      new THREE.Vector2(0.28, 0.06),
+      new THREE.Vector2(0.52, 0.1),
+      new THREE.Vector2(0.68, 0.22),
+      new THREE.Vector2(0.62, 0.27),
+      new THREE.Vector2(0.48, 0.19),
+      new THREE.Vector2(0.28, 0.09),
+      new THREE.Vector2(0.0, 0.08)
+    ];
+
+    mesh(
+      new THREE.LatheGeometry(dishProfile, 12),
+      materials.hullLight,
+      "Concave_Alien_Dish"
+    );
+
+    mesh(
+      new THREE.TorusGeometry(0.67, 0.045, 6, 12),
+      materials.teal,
+      "Dish_Edge_Rim",
+      new THREE.Vector3(0, 1.5, 0)
+    );
+
+    // Small inset dish panel.
+    const dishPanel = mesh(
+      new THREE.CircleGeometry(0.46, 12),
+      materials.hull,
+      "Dish_Inset_Panel",
+      new THREE.Vector3(0, 1.505, 0),
+      new THREE.Euler(-Math.PI / 2, 0, 0)
+    );
+    dishPanel.scale.set(1, 0.72, 1);
+
+    // -------------------------------------------------------------------------
+    // Cockpit
+    // -------------------------------------------------------------------------
+
+    const cockpit = mesh(
+      new THREE.SphereGeometry(0.34, 12, 8),
+      materials.glass,
+      "Faceted_Cockpit",
+      new THREE.Vector3(0, 1.35, -0.25),
+      new THREE.Euler(0, 0, 0),
+      new THREE.Vector3(1.08, 0.68, 0.76)
+    );
+
+    // Cockpit support frame.
+    mesh(
+      new THREE.BoxGeometry(0.6, 0.08, 0.5),
+      materials.dark,
+      "Cockpit_Frame",
+      new THREE.Vector3(0, 1.24, -0.25)
+    );
+
+    // -------------------------------------------------------------------------
+    // Four angular fins
+    // -------------------------------------------------------------------------
+
+    const finGeometry = new THREE.ConeGeometry(0.46, 1.15, 4);
+    const finAngles = [Math.PI / 4, (3 * Math.PI) / 4, (5 * Math.PI) / 4, (7 * Math.PI) / 4];
+
+    finAngles.forEach((angle, index) => {
+      const fin = mesh(
+        finGeometry.clone(),
+        index % 2 === 0 ? materials.hullLight : materials.hull,
+        `Armored_Fin_${index + 1}`,
+        new THREE.Vector3(Math.cos(angle) * 1.22, 0.02, Math.sin(angle) * 1.22),
+        new THREE.Euler(0, -angle, 0),
+        new THREE.Vector3(1, 1, 0.72)
+      );
+      fin.geometry.computeVertexNormals();
+    });
+
+    // -------------------------------------------------------------------------
+    // Three thruster pods
+    // -------------------------------------------------------------------------
+
+    const thrusterAngles = [0.35, 2.25, 4.18];
+
+    thrusterAngles.forEach((angle, index) => {
+      const direction = new THREE.Vector3(
+        Math.cos(angle),
+        0,
+        Math.sin(angle)
+      ).normalize();
+
+      const up = new THREE.Vector3(0, 1, 0);
+      const podQuaternion = new THREE.Quaternion().setFromUnitVectors(up, direction);
+
+      const pod = mesh(
+        new THREE.CylinderGeometry(0.245, 0.29, 0.78, 10),
+        materials.dark,
+        `Thruster_Pod_${index + 1}`,
+        new THREE.Vector3(
+          Math.cos(angle) * 1.55,
+          -0.48,
+          Math.sin(angle) * 1.55
+        ),
+        podQuaternion
+      );
+
+      // Pod armor band.
+      mesh(
+        new THREE.CylinderGeometry(0.285, 0.285, 0.12, 10),
+        materials.teal,
+        `Thruster_Pod_Armor_${index + 1}`,
+        new THREE.Vector3(
+          Math.cos(angle) * 1.55,
+          -0.48,
+          Math.sin(angle) * 1.55
+        ),
+        podQuaternion
+      );
+
+      // Outward-facing nozzle.
+      mesh(
+        new THREE.CylinderGeometry(0.18, 0.22, 0.18, 10),
+        materials.dark,
+        `Thruster_Nozzle_${index + 1}`,
+        new THREE.Vector3(
+          Math.cos(angle) * 2.02,
+          -0.48,
+          Math.sin(angle) * 2.02
+        ),
+        podQuaternion
+      );
+
+      // Emissive energy core.
+      const emitter = mesh(
+        new THREE.CircleGeometry(0.145, 10),
+        materials.glow,
+        `Thruster_Emitter_${index + 1}`,
+        new THREE.Vector3(
+          Math.cos(angle) * 2.115,
+          -0.48,
+          Math.sin(angle) * 2.115
+        ),
+        new THREE.Euler(0, 0, 0),
+        podQuaternion.clone().multiply(new THREE.Euler(0, 0, 0))
+      );
+
+      // Rotate the emitter so it faces outward.
+      emitter.quaternion.copy(podQuaternion).multiply(new THREE.Euler(0, 0, 0));
+      emitter.position.copy(emitter.quaternion).multiply(emitter.position.clone().set(1, 1, 1));
+      emitter.position.multiplyScalar(1.02);
+    });
+
+    // -------------------------------------------------------------------------
+    // Antenna and top mast
+    // -------------------------------------------------------------------------
+
+    mesh(
+      new THREE.CylinderGeometry(0.045, 0.055, 0.78, 6),
+      materials.dark,
+      "Antenna_Mast",
+      new THREE.Vector3(0, 1.8, -0.47)
+    );
+
+    mesh(
+      new THREE.OctahedronGeometry(0.12, 0),
+      materials.glow,
+      "Antenna_Emitter",
+      new THREE.Vector3(0, 2.23, -0.47)
+    );
+
+    // Small top antenna fins.
+    mesh(
+      new THREE.BoxGeometry(0.18, 0.24, 0.42),
+      materials.hullLight,
+      "Top_Antenna_Fin",
+      new THREE.Vector3(0, 1.72, -0.47),
+      new THREE.Euler(0, 0, 0.12)
+    );
+
+    // -------------------------------------------------------------------------
+    // Small hull details
+    // -------------------------------------------------------------------------
+
+    // Side armor plates.
+    [-1, 1].forEach((side, index) => {
+      const plate = mesh(
+        new THREE.BoxGeometry(0.22, 0.46, 0.1),
+        materials.teal,
+        `Hull_Armor_Plate_${index + 1}`,
+        new THREE.Vector3(side * 1.39, -0.2, 0),
+        new THREE.Euler(0, side * 0.12, side * 0.08)
+      );
+      plate.scale.z = 0.9;
+    });
+
+    // Small rivets around the front ring.
+    [-0.34, 0, 0.34].forEach((x, index) => {
+      mesh(
+        new THREE.CylinderGeometry(0.035, 0.035, 0.035, 6),
+        materials.copper,
+        `Front_Rivet_${index + 1}`,
+        new THREE.Vector3(x, -0.25, 1.445),
+        new THREE.Euler(Math.PI / 2, 0, 0)
+      );
+    });
+
+    // Ensure all transforms are current before export.
+    assetRoot.updateMatrixWorld(true);
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", async () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting…";
+      status.textContent = "Building binary GLB…";
+
+      try {
+        const exporter = new GLTFExporter();
+        const result = await exporter.parseAsync(assetRoot, {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 2048
+        });
+
+        const blob = new Blob([result], { type: "model/gltf-binary" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "alien_saucer.glb";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+        status.textContent = "alien_saucer.glb exported successfully.";
+      } catch (error) {
+        console.error(error);
+        status.textContent = "Export failed. See browser console for details.";
+      } finally {
+        exportButton.disabled = false;
+        exportButton.textContent = "Export GLB";
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // Animation loop and resize handling
+    // -------------------------------------------------------------------------
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    status.textContent = "Ready — drag to inspect the asset.";
+    animate();
+  </script>
+</body>
+</html>

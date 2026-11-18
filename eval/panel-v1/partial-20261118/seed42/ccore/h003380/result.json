@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "external_requests": [],
+  "export_buttons": 1,
+  "glb": {
+    "suggested_name": "balance-puzzle-platform.glb",
+    "bytes": 317808,
+    "sha256": "8f6ce89a0a7ebe4fa3a0c85845b9b14feab38ddeb94df53e3b7cba2fa464319c",
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "meshes": 47,
+    "nodes": 48,
+    "materials": 7,
+    "skins": 0,
+    "textures": 0,
+    "triangles": 3128,
+    "animations": [],
+    "size_xyz": [
+      4.699999809265137,
+      1.8750000047683715,
+      2.140000104904175
+    ]
+  }
+}

@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Balance Puzzle Platform</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #d9e1e8;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      width: min(330px, calc(100vw - 40px));
+      padding: 18px;
+      color: #eef6ff;
+      background: rgba(12, 25, 43, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      box-shadow: 0 14px 40px rgba(11, 20, 35, 0.24);
+      backdrop-filter: blur(12px);
+      user-select: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 7px;
+      color: #71c7f5;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .description {
+      margin: 9px 0 16px;
+      color: #aebdce;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 9px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 15px;
+      border: 0;
+      border-radius: 9px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      transition: transform 120ms ease, filter 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #exportButton {
+      flex: 1;
+      color: #07101b;
+      background: #75d6ff;
+    }
+
+    #resetButton {
+      color: #e8f2ff;
+      background: #2b3b52;
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 12px;
+      color: #91a5ba;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: fixed;
+      right: 20px;
+      bottom: 18px;
+      padding: 8px 11px;
+      color: rgba(25, 42, 60, 0.72);
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 8px;
+      font-size: 12px;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 19px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div class="panel">
+    <div class="eyebrow">Godot Game Asset</div>
+    <h1>Balance Puzzle Platform</h1>
+    <p class="description">
+      Static low-poly balance assembly with a blue steel I-beam central pivot,
+      weighted base, broad left platform, and two smaller right platforms.
+    </p>
+
+    <div class="buttons">
+      <button id="exportButton" type="button">Export GLB</button>
+      <button id="resetButton" type="button">Reset View</button>
+    </div>
+
+    <div id="status">Ready to export.</div>
+  </div>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const resetButton = document.getElementById("resetButton");
+    const status = document.getElementById("status");
+
+    // ---------------------------------------------------------------------
+    // Renderer, camera, and controls
+    // ---------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xd9e1e8);
+    scene.fog = new THREE.Fog(0xd9e1e8, 18, 34);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const defaultCameraPosition = new THREE.Vector3(8.4, 6.2, 8.8);
+    const defaultTarget = new THREE.Vector3(0, 0.85, 0);
+
+    camera.position.copy(defaultCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(defaultTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 5;
+    controls.maxDistance = 22;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // Soft studio environment for readable steel surfaces.
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const roomEnvironment = new RoomEnvironment();
+    scene.environment = pmremGenerator.fromScene(roomEnvironment, 0.04).texture;
+    pmremGenerator.dispose();
+
+    const hemisphere = new THREE.HemisphereLight(0xeaf7ff, 0x687380, 2.1);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    keyLight.position.set(5.5, 9, 6.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -8;
+    keyLight.shadow.camera.right = 8;
+    keyLight.shadow.camera.top = 8;
+    keyLight.shadow.camera.bottom = -8;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 30;
+    keyLight.shadow.bias = -0.00015;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x9ddcff, 1.4);
+    rimLight.position.set(-7, 5, -6);
+    scene.add(rimLight);
+
+    // Ground is presentation-only and is not included in the exported GLB.
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(80, 80),
+      new THREE.MeshStandardMaterial({
+        color: 0xcbd5dd,
+        roughness: 0.96,
+        metalness: 0
+      })
+    );
+
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.005;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // ---------------------------------------------------------------------
+    // Exportable asset hierarchy
+    // ---------------------------------------------------------------------
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "BalancePuzzlePlatform";
+    assetRoot.userData = {
+      assetType: "static balance puzzle platform",
+      units: "meters",
+      description:
+        "Blue steel balance puzzle platform with central bolted pivot, weighted base, broad left platform, and two smaller right platforms."
+    };
+    scene.add(assetRoot);
+
+    const materials = {
+      blue: new THREE.MeshStandardMaterial({
+        color: 0x176db4,
+        metalness: 0.72,
+        roughness: 0.38
+      }),
+      blueDark: new THREE.MeshStandardMaterial({
+        color: 0x104f91,
+        metalness: 0.68,
+        roughness: 0.43
+      }),
+      blueLight: new THREE.MeshStandardMaterial({
+        color: 0x2d8dd7,
+        metalness: 0.62,
+        roughness: 0.4
+      }),
+      steel: new THREE.MeshStandardMaterial({
+        color: 0x526173,
+        metalness: 0.78,
+        roughness: 0.35
+      }),
+      darkSteel: new THREE.MeshStandardMaterial({
+        color: 0x283340,
+        metalness: 0.72,
+        roughness: 0.48
+      }),
+      bolt: new THREE.MeshStandardMaterial({
+        color: 0xc8d1d8,
+        metalness: 0.88,
+        roughness: 0.24
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x151a20,
+        metalness: 0.08,
+        roughness: 0.88
+      })
+    };
+
+    function addMesh(parent, geometry, material, name, position) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(parent, size, position, material, name, radius = 0.035) {
+      const safeRadius = Math.min(
+        radius,
+        size[0] * 0.45,
+        size[1] * 0.45,
+        size[2] * 0.45
+      );
+
+      return addMesh(
+        parent,
+        new RoundedBoxGeometry(
+          size[0],
+          size[1],
+          size[2],
+          1,
+          safeRadius
+        ),
+        material,
+        name,
+        position
+      );
+    }
+
+    function addCylinder(
+      parent,
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      name,
+      segments = 12
+    ) {
+      return addMesh(
+        parent,
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments
+        ),
+        material,
+        name,
+        position
+      );
+    }
+
+    function addBolt(parent, position, scale = 1) {
+      const washer = addCylinder(
+        parent,
+        0.085 * scale,
+        0.085 * scale,
+        0.022 * scale,
+        [position[0], position[1], position[2]],
+        materials.bolt,
+        "Bolt_Washer",
+        12
+      );
+
+      const head = addCylinder(
+        parent,
+        0.06 * scale,
+        0.06 * scale,
+        0.065 * scale,
+        [
+          position[0],
+          position[1] + 0.04 * scale,
+          position[2]
+        ],
+        materials.bolt,
+        "Bolt_Head",
+        6
+      );
+
+      return { washer, head };
+    }
+
+    function addBrace(parent, start, end, width, depth, material, name) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const brace = addMesh(
+        parent,
+        new THREE.BoxGeometry(width, length, depth),
+        material,
+        name,
+        a.clone().add(b).multiplyScalar(0.5).toArray()
+      );
+
+      brace.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return brace;
+    }
+
+    // ---------------------------------------------------------------------
+    // Weighted base
+    // ---------------------------------------------------------------------
+
+    const baseGroup = new THREE.Group();
+    baseGroup.name = "Weighted_Base";
+    assetRoot.add(baseGroup);
+
+    addBox(
+      baseGroup,
+      [6.8, 0.3, 3.4],
+      [0, 0.18, 0],
+      materials.darkSteel,
+      "Main_Weighted_Base",
+      0.1
+    );
+
+    addBox(
+      baseGroup,
+      [5.8, 0.12, 2.65],
+      [0, 0.36, 0],
+      materials.steel,
+      "Upper_Base_Deck",
+      0.045
+    );
+
+    const footPositions = [
+      [-2.75, -1.28],
+      [-2.75, 1.28],
+      [2.75, -1.28],
+      [2.75, 1.28]
+    ];
+
+    footPositions.forEach(([x, z], index) => {
+      addBox(
+        baseGroup,
+        [0.52, 0.06, 0.52],
+        [x, 0.025, z],
+        materials.rubber,
+        `Anchor_Foot_${index + 1}`,
+        0.025
+      );
+
+      addBolt(
+        baseGroup,
+        [x, 0.435, z],
+        1
+      );
+    });
+
+    // ---------------------------------------------------------------------
+    // Central pivot, bearing, and I-beam assembly
+    // ---------------------------------------------------------------------
+
+    const pivotGroup = new THREE.Group();
+    pivotGroup.name = "Central_Pivot_Assembly";
+    assetRoot.add(pivotGroup);
+
+    addBox(
+      pivotGroup,
+      [0.9, 0.24, 0.9],
+      [0, 0.51, 0],
+      materials.darkSteel,
+      "Pivot_Pedestal",
+      0.055
+    );
+
+    addBox(
+      pivotGroup,
+      [0.68, 0.18, 0.68],
+      [0, 0.67, 0],
+      materials.blueDark,
+      "Pivot_Bearing_Housing",
+      0.045
+    );
+
+    addCylinder(
+      pivotGroup,
+      0.17,
+      0.17,
+      0.5,
+      [0, 0.85, 0],
+      materials.steel,
+      "Pivot_Shaft",
+      12
+    );
+
+    addCylinder(
+      pivotGroup,
+      0.215,
+      0.245,
+      0.42,
+      [0, 0.83, 0],
+      materials.darkSteel,
+      "Pivot_Collar",
+      12
+    );
+
+    addCylinder(
+      pivotGroup,
+      0.17,
+      0.17,
+      0.12,
+      [0, 1.09, 0],
+      materials.bolt,
+      "Pivot_Cap",
+      12
+    );
+
+    // Four bearing fasteners.
+    for (let i = 0; i < 4; i++) {
+      const angle = Math.PI / 4 + i * Math.PI / 2;
+      const x = Math.cos(angle) * 0.28;
+      const z = Math.sin(angle) * 0.28;
+
+      addBolt(
+        pivotGroup,
+        [x, 0.765, z],
+        0.72
+      );
+    }
+
+    // Horizontal blue I-beam.
+    const beamGroup = new THREE.Group();
+    beamGroup.name = "Blue_I_Beam";
+    assetRoot.add(beamGroup);
+
+    addBox(
+      beamGroup,
+      [6.8, 0.16, 0.78],
+      [0, 1.14, 0.39],
+      materials.blue,
+      "I_Beam_Flange_Left",
+      0.045
+    );
+
+    addBox(
+      beamGroup,
+      [6.8, 0.16, 0.78],
+      [0, 1.14, -0.39],
+      materials.blue,
+      "I_Beam_Flange_Right",
+      0.045
+    );
+
+    addBox(
+      beamGroup,
+      [6.8, 0.38, 0.18],
+      [0, 1.14, 0],
+      materials.blueDark,
+      "I_Beam_Web",
+      0.035
+    );
+
+    // End caps and fasteners.
+    [-3.42, 3.42].forEach((x, index) => {
+      addBox(
+        beamGroup,
+        [0.12, 0.19, 0.79],
+        [x, 1.14, 0],
+        materials.blueLight,
+        `I_Beam_End_Cap_${index + 1}`,
+        0.035
+      );
+    });
+
+    // Visible flange bolts on the front-facing side.
+    [-1.12, 0, 1.12].forEach((x, index) => {
+      const bolt = addBolt(
+        beamGroup,
+        [x, 1.14, 0.805],
+        0.85
+      );
+
+      bolt.washer.rotation.x = Math.PI / 2;
+      bolt.head.rotation.x = Math.PI / 2;
+    });
+
+    // Cross-members below the platforms.
+    [-1.75, 0.75, 2.15].forEach((x, index) => {
+      addBox(
+        beamGroup,
+        [0.18, 0.14, 1.65],
+        [x, 1.05, 0],
+        materials.blueDark,
+        `Beam_Cross_Member_${index + 1}`,
+        0.025
+      );
+    });
+
+    // ---------------------------------------------------------------------
+    // Broad left platform
+    // ---------------------------------------------------------------------
+
+    const leftPlatform = new THREE.Group();
+    leftPlatform.name = "Broad_Left_Platform";
+    assetRoot.add(leftPlatform);
+
+    addBox(
+      leftPlatform,
+      [1.55, 0.24, 1.45],
+      [-2.45, 1.48, 0],
+      materials.blueDark,
+      "Left_Platform_Frame",
+      0.055
+    );
+
+    [-0.5, -0.25, 0, 0.25, 0.5].forEach((z, index) => {
+      addBox(
+        leftPlatform,
+        [1.38, 0.035, 0.055],
+        [-2.45, 1.615, z],
+        materials.rubber,
+        `Left_Tread_${index + 1}`,
+        0.012
+      );
+    });
+
+    addBox(
+      leftPlatform,
+      [1.58, 0.12, 0.08],
+      [-2.45, 1.605, 0.66],
+      materials.blue,
+      "Left_Platform_Rail_Front",
+      0.025
+    );
+
+    addBox(
+      leftPlatform,
+      [1.58, 0.12, 0.08],
+      [-2.45, 1.605, -0.66],
+      materials.blue,
+      "Left_Platform_Rail_Back",
+      0.025
+    );
+
+    [
+      [-3.12, -0.57],
+      [-3.12, 0.57],
+      [-1.78, -0.57],
+      [-1.78, 0.57]
+    ].forEach(([x, z], index) => {
+      addBolt(leftPlatform, [x, 1.625, z], 0.9);
+    });
+
+    // ---------------------------------------------------------------------
+    // Two smaller right platforms
+    // ---------------------------------------------------------------------
+
+    const rightPlacements = [
+      { x: 0.55, length: 1.05, width: 1.35, name: "Right_Left_Platform" },
+      { x: 2.2, length: 0.95, width: 1.25, name: "Right_Right_Platform" }
+    ];
+
+    rightPlacements.forEach((placement, index) => {
+      const rightPlatform = new THREE.Group();
+      rightPlatform.name = placement.name;
+      assetRoot.add(rightPlatform);
+
+      addBox(
+        rightPlatform,
+        [placement.length, 0.24, placement.width],
+        [placement.x, 1.48, 0],
+        materials.blueDark,
+        `${placement.name}_Frame`,
+        0.05
+      );
+
+      [-0.38, 0, 0.38].forEach((z, index) => {
+        addBox(
+          rightPlatform,
+          [placement.length - 0.1, 0.035, 0.055],
+          [placement.x, 1.615, z],
+          materials.rubber,
+          `${placement.name}_Tread_${index + 1}`,
+          0.012
+        );
+      });
+
+      addBox(
+        rightPlatform,
+        [placement.length, 0.12, 0.08],
+        [placement.x, 1.605, placement.width * 0.46],
+        materials.blue,
+        `${placement.name}_Rail_Front`,
+        0.022
+      );
+
+      addBox(
+        rightPlatform,
+        [placement.length, 0.12, 0.08],
+        [placement.x, 1.605, -placement.width * 0.46],
+        materials.blue,
+        `${placement.name}_Rail_Back`,
+        0.022
+      );
+
+      [
+        [placement.x - placement.length * 0.34, -placement.width * 0.4],
+        [placement.x + placement.length * 0.34, -placement.width * 0.4],
+        [placement.x - placement.length * 0.34, placement.width * 0.4],
+        [placement.x + placement.length * 0.34, placement.width * 0.4]
+      ].forEach(([x, z], boltIndex) => {
+        addBolt(rightPlatform, [x, 1.625, z], 0.85);
+      });
+    });
+
+    // ---------------------------------------------------------------------
+    // Plausible platform supports
+    // ---------------------------------------------------------------------
+
+    const supportGroup = new THREE.Group();
+    supportGroup.name = "Platform_Supports";
+    assetRoot.add(supportGroup);
+
+    function addSupport(x, z, name) {
+      const lowerY = 1.055;
+      const upperY = 1.355;
+
+      addBox(
+        supportGroup,
+        [0.11, 0.31, 0.11],
+        [x, lowerY + (upperY - lowerY) * 0.5, z],
+        materials.blueDark,
+        `${name}_Vertical_Support`,
+        0.02
+      );
+
+      addBrace(
+        supportGroup,
+        [x, lowerY, z],
+        [x, upperY, z],
+        0.11,
+        0.105,
+        materials.blueDark,
+        `${name}_Diagonal_Brace`
+      );
+    }
+
+    addSupport(-1.75, 0.47, "Left_Front_Support");
+    addSupport(-1.75, -0.47, "Left_Back_Support");
+    addSupport(0.75, 0.47, "Right_Left_Front_Support");
+    addSupport(0.75, -0.47, "Right_Left_Back_Support");
+    addSupport(2.15, 0.45, "Right_Right_Front_Support");
+    addSupport(2.15, -0.45, "Right_Right_Back_Support");
+
+    // Ensure all asset pieces are set for shadowing.
+    assetRoot.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
+
+    // ---------------------------------------------------------------------
+    // Camera controls and export
+    // ---------------------------------------------------------------------
+
+    function resetView() {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.copy(defaultTarget);
+      controls.update();
+    }
+
+    resetButton.addEventListener("click", resetView);
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB...";
+
+      // Export only the asset hierarchy, excluding the floor, lights, and camera.
+      const exporter = new GLTFExporter();
+      assetRoot.updateMatrixWorld(true);
+
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "balance-puzzle-platform.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          window.setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "GLB exported successfully.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 4096
+        }
+      );
+    });
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

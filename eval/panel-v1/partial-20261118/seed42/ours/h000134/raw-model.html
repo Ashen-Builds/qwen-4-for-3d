@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arcane Key — Three.js GLB Creator</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #070914;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .panel {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 10;
+      width: min(360px, calc(100vw - 48px));
+      padding: 20px 22px;
+      border: 1px solid rgba(151, 222, 255, 0.18);
+      border-radius: 16px;
+      background:
+        linear-gradient(145deg, rgba(18, 24, 48, 0.9), rgba(8, 11, 25, 0.82));
+      box-shadow:
+        0 18px 60px rgba(0, 0, 0, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(14px);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 7px;
+      color: #77e8ff;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #f8f3df;
+      font-size: clamp(24px, 4vw, 34px);
+      font-weight: 750;
+      letter-spacing: -0.035em;
+    }
+
+    .description {
+      margin: 10px 0 0;
+      color: #aeb8d3;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 15px;
+    }
+
+    .tag {
+      padding: 5px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      color: #cbd5e8;
+      background: rgba(255, 255, 255, 0.035);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    #exportButton {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 50px;
+      padding: 0 19px;
+      border: 1px solid rgba(139, 235, 255, 0.55);
+      border-radius: 12px;
+      color: #071018;
+      background: linear-gradient(135deg, #8ff3ff, #58c9f2);
+      box-shadow:
+        0 10px 32px rgba(54, 201, 244, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      transition:
+        transform 160ms ease,
+        box-shadow 160ms ease,
+        opacity 160ms ease;
+    }
+
+    #exportButton:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 14px 38px rgba(54, 201, 244, 0.38),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    #exportButton:active {
+      transform: translateY(0);
+    }
+
+    #exportButton:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #exportButton svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    #status {
+      position: fixed;
+      right: 24px;
+      bottom: 88px;
+      z-index: 20;
+      max-width: 340px;
+      padding: 9px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 9px;
+      color: #aeb8d3;
+      background: rgba(8, 11, 25, 0.75);
+      font-size: 12px;
+      text-align: right;
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .hint {
+      position: fixed;
+      left: 24px;
+      bottom: 24px;
+      z-index: 10;
+      color: rgba(214, 224, 246, 0.62);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 620px) {
+      .panel {
+        top: 14px;
+        left: 14px;
+        width: calc(100vw - 28px);
+        padding: 15px 17px;
+      }
+
+      .description {
+        display: none;
+      }
+
+      .tags {
+        margin-top: 10px;
+      }
+
+      #exportButton {
+        right: 14px;
+        bottom: 14px;
+      }
+
+      #status {
+        right: 14px;
+        bottom: 74px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <div class="eyebrow">Godot Asset Forge</div>
+    <h1>Arcane Key</h1>
+    <p class="description">
+      An ornate low-poly key with a faceted cyan core, engraved rune rings,
+      gilded bronze hardware, and suspended magical sparks.
+    </p>
+    <div class="tags">
+      <span class="tag">Low Poly</span>
+      <span class="tag">Static</span>
+      <span class="tag">PBR Materials</span>
+      <span class="tag">GLB Ready</span>
+    </div>
+  </section>
+
+  <div id="status">Ready to export</div>
+
+  <button id="exportButton" type="button">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round"/>
+    </svg>
+    Export GLB
+  </button>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x070914);
+    scene.fog = new THREE.FogExp2(0x070914, 0.027);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(8.4, 4.6, 11.8);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.35, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 7;
+    controls.maxDistance = 20;
+    controls.minPolarAngle = Math.PI * 0.18;
+    controls.maxPolarAngle = Math.PI * 0.82;
+    controls.update();
+
+    // -------------------------------------------------------------------------
+    // Lighting
+    // -------------------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(0x8dc8ff, 0x211024, 1.45);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffe2a0, 3.4);
+    keyLight.position.set(5.5, 8, 7);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -6;
+    keyLight.shadow.bias = -0.0002;
+    scene.add(keyLight);
+
+    const cyanRim = new THREE.DirectionalLight(0x49dfff, 2.3);
+    cyanRim.position.set(-5, 2, 5);
+    scene.add(cyanRim);
+
+    const violetRim = new THREE.DirectionalLight(0xa56cff, 1.2);
+    violetRim.position.set(2, -1, -5);
+    scene.add(violetRim);
+
+    const crystalLight = new THREE.PointLight(0x5be8ff, 7, 3.5, 2);
+    crystalLight.position.set(0, 3.15, 0.55);
+    scene.add(crystalLight);
+
+    // -------------------------------------------------------------------------
+    // Display-only pedestal and floor
+    // -------------------------------------------------------------------------
+
+    const floorMaterial = new THREE.MeshStandardMaterial({
+      color: 0x0b0e1c,
+      roughness: 0.92,
+      metalness: 0.08
+    });
+
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(12, 64),
+      floorMaterial
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -3.32;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const pedestalMaterial = new THREE.MeshStandardMaterial({
+      color: 0x12172a,
+      roughness: 0.72,
+      metalness: 0.28
+    });
+
+    const pedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.85, 2.1, 0.12, 48),
+      pedestalMaterial
+    );
+    pedestal.position.y = -3.29;
+    pedestal.receiveShadow = true;
+    scene.add(pedestal);
+
+    const pedestalRingMaterial = new THREE.MeshStandardMaterial({
+      color: 0x1b89a9,
+      emissive: 0x0b536c,
+      emissiveIntensity: 0.75,
+      roughness: 0.38,
+      metalness: 0.55
+    });
+
+    const pedestalRing = new THREE.Mesh(
+      new THREE.TorusGeometry(1.7, 0.018, 6, 64),
+      pedestalRingMaterial
+    );
+    pedestalRing.rotation.x = Math.PI / 2;
+    pedestalRing.position.y = -3.22;
+    scene.add(pedestalRing);
+
+    // -------------------------------------------------------------------------
+    // Exportable asset root
+    // -------------------------------------------------------------------------
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "ArcaneKey";
+
+    const bowGroup = new THREE.Group();
+    bowGroup.name = "GildedBow";
+    assetRoot.add(bowGroup);
+
+    const shaftGroup = new THREE.Group();
+    shaftGroup.name = "OrnateShaft";
+    assetRoot.add(shaftGroup);
+
+    const magicGroup = new THREE.Group();
+    magicGroup.name = "ArcaneCore";
+    assetRoot.add(magicGroup);
+
+    const sparkGroup = new THREE.Group();
+    sparkGroup.name = "SuspendedMagic";
+    assetRoot.add(sparkGroup);
+
+    // -------------------------------------------------------------------------
+    // Materials
+    // -------------------------------------------------------------------------
+
+    const gold = new THREE.MeshStandardMaterial({
+      name: "AntiqueGold",
+      color: 0xc9962e,
+      metalness: 0.9,
+      roughness: 0.27,
+      flatShading: true
+    });
+
+    const brightGold = new THREE.MeshStandardMaterial({
+      name: "PolishedGold",
+      color: 0xf1c65b,
+      metalness: 0.94,
+      roughness: 0.2,
+      flatShading: true
+    });
+
+    const darkGold = new THREE.MeshStandardMaterial({
+      name: "DarkGold",
+      color: 0x694315,
+      metalness: 0.88,
+      roughness: 0.34,
+      flatShading: true
+    });
+
+    const bronze = new THREE.MeshStandardMaterial({
+      name: "AgedBronze",
+      color: 0x89531f,
+      metalness: 0.82,
+      roughness: 0.39,
+      flatShading: true
+    });
+
+    const steel = new THREE.MeshStandardMaterial({
+      name: "DarkSteel",
+      color: 0x242738,
+      metalness: 0.82,
+      roughness: 0.35,
+      flatShading: true
+    });
+
+    const crystalMaterial = new THREE.MeshStandardMaterial({
+      name: "ArcaneCrystal",
+      color: 0x79efff,
+      emissive: 0x08799c,
+      emissiveIntensity: 1.65,
+      metalness: 0.18,
+      roughness: 0.12,
+      transparent: true,
+      opacity: 0.92,
+      flatShading: true
+    });
+
+    const crystalCoreMaterial = new THREE.MeshStandardMaterial({
+      name: "CrystalCore",
+      color: 0xc7fbff,
+      emissive: 0x49dcff,
+      emissiveIntensity: 2.2,
+      metalness: 0.05,
+      roughness: 0.08,
+      flatShading: true
+    });
+
+    const runeMaterial = new THREE.MeshStandardMaterial({
+      name: "ArcaneRune",
+      color: 0x9cf8ff,
+      emissive: 0x168da8,
+      emissiveIntensity: 1.3,
+      metalness: 0.25,
+      roughness: 0.24,
+      flatShading: true
+    });
+
+    const sparkMaterial = new THREE.MeshStandardMaterial({
+      name: "MagicSpark",
+      color: 0xb9fbff,
+      emissive: 0x31cfff,
+      emissiveIntensity: 1.8,
+      metalness: 0.12,
+      roughness: 0.18,
+      flatShading: true
+    });
+
+    // -------------------------------------------------------------------------
+    // Geometry helpers
+    // -------------------------------------------------------------------------
+
+    const upAxis = new THREE.Vector3(0, 1, 0);
+
+    function addMesh(
+      geometry,
+      material,
+      name,
+      parent = assetRoot,
+      position = null,
+      rotation = null,
+      scale = null
+    ) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      if (position) mesh.position.copy(position);
+      if (rotation) mesh.rotation.set(rotation.x, rotation.y, rotation.z);
+      if (scale) mesh.scale.copy(scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function cylinderBetween(
+      start,
+      end,
+      radius,
+      material,
+      name,
+      parent = assetRoot,
+      radialSegments = 8,
+      endRadius = radius
+    ) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        endRadius,
+        radius,
+        length,
+        radialSegments,
+        1,
+        false
+      );
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.copy(start).add(end).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(upAxis, direction.normalize());
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function radialTip(angle, innerRadius, outerRadius, parent) {
+      const inward = new THREE.Vector3(
+        Math.cos(angle) * innerRadius,
+        Math.sin(angle) * innerRadius,
+        0
+      );
+
+      const outward = new THREE.Vector3(
+        Math.cos(angle) * outerRadius,
+        Math.sin(angle) * outerRadius,
+        0
+      );
+
+      cylinderBetween(
+        inward,
+        outward,
+        0.09,
+        bronze,
+        "RadialProng",
+        parent,
+        6
+      );
+
+      const tip = new THREE.Mesh(
+        new THREE.ConeGeometry(0.12, 0.34, 6),
+        brightGold
+      );
+      tip.name = "OrnateSpike";
+      tip.position.copy(outward).addScaledVector(
+        new THREE.Vector3(Math.cos(angle), Math.sin(angle), 0),
+        0.08
+      );
+      tip.quaternion.setFromUnitVectors(
+        upAxis,
+        new THREE.Vector3(Math.cos(angle), Math.sin(angle), 0).normalize()
+      );
+      tip.castShadow = true;
+      parent.add(tip);
+    }
+
+    // -------------------------------------------------------------------------
+    // Main bow
+    // -------------------------------------------------------------------------
+
+    const bowY = 3.15;
+
+    addMesh(
+      new THREE.TorusGeometry(1.26, 0.15, 6, 48),
+      gold,
+      "OuterGoldBow",
+      bowGroup,
+      new THREE.Vector3(0, bowY, 0)
+    );
+
+    addMesh(
+      new THREE.TorusGeometry(0.9, 0.055, 6, 40),
+      brightGold,
+      "InsetBowRing",
+      bowGroup,
+      new THREE.Vector3(0, bowY, 0.015)
+    );
+
+    addMesh(
+      new THREE.TorusGeometry(1.48, 0.026, 5, 48),
+      darkGold,
+      "RearHalo",
+      bowGroup,
+      new THREE.Vector3(0, bowY, -0.36)
+    );
+
+    addMesh(
+      new THREE.TorusGeometry(1.04, 0.028, 5, 40),
+      bronze,
+      "OuterBronzeRing",
+      bowGroup,
+      new THREE.Vector3(0, bowY, 0.17)
+    );
+
+    // Radial spokes and pointed bronze prongs.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      radialTip(
+        angle,
+        0.78,
+        1.39,
+        bowGroup
+      );
+    }
+
+    // Decorative studs around the outer bow.
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2 + Math.PI / 12;
+      const radius = 1.39;
+
+      addMesh(
+        new THREE.OctahedronGeometry(0.075, 0),
+        brightGold,
+        `BowStud_${i}`,
+        bowGroup,
+        new THREE.Vector3(
+          Math.cos(angle) * radius,
+          bowY + Math.sin(angle) * radius,
+          0.13
+        )
+      );
+    }
+
+    // Rune-like inlays around the inner bow.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
+
+      addMesh(
+        new THREE.BoxGeometry(0.035, 0.18, 0.035),
+        runeMaterial,
+        `ArcaneRune_${i}`,
+        bowGroup,
+        new THREE.Vector3(
+          Math.cos(angle) * 0.92,
+          bowY + Math.sin(angle) * 0.92,
+          0.225
+        ),
+        new THREE.Euler(0, 0, angle + Math.PI / 2)
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Central medallion, crystal, and claws
+    // -------------------------------------------------------------------------
+
+    const medallion = addMesh(
+      new THREE.CylinderGeometry(0.43, 0.43, 0.34, 12),
+      brightGold,
+      "CentralMedallion",
+      magicGroup,
+      new THREE.Vector3(0, bowY, 0),
+      new THREE.Euler(Math.PI / 2, 0, 0)
+    );
+
+    addMesh(
+      new THREE.TorusGeometry(0.405, 0.045, 6, 32),
+      darkGold,
+      "MedallionRim",
+      magicGroup,
+      new THREE.Vector3(0, bowY, 0.205)
+    );
+
+    addMesh(
+      new THREE.OctahedronGeometry(0.38, 0),
+      crystalMaterial,
+      "FacetedArcaneCrystal",
+      magicGroup,
+      new THREE.Vector3(0, bowY, 0.25),
+      null,
+      new THREE.Vector3(0.9, 1.05, 0.62)
+    );
+
+    addMesh(
+      new THREE.OctahedronGeometry(0.21, 0),
+      crystalCoreMaterial,
+      "InnerCrystalCore",
+      magicGroup,
+      new THREE.Vector3(0, bowY, 0.30),
+      null,
+      new THREE.Vector3(0.86, 1.08, 0.55)
+    );
+
+    // Four metal claws hold the crystal in place.
+    for (let i = 0; i < 4; i++) {
+      const angle = Math.PI / 4 + (i / 4) * Math.PI * 2;
+      const inner = new THREE.Vector3(
+        Math.cos(angle) * 0.34,
+        bowY + Math.sin(angle) * 0.34,
+        0.22
+      );
+      const outer = new THREE.Vector3(
+        Math.cos(angle) * 0.49,
+        bowY + Math.sin(angle) * 0.49,
+        0.28
+      );
+
+      cylinderBetween(
+        inner,
+        outer,
+        0.045,
+        brightGold,
+        `CrystalClaw_${i}`,
+        magicGroup,
+        6
+      );
+    }
+
+    // Magic rings surrounding the core.
+    addMesh(
+      new THREE.TorusGeometry(0.53, 0.018, 5, 36),
+      runeMaterial,
+      "OuterArcaneRing",
+      magicGroup,
+      new THREE.Vector3(0, bowY, 0.39),
+      new THREE.Euler(0.08, 0.12, 0.08)
+    );
+
+    addMesh(
+      new THREE.TorusGeometry(0.64, 0.012, 5, 32),
+      runeMaterial,
+      "InnerArcaneRing",
+      magicGroup,
+      new THREE.Vector3(0, bowY, 0.39),
+      new THREE.Euler(-0.25, 0.5, -0.18)
+    );
+
+    // -------------------------------------------------------------------------
+    // Shaft
+    // -------------------------------------------------------------------------
+
+    addMesh(
+      new THREE.CylinderGeometry(0.19, 0.22, 3.25, 8),
+      gold,
+      "MainShaft",
+      shaftGroup,
+      new THREE.Vector3(0, 0, 0)
+    );
+
+    addMesh(
+      new THREE.CylinderGeometry(0.33, 0.33, 0.23, 8),
+      darkGold,
+      "UpperShaftCollar",
+      shaftGroup,
+      new THREE.Vector3(0, 1.54, 0)
+    );
+
+    addMesh(
+      new THREE.CylinderGeometry(0.3, 0.3, 0.26, 8),
+      bronze,
+      "LowerShaftCollar",
+      shaftGroup,
+      new THREE.Vector3(0, -1.53, 0)
+    );
+
+    addMesh(
+      new THREE.CylinderGeometry(0.22, 0.25, 0.22, 8),
+      brightGold,
+      "UpperShaftCap",
+      shaftGroup,
+      new THREE.Vector3(0, 1.68, 0)
+    );
+
+    addMesh(
+      new THREE.CylinderGeometry(0.27, 0.27, 0.22, 8),
+      darkGold,
+      "LowerShaftCap",
+      shaftGroup,
+      new THREE.Vector3(0, -1.65, 0)
+    );
+
+    // Shaft bands.
+    for (const y of [0.62, -0.62]) {
+      addMesh(
+        new THREE.TorusGeometry(0.215, 0.028, 5, 20),
+        brightGold,
+        `ShaftBand_${y}`,
+        shaftGroup,
+        new THREE.Vector3(0, y, 0),
+        new THREE.Euler(Math.PI / 2, 0, 0)
+      );
+    }
+
+    // Tapered point.
+    const tip = addMesh(
+      new THREE.ConeGeometry(0.28, 0.95, 6),
+      brightGold,
+      "TaperedKeyTip",
+      shaftGroup,
+      new THREE.Vector3(0, -2.22, 0),
+      new THREE.Euler(0, 0, Math.PI)
+    );
+
+    // -------------------------------------------------------------------------
+    // Classic pointed key bit
+    // -------------------------------------------------------------------------
+
+    const bitShape = new THREE.Shape();
+    bitShape.moveTo(-0.32, 0);
+    bitShape.lineTo(0.32, 0);
+    bitShape.lineTo(0.32, -2.25);
+    bitShape.lineTo(0, -2.95);
+    bitShape.lineTo(-0.32, -2.25);
+    bitShape.closePath();
+
+    const bitGeometry = new THREE.ExtrudeGeometry(bitShape, {
+      depth: 0.22,
+      bevelEnabled: true,
+      bevelSegments: 1,
+      steps: 1,
+      bevelSize: 0.04,
+      bevelThickness: 0.04
+    });
+    bitGeometry.translate(0, 0, -0.11);
+
+    addMesh(
+      bitGeometry,
+      gold,
+      "PointedKeyBit",
+      shaftGroup,
+      new THREE.Vector3(0, -1.72, 0)
+    );
+
+    // Dark decorative inset on the front of the bit.
+    const bitInsetShape = new THREE.Shape();
+    bitInsetShape.moveTo(-0.19, 0);
+    bitInsetShape.lineTo(0.19, 0);
+    bitInsetShape.lineTo(0.19, -1.72);
+    bitInsetShape.lineTo(0, -2.53);
+    bitInsetShape.lineTo(-0.19, -1.72);
+    bitInsetShape.closePath();
+
+    const bitInsetGeometry = new THREE.ExtrudeGeometry(bitInsetShape, {
+      depth: 0.025,
+      bevelEnabled: true,
+      bevelSegments: 1,
+      steps: 1,
+      bevelSize: 0.012,
+      bevelThickness: 0.012
+    });
+    bitInsetGeometry.translate(0, 0, 0.135);
+
+    addMesh(
+      bitInsetGeometry,
+      steel,
+      "KeyBitInset",
+      shaftGroup,
+      new THREE.Vector3(0, -1.72, 0)
+    );
+
+    // Small rivets on the shaft.
+    for (const y of [0.98, -0.98]) {
+      addMesh(
+        new THREE.OctahedronGeometry(0.07, 0),
+        brightGold,
+        `ShaftRivet_${y}`,
+        shaftGroup,
+        new THREE.Vector3(0, y, 0.225)
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Suspended magical sparks
+    // -------------------------------------------------------------------------
+
+    const sparkPositions = [
+      [-1.58, 3.62, 0.30, 0.12],
+      [-1.38, 2.72, 0.42, 0.085],
+      [1.55, 3.52, 0.28, 0.105],
+      [1.38, 2.78, 0.40, 0.075],
+      [-1.72, 2.20, 0.26, 0.065],
+      [1.72, 2.18, 0.28, 0.065]
+    ];
+
+    sparkPositions.forEach((values, index) => {
+      const [x, y, z, size] = values;
+
+      addMesh(
+        new THREE.OctahedronGeometry(size, 0),
+        sparkMaterial,
+        `MagicSpark_${index}`,
+        sparkGroup,
+        new THREE.Vector3(x, y, z),
+        new THREE.Euler(index * 0.47, index * 0.23, index * 0.71),
+        new THREE.Vector3(0.62, 1.45, 0.62)
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB…";
+
+      assetRoot.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "arcane-key.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          exportButton.disabled = false;
+          status.textContent = "arcane-key.glb downloaded";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed — see console";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          truncateDrawRange: true
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render
+    // -------------------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

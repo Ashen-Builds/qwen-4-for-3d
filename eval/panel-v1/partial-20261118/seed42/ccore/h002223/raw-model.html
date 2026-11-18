@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Spacecraft Wheel</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #07111f;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .info {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      max-width: 340px;
+      padding: 16px 18px;
+      border: 1px solid rgba(139, 214, 255, 0.2);
+      border-radius: 14px;
+      color: #dceeff;
+      background: rgba(7, 17, 31, 0.72);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .info h1 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .info p {
+      margin: 0;
+      color: #8ea6bc;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .export-panel {
+      position: fixed;
+      top: 22px;
+      right: 22px;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 18px;
+      color: #102033;
+      background: linear-gradient(135deg, #67e8f9, #36bcd4);
+      box-shadow: 0 8px 20px rgba(30, 186, 220, 0.25);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #status {
+      min-height: 16px;
+      color: #8ea6bc;
+      font-size: 11px;
+      text-shadow: 0 1px 4px #000;
+    }
+
+    @media (max-width: 620px) {
+      .info {
+        top: 12px;
+        left: 12px;
+        max-width: calc(100vw - 24px);
+      }
+
+      .export-panel {
+        top: auto;
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="viewport"></div>
+
+  <div class="info">
+    <h1>Orbital Relay Wheel</h1>
+    <p>
+      Static low-poly asset with a reinforced orbital ring, eight solar panels,
+      central communications hub, antenna mast, and utility controls.
+    </p>
+  </div>
+
+  <div class="export-panel">
+    <button id="exportButton">Export GLB</button>
+    <div id="status"></div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    // ------------------------------------------------------------
+    // Renderer, scene, camera, and controls
+    // ------------------------------------------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x07111f);
+    scene.fog = new THREE.Fog(0x07111f, 13, 30);
+
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(5.2, 3.0, 9.2);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enablePan = false;
+    controls.minDistance = 5.5;
+    controls.maxDistance = 15;
+    controls.target.set(0, 0.45, 0);
+    controls.update();
+
+    // ------------------------------------------------------------
+    // Lighting
+    // ------------------------------------------------------------
+
+    scene.add(new THREE.HemisphereLight(0x9edaff, 0x101522, 1.8));
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    keyLight.position.set(5, 7, 8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -6;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xff8a24, 1.8);
+    rimLight.position.set(-6, 2, 4);
+    scene.add(rimLight);
+
+    const cyanLight = new THREE.PointLight(0x21cbd8, 9, 12, 2);
+    cyanLight.position.set(0, 2.5, 4);
+    scene.add(cyanLight);
+
+    // ------------------------------------------------------------
+    // Asset root. Only this group is exported.
+    // ------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "Orbital_Relay_Wheel";
+    scene.add(asset);
+
+    const materials = {
+      white: new THREE.MeshStandardMaterial({
+        color: 0xdce8ef,
+        roughness: 0.48,
+        metalness: 0.42,
+        flatShading: true
+      }),
+      lightGray: new THREE.MeshStandardMaterial({
+        color: 0x8da4b6,
+        roughness: 0.5,
+        metalness: 0.55,
+        flatShading: true
+      }),
+      dark: new THREE.MeshStandardMaterial({
+        color: 0x172637,
+        roughness: 0.42,
+        metalness: 0.68,
+        flatShading: true
+      }),
+      black: new THREE.MeshStandardMaterial({
+        color: 0x080e16,
+        roughness: 0.34,
+        metalness: 0.72,
+        flatShading: true
+      }),
+      orange: new THREE.MeshStandardMaterial({
+        color: 0xff8626,
+        roughness: 0.42,
+        metalness: 0.38,
+        flatShading: true
+      }),
+      blue: new THREE.MeshStandardMaterial({
+        color: 0x102e62,
+        roughness: 0.28,
+        metalness: 0.62,
+        flatShading: true
+      }),
+      cyan: new THREE.MeshStandardMaterial({
+        color: 0x33d4e6,
+        emissive: 0x087486,
+        emissiveIntensity: 0.75,
+        roughness: 0.25,
+        metalness: 0.55,
+        flatShading: true
+      }),
+      red: new THREE.MeshStandardMaterial({
+        color: 0xff3d3d,
+        emissive: 0x9a0808,
+        emissiveIntensity: 0.8,
+        roughness: 0.3,
+        metalness: 0.25,
+        flatShading: true
+      })
+    };
+
+    function addMesh(geometry, material, parent = asset, name = "") {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addRadialBox(
+      parent,
+      name,
+      angle,
+      radius,
+      length,
+      thickness,
+      depth,
+      material
+    ) {
+      const mesh = addMesh(
+        new THREE.BoxGeometry(length, thickness, depth),
+        material,
+        parent,
+        name
+      );
+
+      mesh.position.set(
+        Math.cos(angle) * radius,
+        Math.sin(angle) * radius,
+        0
+      );
+      mesh.rotation.z = angle;
+
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Main structural ring
+    // ------------------------------------------------------------
+
+    const mainRing = addMesh(
+      new THREE.TorusGeometry(2.35, 0.2, 8, 32),
+      materials.white,
+      asset,
+      "Main_Orbital_Ring"
+    );
+    mainRing.castShadow = true;
+
+    const ringAccent = addMesh(
+      new THREE.TorusGeometry(2.35, 0.065, 6, 32),
+      materials.orange,
+      asset,
+      "Orange_Ring_Accent"
+    );
+    ringAccent.position.z = 0.205;
+
+    const innerRing = addMesh(
+      new THREE.TorusGeometry(1.82, 0.075, 6, 28),
+      materials.lightGray,
+      asset,
+      "Inner_Reinforcement_Ring"
+    );
+    innerRing.position.z = 0.03;
+
+    // ------------------------------------------------------------
+    // Eight radial spokes
+    // ------------------------------------------------------------
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+
+      addRadialBox(
+        asset,
+        `Spoke_${i + 1}`,
+        angle,
+        1.2,
+        2.05,
+        0.15,
+        0.2,
+        materials.white
+      );
+
+      const stripe = addRadialBox(
+        asset,
+        `Spoke_Inset_${i + 1}`,
+        angle,
+        1.25,
+        1.55,
+        0.06,
+        0.035,
+        materials.dark
+      );
+      stripe.position.z = 0.115;
+
+      addRadialBox(
+        asset,
+        `Hub_Marker_${i + 1}`,
+        angle,
+        0.55,
+        0.26,
+        0.17,
+        0.24,
+        i % 2 === 0 ? materials.orange : materials.lightGray
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Twelve mechanical clamps around the ring
+    // ------------------------------------------------------------
+
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const clamp = new THREE.Group();
+      clamp.name = `Ring_Clamp_${i + 1}`;
+      clamp.position.set(
+        Math.cos(angle) * 2.35,
+        Math.sin(angle) * 2.35,
+        0
+      );
+      clamp.rotation.z = angle;
+      asset.add(clamp);
+
+      const body = addMesh(
+        new THREE.BoxGeometry(0.46, 0.18, 0.34),
+        i % 3 === 0 ? materials.orange : materials.lightGray,
+        clamp,
+        `Clamp_Body_${i + 1}`
+      );
+      body.castShadow = true;
+
+      const cap = addMesh(
+        new THREE.BoxGeometry(0.18, 0.2, 0.38),
+        materials.dark,
+        clamp,
+        `Clamp_Cap_${i + 1}`
+      );
+      cap.position.x = 0.25;
+    }
+
+    // ------------------------------------------------------------
+    // Central communications hub
+    // ------------------------------------------------------------
+
+    const hub = addMesh(
+      new THREE.CylinderGeometry(0.72, 0.72, 0.58, 12),
+      materials.white,
+      asset,
+      "Central_Communications_Hub"
+    );
+    hub.rotation.x = Math.PI / 2;
+
+    const hubBand = addMesh(
+      new THREE.TorusGeometry(0.62, 0.07, 6, 20),
+      materials.orange,
+      asset,
+      "Hub_Safety_Band"
+    );
+    hubBand.position.z = 0.34;
+
+    const frontCap = addMesh(
+      new THREE.CylinderGeometry(0.52, 0.52, 0.14, 12),
+      materials.orange,
+      asset,
+      "Front_Hub_Cap"
+    );
+    frontCap.rotation.x = Math.PI / 2;
+    frontCap.position.z = 0.35;
+
+    const centerDial = addMesh(
+      new THREE.CylinderGeometry(0.26, 0.26, 0.17, 10),
+      materials.black,
+      asset,
+      "Central_Control_Dial"
+    );
+    centerDial.rotation.x = Math.PI / 2;
+    centerDial.position.z = 0.46;
+
+    const dialCenter = addMesh(
+      new THREE.CylinderGeometry(0.13, 0.13, 0.19, 8),
+      materials.cyan,
+      asset,
+      "Dial_Indicator"
+    );
+    dialCenter.rotation.x = Math.PI / 2;
+    dialCenter.position.z = 0.49;
+
+    const rearCap = addMesh(
+      new THREE.CylinderGeometry(0.56, 0.56, 0.14, 12),
+      materials.dark,
+      asset,
+      "Rear_Hub_Cap"
+    );
+    rearCap.rotation.x = Math.PI / 2;
+    rearCap.position.z = -0.35;
+
+    // Hub bolts
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const bolt = addMesh(
+        new THREE.CylinderGeometry(0.055, 0.055, 0.08, 6),
+        materials.black,
+        asset,
+        `Hub_Bolt_${i + 1}`
+      );
+      bolt.rotation.x = Math.PI / 2;
+      bolt.position.set(
+        Math.cos(angle) * 0.54,
+        Math.sin(angle) * 0.54,
+        0.43
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Four solar panels
+    // ------------------------------------------------------------
+
+    function createSolarPanel(angle, index) {
+      const panelGroup = new THREE.Group();
+      panelGroup.name = `Solar_Panel_${index + 1}`;
+      panelGroup.position.set(
+        Math.cos(angle) * 2.52,
+        Math.sin(angle) * 2.52,
+        0
+      );
+      panelGroup.rotation.z = angle;
+      asset.add(panelGroup);
+
+      const frame = addMesh(
+        new THREE.BoxGeometry(0.98, 0.66, 0.1),
+        materials.dark,
+        panelGroup,
+        `Panel_Frame_${index + 1}`
+      );
+      frame.castShadow = true;
+
+      const cells = addMesh(
+        new THREE.BoxGeometry(0.88, 0.56, 0.12),
+        materials.blue,
+        panelGroup,
+        `Panel_Cells_${index + 1}`
+      );
+      cells.position.z = 0.065;
+
+      for (let grid = 0; grid < 3; grid++) {
+        const vertical = addMesh(
+          new THREE.BoxGeometry(0.025, 0.48, 0.025),
+          materials.cyan,
+          panelGroup,
+          `Panel_Grid_${index + 1}_${grid + 1}`
+        );
+        vertical.position.set(
+          (grid - 1) * 0.28,
+          0,
+          0.14
+        );
+      }
+
+      for (let row = 0; row < 2; row++) {
+        const horizontal = addMesh(
+          new THREE.BoxGeometry(0.8, 0.025, 0.025),
+          materials.cyan,
+          panelGroup,
+          `Panel_Grid_Row_${index + 1}_${row + 1}`
+        );
+        horizontal.position.set(0, (row - 0.5) * 0.28, 0.14);
+      }
+    }
+
+    [Math.PI / 4, (3 * Math.PI) / 4, (5 * Math.PI) / 4, (7 * Math.PI) / 4]
+      .forEach((angle, index) => createSolarPanel(angle, index));
+
+    // ------------------------------------------------------------
+    // Antenna mast and beacon
+    // ------------------------------------------------------------
+
+    const mastBase = addMesh(
+      new THREE.CylinderGeometry(0.13, 0.19, 0.26, 8),
+      materials.orange,
+      asset,
+      "Antenna_Mast_Base"
+    );
+    mastBase.position.set(0, 0.86, 0);
+
+    const mast = addMesh(
+      new THREE.CylinderGeometry(0.045, 0.065, 2.25, 6),
+      materials.white,
+      asset,
+      "Antenna_Mast"
+    );
+    mast.position.set(0, 2.02, 0);
+
+    const mastCrossbar = addRadialBox(
+      asset,
+      "Antenna_Crossbar",
+      0,
+      2.78,
+      0.58,
+      0.055,
+      0.065,
+      materials.dark
+    );
+    mastCrossbar.castShadow = true;
+
+    const beacon = addMesh(
+      new THREE.SphereGeometry(0.11, 8, 6),
+      materials.red,
+      asset,
+      "Mast_Beacon"
+    );
+    beacon.position.set(0, 3.18, 0);
+
+    // ------------------------------------------------------------
+    // Lower utility control module
+    // ------------------------------------------------------------
+
+    const controlGroup = new THREE.Group();
+    controlGroup.name = "Utility_Control_Module";
+    controlGroup.position.set(0, -2.52, 0);
+    controlGroup.rotation.z = -Math.PI / 2;
+    asset.add(controlGroup);
+
+    const controlBody = addMesh(
+      new THREE.BoxGeometry(0.72, 0.38, 0.5),
+      materials.white,
+      controlGroup,
+      "Control_Module_Body"
+    );
+    controlBody.castShadow = true;
+
+    const controlScreen = addMesh(
+      new THREE.BoxGeometry(0.48, 0.19, 0.035),
+      materials.blue,
+      controlGroup,
+      "Control_Module_Screen"
+    );
+    controlScreen.position.set(-0.08, 0, 0.27);
+
+    const controlButton = addMesh(
+      new THREE.CylinderGeometry(0.075, 0.075, 0.06, 8),
+      materials.orange,
+      controlGroup,
+      "Control_Module_Button"
+    );
+    controlButton.rotation.x = Math.PI / 2;
+    controlButton.position.set(0.22, 0, 0.29);
+
+    // Small side stabilizer details
+    for (let i = 0; i < 6; i++) {
+      const angle = Math.PI + (i / 6) * Math.PI * 2;
+      const fin = addRadialBox(
+        asset,
+        `Stabilizer_Fin_${i + 1}`,
+        angle,
+        2.28,
+        0.48,
+        0.12,
+        0.28,
+        materials.dark
+      );
+      fin.castShadow = true;
+    }
+
+    // ------------------------------------------------------------
+    // Decorative scene-only star field. It is not exported.
+    // ------------------------------------------------------------
+
+    const starPositions = [];
+    let seed = 42;
+    const random = () => {
+      seed = (seed * 16807) % 2147483647;
+      return (seed - 1) / 2147483646;
+    };
+
+    for (let i = 0; i < 90; i++) {
+      const radius = 13 + random() * 17;
+      const theta = random() * Math.PI * 2;
+      const phi = Math.acos(2 * random() - 1);
+
+      starPositions.push(
+        radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+
+    const starGeometry = new THREE.BufferGeometry();
+    starGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(starPositions, 3)
+    );
+
+    const stars = new THREE.Points(
+      starGeometry,
+      new THREE.PointsMaterial({
+        color: 0x9bdfff,
+        size: 0.035,
+        transparent: true,
+        opacity: 0.55,
+        depthWrite: false
+      })
+    );
+    stars.name = "Scene_Stars";
+    scene.add(stars);
+
+    // ------------------------------------------------------------
+    // GLB export
+    // ------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting...";
+      status.textContent = "Preparing geometry...";
+
+      asset.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "orbital-relay-wheel.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          status.textContent = "GLB downloaded successfully";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          status.textContent = "Export failed — see console";
+        },
+        {
+          binary: true
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Resize and render loop
+    // ------------------------------------------------------------
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

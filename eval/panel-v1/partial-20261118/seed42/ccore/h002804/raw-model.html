@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Wooden Egg House</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #dce5e1;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      background: rgba(250, 252, 249, 0.84);
+      box-shadow: 0 10px 32px rgba(45, 65, 55, 0.13);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    #title-panel {
+      top: 20px;
+      left: 20px;
+      padding: 14px 17px;
+      border-radius: 14px;
+      pointer-events: none;
+    }
+
+    #title-panel h1 {
+      margin: 0;
+      color: #403a31;
+      font-size: 18px;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+    }
+
+    #title-panel p {
+      margin: 5px 0 0;
+      color: #756d62;
+      font-size: 12px;
+    }
+
+    #export-panel {
+      top: 20px;
+      right: 20px;
+      padding: 10px;
+      border-radius: 14px;
+    }
+
+    #export-button {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-width: 150px;
+      padding: 11px 15px;
+      border: 0;
+      border-radius: 9px;
+      color: #fff;
+      background: #9b3f32;
+      box-shadow: 0 5px 14px rgba(127, 48, 35, 0.25);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition:
+        transform 120ms ease,
+        background 120ms ease,
+        box-shadow 120ms ease;
+    }
+
+    #export-button:hover {
+      background: #ad4938;
+      box-shadow: 0 7px 18px rgba(127, 48, 35, 0.3);
+      transform: translateY(-1px);
+    }
+
+    #export-button:active {
+      transform: translateY(0);
+    }
+
+    #export-button:disabled {
+      cursor: wait;
+      opacity: 0.7;
+      transform: none;
+    }
+
+    #export-button svg {
+      width: 17px;
+      height: 17px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    #status {
+      min-height: 16px;
+      margin: 8px 4px 1px;
+      color: #6b6258;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    #hint {
+      position: fixed;
+      z-index: 10;
+      bottom: 18px;
+      left: 50%;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 999px;
+      color: #6d665d;
+      background: rgba(250, 252, 249, 0.72);
+      font-size: 11px;
+      pointer-events: none;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+
+    @media (max-width: 600px) {
+      #title-panel {
+        top: 12px;
+        left: 12px;
+        padding: 11px 13px;
+      }
+
+      #title-panel h1 {
+        font-size: 15px;
+      }
+
+      #title-panel p {
+        display: none;
+      }
+
+      #export-panel {
+        top: 12px;
+        right: 12px;
+      }
+
+      #export-button {
+        min-width: 132px;
+        padding: 10px 12px;
+      }
+
+      #export-button span {
+        display: none;
+      }
+
+      #hint {
+        bottom: 10px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section id="title-panel" class="panel">
+    <h1>Low-Poly Wooden Egg House</h1>
+    <p>Procedural game asset · static model</p>
+  </section>
+
+  <section id="export-panel" class="panel">
+    <button id="export-button" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3v12"></path>
+        <path d="m7 10 5 5 5-5"></path>
+        <path d="M5 21h14"></path>
+      </svg>
+      <span>Export GLB</span>
+    </button>
+    <div id="status">Ready to export</div>
+  </section>
+
+  <div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("export-button");
+    const status = document.getElementById("status");
+
+    // ------------------------------------------------------------
+    // Renderer and scene
+    // ------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdce5e1);
+    scene.fog = new THREE.Fog(0xdce5e1, 11, 22);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(5.3, 4.25, 6.2);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.65, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.075;
+    controls.minDistance = 4;
+    controls.maxDistance = 11;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // ------------------------------------------------------------
+    // Lighting
+    // ------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(0xf7fbff, 0x76604c, 2.15);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xfff1d5, 3.25);
+    keyLight.position.set(4.5, 7.5, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 18;
+    keyLight.shadow.bias = -0.00035;
+    keyLight.shadow.normalBias = 0.025;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xc8dded, 1.05);
+    fillLight.position.set(-5, 4, -4);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffd3b0, 1.15);
+    rimLight.position.set(1, 4, -6);
+    scene.add(rimLight);
+
+    // Presentation ground is intentionally not included in the GLB.
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(200, 200),
+      new THREE.MeshStandardMaterial({
+        color: 0xd4ddd9,
+        roughness: 1,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // ------------------------------------------------------------
+    // Asset root
+    // ------------------------------------------------------------
+
+    const model = new THREE.Group();
+    model.name = "LowPoly_Wooden_Egg_House";
+    scene.add(model);
+
+    const materials = {
+      woodLight: new THREE.MeshStandardMaterial({
+        name: "Wood_Light",
+        color: 0xc98d50,
+        roughness: 0.82,
+        metalness: 0
+      }),
+      wood: new THREE.MeshStandardMaterial({
+        name: "Wood",
+        color: 0xa96837,
+        roughness: 0.88,
+        metalness: 0
+      }),
+      woodDark: new THREE.MeshStandardMaterial({
+        name: "Wood_Dark",
+        color: 0x704329,
+        roughness: 0.9,
+        metalness: 0
+      }),
+      roof: new THREE.MeshStandardMaterial({
+        name: "Roof_Red_Wood",
+        color: 0xb83e32,
+        roughness: 0.76,
+        metalness: 0
+      }),
+      roofDark: new THREE.MeshStandardMaterial({
+        name: "Roof_Dark_Red",
+        color: 0x862b27,
+        roughness: 0.82,
+        metalness: 0
+      }),
+      interior: new THREE.MeshStandardMaterial({
+        name: "Interior_Dark_Wood",
+        color: 0x493025,
+        roughness: 1,
+        metalness: 0
+      }),
+      tray: new THREE.MeshStandardMaterial({
+        name: "Egg_Tray",
+        color: 0xe7d3a6,
+        roughness: 0.92,
+        metalness: 0
+      }),
+      egg: new THREE.MeshStandardMaterial({
+        name: "Egg_Cream",
+        color: 0xf3e2bd,
+        roughness: 0.7,
+        metalness: 0
+      }),
+      eggWarm: new THREE.MeshStandardMaterial({
+        name: "Egg_Warm",
+        color: 0xe9c99d,
+        roughness: 0.74,
+        metalness: 0
+      }),
+      metal: new THREE.MeshStandardMaterial({
+        name: "Dark_Metal",
+        color: 0x454843,
+        roughness: 0.48,
+        metalness: 0.72
+      })
+    };
+
+    // ------------------------------------------------------------
+    // Geometry helpers
+    // ------------------------------------------------------------
+
+    function addBox(
+      name,
+      size,
+      position,
+      material,
+      parent = model,
+      radius = 0.025
+    ) {
+      const [width, height, depth] = size;
+      const safeRadius = Math.min(radius, width * 0.24, height * 0.24, depth * 0.24);
+      const geometry = new RoundedBoxGeometry(
+        width,
+        height,
+        depth,
+        1,
+        safeRadius
+      );
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.set(...position);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBeam(name, start, end, thickness, material, parent = model) {
+      const from = new THREE.Vector3(...start);
+      const to = new THREE.Vector3(...end);
+      const direction = to.clone().sub(from);
+      const length = direction.length();
+
+      const mesh = addBox(
+        name,
+        [thickness, length, thickness],
+        from.clone().add(to).multiplyScalar(0.5).toArray(),
+        material,
+        parent,
+        0.018
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    function addRing(name, position, material, parent = model) {
+      const geometry = new THREE.TorusGeometry(0.072, 0.017, 5, 12);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.set(...position);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addEgg(name, position, scale, material) {
+      const geometry = new THREE.SphereGeometry(0.118, 10, 8);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.set(...position);
+      mesh.scale.set(scale, scale * 1.28, scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      model.add(mesh);
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Lower shelf and support frame
+    // ------------------------------------------------------------
+
+    addBox(
+      "Lower_Shelf_Board",
+      [3.30, 0.16, 1.52],
+      [0, 1.16, 0],
+      materials.woodLight,
+      model,
+      0.035
+    );
+
+    addBox(
+      "Lower_Shelf_Front_Trim",
+      [3.32, 0.11, 0.10],
+      [0, 1.24, 0.72],
+      materials.wood,
+      model,
+      0.018
+    );
+
+    addBox(
+      "Lower_Shelf_Back_Trim",
+      [3.32, 0.11, 0.10],
+      [0, 1.24, -0.72],
+      materials.wood,
+      model,
+      0.018
+    );
+
+    for (const x of [-1.34, 1.34]) {
+      for (const z of [-0.61, 0.61]) {
+        const foot = [x + (x > 0 ? -0.12 : 0.12), 0.07, z + (z > 0 ? -0.08 : 0.08)];
+        const top = [x, 1.25, z];
+
+        addBeam(
+          `Support_Leg_${x}_${z}`,
+          foot,
+          top,
+          0.23,
+          materials.woodDark
+        );
+
+        addBox(
+          `Foot_Pad_${x}_${z}`,
+          [0.31, 0.08, 0.31],
+          foot,
+          materials.metal,
+          model,
+          0.025
+        );
+      }
+    }
+
+    for (const z of [-0.61, 0.61]) {
+      addBox(
+        `Lower_Cross_Rail_${z}`,
+        [2.78, 0.13, 0.13],
+        [0, 1.03, z],
+        materials.woodDark,
+        model,
+        0.018
+      );
+    }
+
+    for (const x of [-1.25, 1.25]) {
+      for (const z of [-0.60, 0.60]) {
+        addBeam(
+          `Diagonal_Shelf_Brace_${x}_${z}`,
+          [x + Math.sign(x) * 0.28, 0.27, z + 0.03],
+          [x * 0.68, 1.10, z],
+          0.105,
+          materials.wood
+        );
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Main wooden body
+    // ------------------------------------------------------------
+
+    addBox(
+      "Cabin_Bottom_Rail",
+      [3.18, 0.18, 1.48],
+      [0, 1.37, 0],
+      materials.woodDark,
+      model,
+      0.025
+    );
+
+    addBox(
+      "Left_Side_Wall",
+      [0.15, 1.43, 1.42],
+      [-1.48, 2.12, 0],
+      materials.woodLight,
+      model,
+      0.028
+    );
+
+    addBox(
+      "Right_Side_Wall",
+      [0.15, 1.43, 1.42],
+      [1.48, 2.12, 0],
+      materials.woodLight,
+      model,
+      0.028
+    );
+
+    addBox(
+      "Back_Wall",
+      [2.91, 1.43, 0.12],
+      [0, 2.12, -0.68],
+      materials.wood,
+      model,
+      0.018
+    );
+
+    addBox(
+      "Top_Cabin_Rail",
+      [3.18, 0.18, 1.48],
+      [0, 2.86, 0],
+      materials.woodDark,
+      model,
+      0.025
+    );
+
+    // Vertical wall battens give the sides a crafted wooden construction.
+    for (const x of [-1.575, 1.575]) {
+      for (const z of [-0.48, -0.16, 0.16, 0.48]) {
+        addBox(
+          `Side_Batten_${x}_${z}`,
+          [0.055, 1.13, 0.09],
+          [x, 2.12, z],
+          materials.wood,
+          model,
+          0.012
+        );
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Door frame
+    // ------------------------------------------------------------
+
+    addBox(
+      "Door_Frame_Top",
+      [3.08, 0.15, 0.15],
+      [0, 2.76, 0.79],
+      materials.woodDark,
+      model,
+      0.022
+    );
+
+    addBox(
+      "Door_Frame_Bottom",
+      [3.08, 0.15, 0.15],
+      [0, 1.48, 0.79],
+      materials.woodDark,
+      model,
+      0.022
+    );
+
+    for (const x of [-1.47, 1.47]) {
+      addBox(
+        `Door_Frame_Stile_${x}`,
+        [0.17, 1.35, 0.15],
+        [x, 2.12, 0.79],
+        materials.woodDark,
+        model,
+        0.022
+      );
+    }
+
+    const doorCenters = [-0.94, 0, 0.94];
+
+    for (let bay = 0; bay < doorCenters.length; bay++) {
+      const centerX = doorCenters[bay];
+
+      addBox(
+        `Door_Panel_${bay + 1}`,
+        [0.88, 1.16, 0.085],
+        [centerX, 2.12, 0.755],
+        materials.woodLight,
+        model,
+        0.025
+      );
+
+      // Dark recessed interior visible through the small gaps between doors.
+      addBox(
+        `Door_Interior_Shadow_${bay + 1}`,
+        [2.86, 1.25, 0.035],
+        [0, 2.11, 0.645],
+        materials.interior,
+        model,
+        0.005
+      );
+
+      // Two low-poly hinges on each door.
+      for (const y of [1.72, 2.50]) {
+        addBox(
+          `Door_Hinge_${bay + 1}_${y}`,
+          [0.065, 0.13, 0.045],
+          [centerX - 0.425, y, 0.828],
+          materials.metal,
+          model,
+          0.012
+        );
+      }
+
+      // Small metal pull handle.
+      addRing(
+        `Door_Handle_${bay + 1}`,
+        [centerX + 0.31, 2.08, 0.845],
+        materials.metal
+      );
+
+      // Three short ventilation slots.
+      for (let slot = 0; slot < 3; slot++) {
+        addBox(
+          `Door_Vent_${bay + 1}_${slot + 1}`,
+          [0.43, 0.025, 0.025],
+          [centerX, 2.48 + slot * 0.065, 0.807],
+          materials.interior,
+          model,
+          0.006
+        );
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Egg trays and eggs
+    // ------------------------------------------------------------
+
+    const eggMaterialA = materials.egg;
+    const eggMaterialB = materials.eggWarm;
+
+    for (let bay = 0; bay < doorCenters.length; bay++) {
+      const centerX = doorCenters[bay];
+
+      addBox(
+        `Egg_Tray_Base_${bay + 1}`,
+        [1.43, 0.07, 0.91],
+        [centerX, 1.50, 0.03],
+        materials.tray,
+        model,
+        0.018
+      );
+
+      addBox(
+        `Egg_Tray_Front_Lip_${bay + 1}`,
+        [1.43, 0.10, 0.045],
+        [centerX, 1.565, 0.465],
+        materials.tray,
+        model,
+        0.012
+      );
+
+      addBox(
+        `Egg_Tray_Back_Lip_${bay + 1}`,
+        [1.43, 0.10, 0.045],
+        [centerX, 1.565, -0.445],
+        materials.tray,
+        model,
+        0.012
+      );
+
+      for (const x of [-0.655, 0.655]) {
+        addBox(
+          `Egg_Tray_Side_Lip_${bay + 1}_${x}`,
+          [0.045, 0.10, 0.87],
+          [centerX + x, 1.565, 0.01],
+          materials.tray,
+          model,
+          0.012
+        );
+      }
+
+      const eggPositions = [
+        [-0.39, 1.655, -0.22],
+        [0, 1.66, -0.22],
+        [0.39, 1.655, -0.22],
+        [-0.39, 1.655, 0.20],
+        [0, 1.66, 0.20],
+        [0.39, 1.655, 0.20]
+      ];
+
+      eggPositions.forEach((position, index) => {
+        const material = (bay + index) % 3 === 0
+          ? eggMaterialB
+          : eggMaterialA;
+
+        addEgg(
+          `Egg_${bay + 1}_${index + 1}`,
+          position,
+          0.92 + ((index + bay) % 3) * 0.035,
+          material
+        );
+      });
+    }
+
+    // ------------------------------------------------------------
+    // Gabled roof
+    // ------------------------------------------------------------
+
+    const backRoof = addBox(
+      "Roof_Back_Slab",
+      [3.70, 0.13, 1.85],
+      [0, 3.12, -0.43],
+      materials.roof,
+      model,
+      0.035
+    );
+    backRoof.rotation.x = 0.20;
+
+    const frontRoof = addBox(
+      "Roof_Front_Slab",
+      [3.70, 0.13, 1.85],
+      [0, 3.12, 0.43],
+      materials.roof,
+      model,
+      0.035
+    );
+    frontRoof.rotation.x = -0.20;
+
+    addBox(
+      "Roof_Ridge_Cap",
+      [3.78, 0.12, 0.18],
+      [0, 3.36, 0],
+      materials.roofDark,
+      model,
+      0.025
+    );
+
+    addBox(
+      "Roof_Front_Fascia",
+      [3.72, 0.15, 0.12],
+      [0, 3.00, 0.80],
+      materials.roofDark,
+      model,
+      0.02
+    );
+
+    addBox(
+      "Roof_Back_Fascia",
+      [3.72, 0.15, 0.12],
+      [0, 3.19, -0.80],
+      materials.roofDark,
+      model,
+      0.02
+    );
+
+    // Raised roof ribs follow the slopes.
+    for (let index = 0; index < 7; index++) {
+      const x = -1.62 + index * 0.54;
+
+      addBeam(
+        `Roof_Rib_Back_${index + 1}`,
+        [x, 3.36, 0],
+        [x, 3.01, -0.83],
+        0.047,
+        materials.roofDark
+      );
+
+      addBeam(
+        `Roof_Rib_Front_${index + 1}`,
+        [x, 3.36, 0],
+        [x, 2.97, 0.83],
+        0.047,
+        materials.roofDark
+      );
+    }
+
+    // Rafters under the roof.
+    for (const x of [-1.42, -0.48, 0.48, 1.42]) {
+      addBeam(
+        `Roof_Rafter_Back_${x}`,
+        [x, 3.055, -0.72],
+        [x, 2.955, 0.72],
+        0.10,
+        materials.woodDark
+      );
+    }
+
+    // Small metal corner caps on the front frame.
+    for (const x of [-1.47, 1.47]) {
+      addBox(
+        `Front_Corner_Cap_${x}`,
+        [0.20, 0.18, 0.035],
+        [x, 2.76, 0.875],
+        materials.metal,
+        model,
+        0.012
+      );
+    }
+
+    // ------------------------------------------------------------
+    // GLB export
+    // ------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building GLB…";
+
+      model.updateMatrixWorld(true);
+
+      exporter.parse(
+        model,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low-poly-wooden-egg-house.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          status.textContent = "GLB downloaded";
+          exportButton.disabled = false;
+        },
+        (error) => {
+          console.error(error);
+          status.textContent = "Export failed — see console";
+          exportButton.disabled = false;
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Resize and render loop
+    // ------------------------------------------------------------
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

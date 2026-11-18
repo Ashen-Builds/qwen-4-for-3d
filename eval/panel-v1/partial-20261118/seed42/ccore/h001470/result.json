@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "external_requests": [],
+  "export_buttons": 1,
+  "glb": {
+    "suggested_name": "low-poly-explorer.glb",
+    "bytes": 189660,
+    "sha256": "ef5c33e40ae24fda5e9381d487ac15b915a04371462705d8b9dca1839f32a08b",
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "meshes": 72,
+    "nodes": 75,
+    "materials": 23,
+    "skins": 0,
+    "textures": 0,
+    "triangles": 2460,
+    "animations": [],
+    "size_xyz": [
+      3.014866731768092,
+      3.8592145498633426,
+      1.5921665300844796
+    ]
+  }
+}

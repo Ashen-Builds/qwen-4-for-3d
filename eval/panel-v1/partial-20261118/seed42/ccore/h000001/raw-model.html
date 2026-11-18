@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Artist</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e8e4dc;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(340px, calc(100vw - 44px));
+      padding: 18px 20px;
+      border: 1px solid rgba(66, 52, 37, 0.14);
+      border-radius: 16px;
+      background: rgba(255, 253, 246, 0.88);
+      box-shadow: 0 12px 36px rgba(54, 43, 30, 0.12);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      color: #304b3d;
+      font-size: 22px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0;
+      color: #756b5d;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+      margin-top: 15px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #exportButton {
+      flex: 1;
+      color: #fffaf0;
+      background: #365f4b;
+      box-shadow: 0 5px 14px rgba(39, 77, 59, 0.24);
+    }
+
+    #exportButton:hover {
+      background: #2b4e3c;
+    }
+
+    #resetButton {
+      color: #495349;
+      background: #e5ddd0;
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 10px;
+      color: #6d6254;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: fixed;
+      right: 20px;
+      bottom: 18px;
+      z-index: 5;
+      padding: 8px 11px;
+      border-radius: 9px;
+      color: rgba(54, 50, 41, 0.68);
+      background: rgba(255, 253, 246, 0.65);
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <h1>Low-Poly Artist</h1>
+    <p>
+      A stylized forest artist with a feathered hat, leather apron, enchanted
+      scroll, and a well-loved field notebook.
+    </p>
+
+    <div class="actions">
+      <button id="exportButton" type="button">Export GLB</button>
+      <button id="resetButton" type="button">Reset View</button>
+    </div>
+
+    <div id="status" aria-live="polite"></div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const resetButton = document.getElementById("resetButton");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe8e4dc);
+    scene.fog = new THREE.Fog(0xe8e4dc, 13, 24);
+
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const initialCameraPosition = new THREE.Vector3(6.1, 4.35, 8.3);
+    const initialTarget = new THREE.Vector3(0, 2.45, 0);
+
+    camera.position.copy(initialCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(initialTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 17;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // Lighting
+    scene.add(new THREE.HemisphereLight(0xfff4dc, 0x65725e, 2.0));
+
+    const keyLight = new THREE.DirectionalLight(0xfff0cf, 3.4);
+    keyLight.position.set(5.5, 9, 6.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.bias = -0.00035;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xa9d7e7, 1.35);
+    fillLight.position.set(-5, 4, 3);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffbd73, 1.6);
+    rimLight.position.set(2, 5, -6);
+    scene.add(rimLight);
+
+    // Display-only ground plane; it is not included in the exported GLB.
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(8, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0xd8d2c4,
+        roughness: 1,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.025;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const material = (color, roughness = 0.85, metalness = 0) =>
+      new THREE.MeshStandardMaterial({
+        color,
+        roughness,
+        metalness,
+        flatShading: true
+      });
+
+    const M = {
+      hood: material(0x315c45),
+      tunic: material(0x3e725d),
+      apron: material(0xb37a3f),
+      apronDark: material(0x85532f),
+      leather: material(0x5a3828),
+      darkLeather: material(0x3b281f),
+      skin: material(0xd39a6b),
+      beard: material(0x4b3026),
+      cream: material(0xf4e7c7),
+      eye: material(0x17211d),
+      gold: material(0xd5a13b, 0.42, 0.35),
+      book: material(0x70322f),
+      paper: material(0xd8bd78),
+      scroll: material(0x6d452c),
+      feather: material(0xc58b43),
+      featherDark: material(0x9c6330)
+    };
+
+    const artist = new THREE.Group();
+    artist.name = "LowPolyArtist";
+    scene.add(artist);
+
+    function addMesh(
+      parent,
+      geometry,
+      mat,
+      position = [0, 0, 0],
+      rotation = [0, 0, 0],
+      scale = [1, 1, 1],
+      name = ""
+    ) {
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.position.set(...position);
+      mesh.rotation.set(...rotation);
+      mesh.scale.set(...scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      if (name) mesh.name = name;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function cylinderBetween(
+      parent,
+      start,
+      end,
+      radiusStart,
+      radiusEnd,
+      mat,
+      radialSegments = 7,
+      name = ""
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radiusEnd,
+        radiusStart,
+        length,
+        radialSegments,
+        1,
+        false
+      );
+
+      const mesh = addMesh(
+        parent,
+        geometry,
+        mat,
+        a.clone().add(b).multiplyScalar(0.5).toArray(),
+        [0, 0, 0],
+        [1, 1, 1],
+        name
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    function barBetween(
+      parent,
+      start,
+      end,
+      width,
+      depth,
+      mat,
+      name = ""
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        parent,
+        new THREE.BoxGeometry(width, length, depth),
+        mat,
+        a.clone().add(b).multiplyScalar(0.5).toArray(),
+        [0, 0, 0],
+        [1, 1, 1],
+        name
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    // Boots and legs
+    for (const side of [-1, 1]) {
+      const x = side * 0.31;
+
+      cylinderBetween(
+        artist,
+        [x, 0.67, 0],
+        [x * 1.04, 1.67, 0],
+        0.205,
+        0.18,
+        M.darkLeather,
+        7,
+        side < 0 ? "Left_Leg" : "Right_Leg"
+      );
+
+      addMesh(
+        artist,
+        new THREE.BoxGeometry(0.49, 0.4, 0.63),
+        M.leather,
+        [x, 0.29, 0.12],
+        [0, 0, 0],
+        [1, 1, 1],
+        side < 0 ? "Left_Boot" : "Right_Boot"
+      );
+
+      addMesh(
+        artist,
+        new THREE.BoxGeometry(0.51, 0.27, 0.39),
+        M.leather,
+        [x, 0.22, 0.42],
+        [0, 0, 0],
+        [1, 1, 1],
+        side < 0 ? "Left_Boot_Toe" : "Right_Boot_Toe"
+      );
+
+      addMesh(
+        artist,
+        new THREE.CylinderGeometry(0.24, 0.22, 0.16, 7),
+        M.darkLeather,
+        [x, 0.65, 0],
+        [0, 0, 0],
+        [1, 1, 1],
+        side < 0 ? "Left_Boot_Cuff" : "Right_Boot_Cuff"
+      );
+    }
+
+    // Tunic body
+    addMesh(
+      artist,
+      new THREE.CylinderGeometry(0.58, 0.47, 1.14, 8),
+      M.tunic,
+      [0, 2.21, 0],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Tunic"
+    );
+
+    // Shoulder caps
+    for (const side of [-1, 1]) {
+      addMesh(
+        artist,
+        new THREE.IcosahedronGeometry(0.27, 1),
+        M.tunic,
+        [side * 0.5, 2.61, 0],
+        [0, 0, 0],
+        [1.05, 0.8, 1],
+        side < 0 ? "Left_Shoulder" : "Right_Shoulder"
+      );
+    }
+
+    // Neck and collar
+    addMesh(
+      artist,
+      new THREE.CylinderGeometry(0.19, 0.22, 0.3, 7),
+      M.skin,
+      [0, 2.78, 0],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Neck"
+    );
+
+    addMesh(
+      artist,
+      new THREE.TorusGeometry(0.29, 0.085, 5, 10),
+      M.hood,
+      [0, 2.76, 0],
+      [Math.PI / 2, 0, 0],
+      [1, 1, 1],
+      "Collar"
+    );
+
+    // Belt and buckle
+    addMesh(
+      artist,
+      new THREE.TorusGeometry(0.505, 0.065, 5, 12),
+      M.leather,
+      [0, 1.72, 0],
+      [Math.PI / 2, 0, 0],
+      [1, 1, 1],
+      "Belt"
+    );
+
+    addMesh(
+      artist,
+      new THREE.BoxGeometry(0.22, 0.19, 0.09),
+      M.gold,
+      [0, 1.72, 0.55],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Belt_Buckle"
+    );
+
+    // Leather apron
+    const apronShape = new THREE.Shape();
+    apronShape.moveTo(-0.43, 0.56);
+    apronShape.lineTo(0.43, 0.56);
+    apronShape.lineTo(0.35, -0.55);
+    apronShape.lineTo(-0.35, -0.55);
+    apronShape.closePath();
+
+    addMesh(
+      artist,
+      new THREE.ExtrudeGeometry(apronShape, {
+        depth: 0.075,
+        bevelEnabled: false,
+        curveSegments: 1
+      }),
+      M.apron,
+      [0, 1.85, 0.5],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Leather_Apron"
+    );
+
+    // Apron straps
+    barBetween(
+      artist,
+      [-0.31, 2.57, 0.43],
+      [-0.22, 3.12, 0.3],
+      0.095,
+      0.055,
+      M.apronDark,
+      "Left_Apron_Strap"
+    );
+
+    barBetween(
+      artist,
+      [0.31, 2.57, 0.43],
+      [0.22, 3.12, 0.3],
+      0.095,
+      0.055,
+      M.apronDark,
+      "Right_Apron_Strap"
+    );
+
+    // Apron pocket and pencil
+    addMesh(
+      artist,
+      new THREE.BoxGeometry(0.49, 0.3, 0.085),
+      M.apronDark,
+      [0, 1.53, 0.625],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Apron_Pocket"
+    );
+
+    cylinderBetween(
+      artist,
+      [0.12, 1.69, 0.685],
+      [0.12, 1.96, 0.685],
+      0.025,
+      0.025,
+      M.gold,
+      6,
+      "Pocket_Pencil"
+    );
+
+    // Arms
+    cylinderBetween(
+      artist,
+      [-0.5, 2.58, 0],
+      [-0.78, 2.15, 0.05],
+      0.235,
+      0.19,
+      M.tunic,
+      7,
+      "Left_Upper_Sleeve"
+    );
+
+    cylinderBetween(
+      artist,
+      [-0.78, 2.15, 0.05],
+      [-0.69, 1.72, 0.38],
+      0.19,
+      0.145,
+      M.tunic,
+      7,
+      "Left_Lower_Sleeve"
+    );
+
+    cylinderBetween(
+      artist,
+      [-0.69, 1.79, 0.34],
+      [-0.68, 1.67, 0.42],
+      0.16,
+      0.15,
+      M.leather,
+      7,
+      "Left_Cuff"
+    );
+
+    addMesh(
+      artist,
+      new THREE.IcosahedronGeometry(0.17, 1),
+      M.skin,
+      [-0.67, 1.62, 0.44],
+      [0, 0, 0],
+      [0.9, 1.05, 0.8],
+      "Left_Hand"
+    );
+
+    cylinderBetween(
+      artist,
+      [0.5, 2.58, 0],
+      [0.8, 2.18, 0.05],
+      0.235,
+      0.19,
+      M.tunic,
+      7,
+      "Right_Upper_Sleeve"
+    );
+
+    cylinderBetween(
+      artist,
+      [0.8, 2.18, 0.05],
+      [0.77, 1.76, 0.42],
+      0.19,
+      0.145,
+      M.tunic,
+      7,
+      "Right_Lower_Sleeve"
+    );
+
+    cylinderBetween(
+      artist,
+      [0.77, 1.83, 0.38],
+      [0.78, 1.72, 0.45],
+      0.16,
+      0.15,
+      M.leather,
+      7,
+      "Right_Cuff"
+    );
+
+    addMesh(
+      artist,
+      new THREE.IcosahedronGeometry(0.17, 1),
+      M.skin,
+      [0.79, 1.68, 0.48],
+      [0, 0, 0],
+      [0.9, 1.05, 0.8],
+      "Right_Hand"
+    );
+
+    // Head
+    addMesh(
+      artist,
+      new THREE.IcosahedronGeometry(0.58, 2),
+      M.skin,
+      [0, 3.17, 0],
+      [0, 0, 0],
+      [0.92, 1.05, 0.88],
+      "Head"
+    );
+
+    // Ears
+    for (const side of [-1, 1]) {
+      addMesh(
+        artist,
+        new THREE.IcosahedronGeometry(0.13, 1),
+        M.skin,
+        [side * 0.55, 3.15, 0],
+        [0, 0, 0],
+        [0.65, 1, 0.8],
+        side < 0 ? "Left_Ear" : "Right_Ear"
+      );
+
+      addMesh(
+        artist,
+        new THREE.IcosahedronGeometry(0.18, 1),
+        M.beard,
+        [side * 0.47, 3.27, -0.04],
+        [0, 0, 0],
+        [0.7, 1.1, 0.8],
+        side < 0 ? "Left_Sideburn" : "Right_Sideburn"
+      );
+    }
+
+    // Eyes
+    for (const side of [-1, 1]) {
+      addMesh(
+        artist,
+        new THREE.SphereGeometry(0.09, 8, 6),
+        M.cream,
+        [side * 0.19, 3.3, 0.465],
+        [0, 0, 0],
+        [1, 0.82, 0.55],
+        side < 0 ? "Left_Eye" : "Right_Eye"
+      );
+
+      addMesh(
+        artist,
+        new THREE.SphereGeometry(0.036, 7, 5),
+        M.eye,
+        [side * 0.19, 3.3, 0.525],
+        [0, 0, 0],
+        [0.85, 1, 0.55],
+        side < 0 ? "Left_Pupil" : "Right_Pupil"
+      );
+
+      barBetween(
+        artist,
+        [side * 0.11, 3.43, 0.485],
+        [side * 0.27, 3.46, 0.475],
+        0.14,
+        0.045,
+        M.beard,
+        side < 0 ? "Left_Eyebrow" : "Right_Eyebrow"
+      );
+    }
+
+    // Nose
+    addMesh(
+      artist,
+      new THREE.ConeGeometry(0.12, 0.28, 5),
+      M.skin,
+      [0, 3.15, 0.52],
+      [Math.PI / 2, 0, 0],
+      [1, 1, 0.9],
+      "Nose"
+    );
+
+    // Beard
+    addMesh(
+      artist,
+      new THREE.ConeGeometry(0.38, 0.59, 6),
+      M.beard,
+      [0, 2.91, 0.32],
+      [0, 0, Math.PI],
+      [1, 1, 0.66],
+      "Beard"
+    );
+
+    // Moustache
+    addMesh(
+      artist,
+      new THREE.IcosahedronGeometry(0.18, 1),
+      M.beard,
+      [-0.13, 3.04, 0.485],
+      [0, 0, -0.18],
+      [1.2, 0.46, 0.58],
+      "Left_Moustache"
+    );
+
+    addMesh(
+      artist,
+      new THREE.IcosahedronGeometry(0.18, 1),
+      M.beard,
+      [0.13, 3.04, 0.485],
+      [0, 0, 0.18],
+      [1.2, 0.46, 0.58],
+      "Right_Moustache"
+    );
+
+    // Hat
+    const hat = new THREE.Group();
+    hat.name = "Hat";
+    hat.position.set(0, 3.56, 0);
+    hat.rotation.z = -0.065;
+    artist.add(hat);
+
+    addMesh(
+      hat,
+      new THREE.CylinderGeometry(0.78, 0.78, 0.095, 12),
+      M.hood,
+      [0, 0.025, 0],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Hat_Brim"
+    );
+
+    addMesh(
+      hat,
+      new THREE.CylinderGeometry(0.55, 0.67, 0.56, 8),
+      M.hood,
+      [0, 0.36, 0],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Hat_Crown"
+    );
+
+    addMesh(
+      hat,
+      new THREE.CylinderGeometry(0.665, 0.665, 0.105, 12),
+      M.leather,
+      [0, 0.16, 0],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Hat_Band"
+    );
+
+    // Feather
+    cylinderBetween(
+      hat,
+      [0.38, 0.55, -0.04],
+      [0.64, 1.35, -0.08],
+      0.035,
+      0.025,
+      M Shaft,
+      6,
+      "Feather_Shaft"
+    );
+
+    addMesh(
+      hat,
+      new THREE.ConeGeometry(0.2, 0.83, 5),
+      M.feather,
+      [0.48, 0.93, -0.06],
+      [0, 0, -0.52],
+      [1, 1, 0.27],
+      "Feather_Main"
+    );
+
+    addMesh(
+      hat,
+      new THREE.ConeGeometry(0.15, 0.68, 5),
+      M.featherDark,
+      [0.58, 1.03, -0.075],
+      [0, 0, -0.72],
+      [1, 1, 0.25],
+      "Feather_Left"
+    );
+
+    addMesh(
+      hat,
+      new THREE.ConeGeometry(0.13, 0.6, 5),
+      M.feather,
+      [0.65, 1.08, -0.085],
+      [0, 0, -0.88],
+      [1, 1, 0.24],
+      "Feather_Right"
+    );
+
+    // Field notebook
+    const notebook = new THREE.Group();
+    notebook.name = "Field>Notebook";
+    notebook.position.set(0.82, 1.35, 0.49);
+    notebook.rotation.set(-0.08, 0.13, -0.12);
+    artist.add(notebook);
+
+    addMesh(
+      notebook,
+      new THREE.BoxGeometry(0.62, 0.72, 0.13),
+      M.paper,
+      [0, 0, 0],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Notebook_Pages"
+    );
+
+    addMesh(
+      notebook,
+      new THREE.BoxGeometry(0.64, 0.74, 0.055),
+      M.book,
+      [0, 0, 0.079],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Notebook_Front_Cover"
+    );
+
+    addMesh(
+      notebook,
+      new THREE.BoxGeometry(0.64, 0.74, 0.055),
+      M.book,
+      [0, 0, -0.079],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Notebook_Back_Cover"
+    );
+
+    addMesh(
+      notebook,
+      new THREE.BoxGeometry(0.075, 0.76, 0.19),
+      M.book,
+      [-0.305, 0, 0],
+      [0, 0, 0],
+      [1, 1, 1],
+      "Notebook_Spine"
+    );
+
+    // Small gold emblem on the notebook cover
+    addMesh(
+      notebook,
+      new THREE.OctahedronGeometry(0.105, 0),
+      M.gold,
+      [0.12, 0.02, 0.116],
+      [0, 0, 0],
+      [0.7, 1, 0.25],
+      "Notebook_Emblem"
+    );
+
+    // Rolled scroll
+    const scroll = new THREE.Group();
+    scroll.name = "Rolled_Scroll";
+    scroll.position.set(0.83, 1.94, 0.55);
+    scroll.rotation.z = 0.08;
+    artist.add(scroll);
+
+    addMesh(
+      scroll,
+      new THREE.CylinderGeometry(0.125, 0.125, 0.86, 10),
+      M scrolls,
+      [0, 0, 0],
+      [0, 0, Math.PI / 2],
+      [1, 1, 1],
+      "Scroll_Roll"
+    );
+
+    for (const x of [-0.29, 0.29]) {
+      addMesh(
+        scroll,
+        new THREE.TorusGeometry(0.128, 0.018, 5, 10),
+        M.gold,
+        [x, 0, 0],
+        [0, Math.PI / 2, 0],
+        [1, 1, 1],
+        "Scroll_Band"
+      );
+    }
+
+    // Small hip pouch
+    addMesh(
+      artist,
+      new THREE.BoxGeometry(0.32, 0.35, 0.22),
+      M.leather,
+      [-0.52, 1.38, 0.1],
+      [0, 0, -0.08],
+      [1, 1, 1],
+      "Hip_Pouch"
+    );
+
+    addMesh(
+      artist,
+      new THREE.BoxGeometry(0.34, 0.13, 0.24),
+      M.apronDark,
+      [-0.52, 1.54, 0.11],
+      [0, 0, -0.08],
+      [1, 1, 1],
+      "Hip_Pouch_Flap"
+    );
+
+    // Export only the character, excluding the display ground and lights.
+    exportButton.addEventListener("click", async () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB…";
+
+      try {
+        artist.updateMatrixWorld(true);
+
+        const exporter = new GLTFExporter();
+        const result = await exporter.parseAsync(artist, {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 2048
+        });
+
+        const blob = new Blob([result], {
+          type: "model/gltf-binary"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "low-poly-artist.glb";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        status.textContent = "GLB exported successfully.";
+      } catch (error) {
+        console.error(error);
+        status.textContent = "Export failed. Check the browser console.";
+      } finally {
+        exportButton.disabled = false;
+      }
+    });
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(initialCameraPosition);
+      controls.target.copy(initialTarget);
+      controls.update();
+    });
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

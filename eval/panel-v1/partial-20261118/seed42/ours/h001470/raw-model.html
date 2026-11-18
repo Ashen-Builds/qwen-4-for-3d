@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Explorer</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #08131d;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 10;
+      width: min(360px, calc(100vw - 48px));
+      padding: 20px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      background: rgba(9, 20, 30, 0.78);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 25px;
+      letter-spacing: -0.04em;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: #aebdca;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 16px;
+      background: #f0b84b;
+      color: #251b0d;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition:
+        transform 120ms ease,
+        background 120ms ease,
+        box-shadow 120ms ease;
+    }
+
+    button:hover {
+      background: #ffd16a;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(240, 184, 75, 0.25);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.09);
+      color: #e9f0f2;
+    }
+
+    button.secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 12px;
+      color: #92c7ad;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: fixed;
+      right: 22px;
+      bottom: 18px;
+      z-index: 10;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(9, 20, 30, 0.62);
+      color: #aebdca;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 16px 18px;
+      }
+
+      h1 {
+        font-size: 21px;
+      }
+
+      .hint {
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <h1>Low-Poly Explorer</h1>
+    <p>
+      A stylized adventurer with a sun hat, goggles, field pack, binoculars,
+      and a rolled map.
+    </p>
+
+    <div class="actions">
+      <button id="exportButton">Export GLB</button>
+      <button id="resetButton" class="secondary">Reset View</button>
+    </div>
+
+    <div id="status"></div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const resetButton = document.getElementById("resetButton");
+    const status = document.getElementById("status");
+
+    // ---------------------------------------------------------------------
+    // Scene
+    // ---------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x08131d);
+    scene.fog = new THREE.Fog(0x08131d, 10, 24);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const defaultCameraPosition = new THREE.Vector3(4.6, 3.35, 7.2);
+    const defaultTarget = new THREE.Vector3(0, 1.7, 0);
+    camera.position.copy(defaultCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(defaultTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 3.2;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const hemisphere = new THREE.HemisphereLight(0xbfe8ff, 0x25303a, 2.0);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffe0b8, 4.2);
+    keyLight.position.set(4, 8, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 0.1;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x77c9ff, 2.5);
+    rimLight.position.set(-5, 4, -4);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.PointLight(0xffa95b, 18, 8, 2);
+    fillLight.position.set(-3, 2.8, 3.5);
+    scene.add(fillLight);
+
+    // Display-only stage. It is deliberately not part of the exported asset.
+    const stage = new THREE.Group();
+    stage.name = "Display_Stage";
+    scene.add(stage);
+
+    const groundMaterial = new THREE.MeshStandardMaterial({
+      color: 0x102331,
+      roughness: 0.94,
+      metalness: 0.02
+    });
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(100, 100),
+      groundMaterial
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.06;
+    ground.receiveShadow = true;
+    stage.add(ground);
+
+    const platformMaterial = new THREE.MeshStandardMaterial({
+      color: 0x173547,
+      roughness: 0.82,
+      metalness: 0.1
+    });
+
+    const platform = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.05, 2.18, 0.13, 64),
+      platformMaterial
+    );
+    platform.position.y = -0.015;
+    platform.receiveShadow = true;
+    stage.add(platform);
+
+    const platformRing = new THREE.Mesh(
+      new THREE.TorusGeometry(2.08, 0.025, 8, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x3d8b9b,
+        emissive: 0x163f4c,
+        emissiveIntensity: 0.3,
+        roughness: 0.55
+      })
+    );
+    platformRing.rotation.x = Math.PI / 2;
+    platformRing.position.y = 0.055;
+    stage.add(platformRing);
+
+    // ---------------------------------------------------------------------
+    // Character root
+    // ---------------------------------------------------------------------
+
+    const explorer = new THREE.Group();
+    explorer.name = "LowPolyExplorer";
+    explorer.rotation.y = -0.12;
+    scene.add(explorer);
+
+    const materials = {
+      skin: new THREE.MeshStandardMaterial({
+        color: 0xd9a078,
+        roughness: 0.88,
+        flatShading: true
+      }),
+      skinDark: new THREE.MeshStandardMaterial({
+        color: 0xb87852,
+        roughness: 0.9,
+        flatShading: true
+      }),
+      jacket: new THREE.MeshStandardMaterial({
+        color: 0xc79a55,
+        roughness: 0.92,
+        flatShading: true
+      }),
+      jacketDark: new THREE.MeshStandardMaterial({
+        color: 0x966d3b,
+        roughness: 0.95,
+        flatShading: true
+      }),
+      pants: new THREE.MeshStandardMaterial({
+        color: 0x4c5960,
+        roughness: 0.95,
+        flatShading: true
+      }),
+      pantsDark: new THREE.MeshStandardMaterial({
+        color: 0x303b42,
+        roughness: 0.95,
+        flatShading: true
+      }),
+      leather: new THREE.MeshStandardMaterial({
+        color: 0x593b2b,
+        roughness: 0.92,
+        flatShading: true
+      }),
+      leatherLight: new THREE.MeshStandardMaterial({
+        color: 0x81553a,
+        roughness: 0.9,
+        flatShading: true
+      }),
+      hat: new THREE.MeshStandardMaterial({
+        color: 0xd7ae63,
+        roughness: 0.85,
+        flatShading: true
+      }),
+      hatBand: new THREE.MeshStandardMaterial({
+        color: 0x8d5630,
+        roughness: 0.9,
+        flatShading: true
+      }),
+      scarf: new THREE.MeshStandardMaterial({
+        color: 0x2f8277,
+        roughness: 0.95,
+        flatShading: true
+      }),
+      scarfDark: new THREE.MeshStandardMaterial({
+        color: 0x225d5b,
+        roughness: 0.95,
+        flatShading: true
+      }),
+      black: new THREE.MeshStandardMaterial({
+        color: 0x172127,
+        roughness: 0.55,
+        flatShading: true
+      }),
+      lens: new THREE.MeshStandardMaterial({
+        color: 0x4a9eaa,
+        emissive: 0x123841,
+        emissiveIntensity: 0.5,
+        roughness: 0.18,
+        metalness: 0.35,
+        side: THREE.DoubleSide
+      }),
+      brass: new THREE.MeshStandardMaterial({
+        color: 0xc89439,
+        roughness: 0.42,
+        metalness: 0.72,
+        flatShading: true
+      }),
+      paper: new THREE.MeshStandardMaterial({
+        color: 0xe2d4aa,
+        roughness: 0.98,
+        flatShading: true
+      }),
+      canvas: new THREE.MeshStandardMaterial({
+        color: 0x66736f,
+        roughness: 1,
+        flatShading: true
+      }),
+      pocket: new THREE.MeshStandardMaterial({
+        color: 0x9b8054,
+        roughness: 0.94,
+        flatShading: true
+      })
+    };
+
+    function addMesh(parent, geometry, material, position, rotation, scale) {
+      const mesh = new THREE.Mesh(geometry, material);
+      if (position) mesh.position.set(...position);
+      if (rotation) mesh.rotation.set(...rotation);
+      if (scale) mesh.scale.set(...scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(
+      parent,
+      size,
+      material,
+      position = [0, 0, 0],
+      rotation = [0, 0, 0],
+      scale = [1, 1, 1]
+    ) {
+      return addMesh(
+        parent,
+        new THREE.BoxGeometry(...size),
+        material,
+        position,
+        rotation,
+        scale
+      );
+    }
+
+    function addCylinder(
+      parent,
+      radiusTop,
+      radiusBottom,
+      height,
+      segments,
+      material,
+      position = [0, 0, 0],
+      rotation = [0, 0, 0],
+      scale = [1, 1, 1]
+    ) {
+      return addMesh(
+        parent,
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments
+        ),
+        material,
+        position,
+        rotation,
+        scale
+      );
+    }
+
+    function addSphere(
+      parent,
+      radius,
+      material,
+      position = [0, 0, 0],
+      scale = [1, 1, 1],
+      widthSegments = 10,
+      heightSegments = 6
+    ) {
+      return addMesh(
+        parent,
+        new THREE.SphereGeometry(
+          radius,
+          widthSegments,
+          heightSegments
+        ),
+        material,
+        position,
+        [0, 0, 0],
+        scale
+      );
+    }
+
+    // ---------------------------------------------------------------------
+    // Legs and boots
+    // ---------------------------------------------------------------------
+
+    const leftLeg = new THREE.Group();
+    leftLeg.name = "Left_Leg";
+    explorer.add(leftLeg);
+
+    addCylinder(leftLeg, 0.18, 0.22, 0.72, 8, materials.pants, [0.25, 1.08, 0]);
+    addCylinder(leftLeg, 0.15, 0.18, 0.64, 8, materials.pantsDark, [0.25, 0.46, 0]);
+
+    addBox(leftLeg, [0.39, 0.12, 0.62], materials.black, [0.25, 0.15, 0.12]);
+    addBox(leftLeg, [0.43, 0.29, 0.61], materials.leather, [0.25, 0.29, 0.12]);
+    addBox(leftLeg, [0.43, 0.16, 0.12], materials.leatherLight, [0.25, 0.28, 0.42]);
+
+    addBox(leftLeg, [0.43, 0.12, 0.62], materials.black, [0.25, 0.15, 0.12]);
+    addBox(leftLeg, [0.43, 0.29, 0.61], materials.leather, [0.25, 0.29, 0.12]);
+    addBox(leftLeg, [0.43, 0.16, 0.12], materials.leatherLight, [0.25, 0.28, 0.42]);
+
+    addBox(leftLeg, [0.43, 0.12, 0.62], materials.black, [0.25, 0.15, 0.12]);
+    addBox(leftLeg, [0.43, 0.29, 0.61], materials.leather, [0.25, 0.29, 0.12]);
+    addBox(leftLeg, [0.43, 0.16, 0.12], materials.leatherLight, [0.25, 0.28, 0.42]);
+
+    addBox(leftLeg, [0.43, 0.12, 0.62], materials.black, [0.25, 0.15, 0.12]);
+    addBox(leftLeg, [0.43, 0.29, 0.61], materials.leather, [0.25, 0.29, 0.12]);
+    addBox(leftLeg, [0.43, 0.16, 0.12], materials.leatherLight, [0.25, 0.28, 0.42]);
+
+    // ---------------------------------------------------------------------
+    // Hips, torso, and jacket
+    // ---------------------------------------------------------------------
+
+    addCylinder(explorer, 0.39, 0.46, 0.42, 8, materials.pantsDark, [0, 1.37, 0]);
+
+    addCylinder(explorer, 0.48, 0.57, 1.08, 8, materials.jacket, [0, 1.92, 0]);
+
+    addBox(explorer, [0.72, 0.5, 0.055], materials.jacketDark, [0, 2.08, 0.485]);
+    addBox(explorer, [0.48, 0.37, 0.055], materials.jacket, [0, 1.73, 0.49]);
+
+    addBox(explorer, [0.94, 0.12, 0.5], materials.leather, [0, 1.43, 0.02]);
+    addBox(explorer, [0.18, 0.17, 0.08], materials.brass, [0, 1.43, 0.3]);
+
+    // Collar and scarf
+    addCylinder(explorer, 0.23, 0.26, 0.16, 8, materials.jacketDark, [0, 2.48, 0]);
+
+    const scarfRing = addMesh(
+      explorer,
+      new THREE.TorusGeometry(0.27, 0.075, 6, 12),
+      materials.scarf,
+      [0, 2.52, 0.02],
+      [Math.PI / 2, 0, 0]
+    );
+    scarfRing.name = "Scarf_Collar";
+
+    addBox(
+      explorer,
+      [0.2, 0.42, 0.07],
+      materials.scarf,
+      [0.14, 2.34, 0.49],
+      [0.02, 0, -0.13]
+    );
+
+    addBox(
+      explorer,
+      [0.18, 0.36, 0.065],
+      materials.scarfDark,
+      [0.25, 2.28, 0.48],
+      [0.03, 0, -0.23]
+    );
+
+    // Chest badge
+    addCylinder(
+      explorer,
+      0.075,
+      0.075,
+      0.028,
+      10,
+      materials.brass,
+      [-0.25, 2.07, 0.525],
+      [Math.PI / 2, 0, 0]
+    );
+
+    addMesh(
+      explorer,
+      new THREE.CircleGeometry(0.045, 10),
+      materials.jacketDark,
+      [-0.25, 2.07, 0.545]
+    );
+
+    // ---------------------------------------------------------------------
+    // Shoulder area
+    // ---------------------------------------------------------------------
+
+    addBox(explorer, [0.19, 0.2, 0.24], materials.jacketDark, [-0.45, 2.35, 0]);
+    addBox(explorer, [0.19, 0.2, 0.24], materials.jacketDark, [0.45, 2.35, 0]);
+
+    // ---------------------------------------------------------------------
+    // Backpack and bedroll
+    // ---------------------------------------------------------------------
+
+    const backpack = new THREE.Group();
+    backpack.name = "Backpack";
+    explorer.add(backpack);
+
+    addBox(backpack, [0.82, 1.12, 0.38], materials.canvas, [0, 1.96, -0.43]);
+    addBox(backpack, [0.7, 0.73, 0.34], materials.canvas, [0, 2.08, -0.48]);
+
+    addBox(backpack, [0.7, 0.28, 0.34], materials.pocket, [0, 1.48, -0.45]);
+    addBox(backpack, [0.58, 0.22, 0.33], materials.pocket, [0, 2.48, -0.46]);
+
+    // Bedroll across the top of the pack
+    addCylinder(
+      backpack,
+      0.17,
+      0.17,
+      0.84,
+      8,
+      materials.paper,
+      [0, 2.68, -0.5],
+      [0, 0, Math.PI / 2]
+    );
+
+    addCylinder(
+      backpack,
+      0.18,
+      0.18,
+      0.065,
+      8,
+      materials.leatherLight,
+      [0, 2.68, -0.5],
+      [0, 0, Math.PI / 2]
+    );
+
+    // Pack straps
+    addBox(explorer, [0.1, 0.91, 0.055], materials.leather, [-0.3, 1.97, 0.49], [0, 0, -0.05]);
+    addBox(explorer, [0.1, 0.91, 0.055], materials.leather, [0.3, 1.97, 0.49], [0, 0, 0.05]);
+
+    addBox(explorer, [0.13, 0.16, 0.06], materials.leatherLight, [-0.3, 1.59, 0.53], [0, 0, -0.05]);
+    addBox(explorer, [0.13, 0.16, 0.06], materials.leatherLight, [0.3, 1.59, 0.53], [0, 0, 0.05]);
+
+    // ---------------------------------------------------------------------
+    // Arms and hands
+    // ---------------------------------------------------------------------
+
+    function createArm(side) {
+      const arm = new THREE.Group();
+      arm.name = side < 0 ? "Left_Arm" : "Right_Arm";
+      arm.position.set(side * 0.48, 2.34, 0);
+      arm.rotation.z = side < 0 ? 0.22 : -0.22;
+      explorer.add(arm);
+
+      addCylinder(arm, 0.17, 0.2, 0.55, 8, materials.jacket, [0, -0.25, 0]);
+      addSphere(arm, 0.19, materials.jacketDark, [0, -0.52, 0]);
+
+      addCylinder(arm, 0.14, 0.17, 0.43, 8, materials.jacketDark, [0, -0.73, 0]);
+      addSphere(arm, 0.13, materials.skin, [0, -1.0, 0]);
+
+      return arm;
+    }
+
+    const leftArm = createArm(-1);
+    addCylinder(
+      leftArm,
+      0.15,
+      0.15,
+      0.7,
+      8,
+      materials.paper,
+      [-0.08, -1.02, 0.06],
+      [0, 0, Math.PI / 2]
+    );
+
+    const rightArm = createArm(1);
+
+    // ---------------------------------------------------------------------
+    // Head, face, and hat
+    // ---------------------------------------------------------------------
+
+    addCylinder(explorer, 0.12, 0.14, 0.18, 8, materials.skinDark, [0, 2.52, 0]);
+
+    addSphere(
+      explorer,
+      0.34,
+      materials.skin,
+      [0, 2.8, 0.02],
+      [0.94, 1.12, 0.92],
+      10,
+      6
+    );
+
+    // Hair peeking beneath the hat
+    addSphere(
+      explorer,
+      0.345,
+      materials.leatherDark,
+      [0, 2.87, -0.025],
+      [1.02, 0.56, 0.98],
+      10,
+      5
+    );
+
+    // Nose
+    addMesh(
+      explorer,
+      new THREE.ConeGeometry(0.065, 0.15, 4),
+      materials.skin,
+      [0, 2.77, 0.325],
+      [Math.PI / 2, 0, Math.PI / 4]
+    );
+
+    // Eyes
+    addBox(explorer, [0.045, 0.055, 0.025], materials.black, [-0.12, 2.86, 0.315]);
+    addBox(explorer, [0.045, 0.055, 0.025], materials.black, [0.12, 2.86, 0.315]);
+
+    // Goggles frames
+    addMesh(
+      explorer,
+      new THREE.TorusGeometry(0.145, 0.035, 6, 12),
+      materials.leather,
+      [-0.12, 2.86, 0.335]
+    );
+    addMesh(
+      explorer,
+      new THREE.TorusGeometry(0.145, 0.035, 6, 12),
+      materials.leather,
+      [0.12, 2.86, 0.335]
+    );
+
+    addMesh(
+      explorer,
+      new THREE.CircleGeometry(0.125, 12),
+      materials.lens,
+      [-0.12, 2.86, 0.338]
+    );
+    addMesh(
+      explorer,
+      new THREE.CircleGeometry(0.125, 12),
+      materials.lens,
+      [0.12, 2.86, 0.338]
+    );
+
+    // Goggle bridge and strap
+    addBox(explorer, [0.09, 0.035, 0.035], materials.leather, [0, 2.86, 0.34]);
+    addBox(explorer, [0.64, 0.035, 0.04], materials.leather, [0, 2.86, 0.02]);
+
+    // Hat brim
+    addCylinder(explorer, 0.58, 0.58, 0.075, 12, materials.hat, [0, 3.16, 0]);
+    addCylinder(explorer, 0.38, 0.45, 0.31, 10, materials.hat, [0, 3.36, 0]);
+    addCylinder(explorer, 0.455, 0.455, 0.075, 10, materials.hatBand, [0, 3.24, 0]);
+
+    // Hat buckle
+    addBox(explorer, [0.13, 0.11, 0.06], materials.brass, [0, 3.24, 0.45]);
+
+    // ---------------------------------------------------------------------
+    // Binoculars held in the right hand
+    // ---------------------------------------------------------------------
+
+    const binoculars = new THREE.Group();
+    binoculars.name = "Binoculars";
+    binoculars.position.set(0.57, 1.28, 0.18);
+    binoculars.rotation.x = -0.12;
+    explorer.add(binoculars);
+
+    addBox(binoculars, [0.25, 0.14, 0.18], materials.leatherLight, [0, 0, -0.13]);
+
+    addCylinder(binoculars, 0.105, 0.105, 0.34, 10, materials.brass, [0, 0, 0.02], [Math.PI / 2, 0, 0]);
+    addCylinder(binoculars, 0.085, 0.085, 0.31, 10, materials.brass, [-0.085, 0, 0.02], [Math.PI / 2, 0, 0]);
+    addCylinder(binoculars, 0.085, 0.085, 0.31, 10, materials.brass, [0.085, 0, 0.02], [Math.PI / 2, 0, 0]);
+
+    addCylinder(binoculars, 0.085, 0.085, 0.12, 10, materials.black, [-0.085, 0, 0.22], [Math.PI / 2, 0, 0]);
+    addCylinder(binoculars, 0.085, 0.085, 0.12, 10, materials.black, [0.085, 0, 0.22], [Math.PI / 2, 0, 0]);
+
+    // ---------------------------------------------------------------------
+    // Rolled map held in the left hand
+    // ---------------------------------------------------------------------
+
+    const mapRoll = new THREE.Group();
+    mapRoll.name = "Rolled_Map";
+    mapRoll.position.set(-0.58, 1.43, 0.12);
+    mapRoll.rotation.z = 0.13;
+    explorer.add(mapRoll);
+
+    addCylinder(mapRoll, 0.16, 0.16, 0.65, 8, materials.paper, [0, 0, 0], [0, 0, Math.PI / 2]);
+
+    // ---------------------------------------------------------------------
+    // Small accessory details
+    // ---------------------------------------------------------------------
+
+    addBox(explorer, [0.3, 0.13, 0.28], materials.pocket, [-0.65, 1.77, -0.02]);
+    addBox(explorer, [0.3, 0.13, 0.28], materials.pocket, [0.65, 1.77, -0.02]);
+
+    // Ensure the complete asset is ready for rendering/export.
+    explorer.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
+
+    // ---------------------------------------------------------------------
+    // Export GLB
+    // ---------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB…";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        explorer,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low_poly_explorer.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "GLB downloaded successfully.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          truncateDrawRange: true
+        }
+      );
+    });
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.copy(defaultTarget);
+      controls.update();
+    });
+
+    // ---------------------------------------------------------------------
+    // Render loop
+    // ---------------------------------------------------------------------
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

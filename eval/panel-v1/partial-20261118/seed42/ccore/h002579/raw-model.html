@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Pressure Gate</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #06131b;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      border: 1px solid rgba(151, 219, 231, 0.2);
+      background: linear-gradient(
+        145deg,
+        rgba(7, 25, 33, 0.9),
+        rgba(7, 18, 25, 0.76)
+      );
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-radius: 14px;
+    }
+
+    #info {
+      top: 22px;
+      left: 22px;
+      width: min(340px, calc(100vw - 44px));
+      padding: 18px 20px;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 7px;
+      color: #67d6df;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.19em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #edf9f8;
+      font-size: 25px;
+      line-height: 1.1;
+      letter-spacing: -0.035em;
+    }
+
+    #info p {
+      margin: 9px 0 0;
+      color: #9ab4bd;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    #actions {
+      top: 22px;
+      right: 22px;
+      padding: 10px;
+    }
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-width: 174px;
+      padding: 12px 17px;
+      border: 0;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #64d8df, #36aebd);
+      color: #042027;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      box-shadow: 0 7px 20px rgba(32, 176, 194, 0.24);
+      transition:
+        transform 150ms ease,
+        filter 150ms ease,
+        opacity 150ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.62;
+      transform: none;
+    }
+
+    button svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    #status {
+      min-height: 16px;
+      margin-top: 8px;
+      color: #86a4ab;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    #hint {
+      position: fixed;
+      z-index: 10;
+      bottom: 20px;
+      left: 50%;
+      padding: 9px 14px;
+      border: 1px solid rgba(151, 219, 231, 0.13);
+      border-radius: 999px;
+      background: rgba(5, 17, 24, 0.68);
+      color: #76969f;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      transform: translateX(-50%);
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 620px) {
+      #info {
+        top: 12px;
+        left: 12px;
+        width: 255px;
+        padding: 13px 15px;
+      }
+
+      h1 {
+        font-size: 20px;
+      }
+
+      #info p {
+        display: none;
+      }
+
+      #actions {
+        top: 12px;
+        right: 12px;
+      }
+
+      button {
+        min-width: 142px;
+        padding: 11px 13px;
+      }
+
+      #hint {
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section id="info" class="panel">
+    <div class="eyebrow">Godot Ready Asset</div>
+    <h1>Subsea Pressure Gate</h1>
+    <p>
+      Static low-poly bulkhead with reinforced framing, mechanical locking wheel,
+      pressure pipes, warning markings, rocks, and submerged vegetation.
+    </p>
+  </section>
+
+  <section id="actions" class="panel">
+    <button id="exportButton" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M11 3h2v10.17l3.59-3.58L18 11l-6 6-6-6 1.41-1.41L11 13.17V3Zm-6 16h14v2H5v-2Z"/>
+      </svg>
+      Export GLB
+    </button>
+    <div id="status">Ready to export</div>
+  </section>
+
+  <div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const viewport = document.querySelector("#viewport");
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x06131b);
+    scene.fog = new THREE.FogExp2(0x06131b, 0.035);
+
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    camera.position.set(6.5, 4.6, 7.7);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.75, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 4.2;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // Lighting is kept outside the exported asset.
+    scene.add(new THREE.HemisphereLight(0x8bd7e8, 0x10171b, 2.0));
+
+    const keyLight = new THREE.DirectionalLight(0xffe3bd, 3.4);
+    keyLight.position.set(4.5, 8, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x43c9e7, 2.2);
+    rimLight.position.set(-5, 4, -4);
+    scene.add(rimLight);
+
+    const cyanLight = new THREE.PointLight(0x35dce8, 12, 8, 2);
+    cyanLight.position.set(-3.2, 1.7, 2.4);
+    scene.add(cyanLight);
+
+    const warmLight = new THREE.PointLight(0xffa24b, 7, 6, 2);
+    warmLight.position.set(3.2, 3.1, 2.2);
+    scene.add(warmLight);
+
+    // Preview-only seabed.
+    const previewGround = new THREE.Mesh(
+      new THREE.CircleGeometry(18, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x07151c,
+        roughness: 1,
+        metalness: 0
+      })
+    );
+
+    previewGround.rotation.x = -Math.PI / 2;
+    previewGround.position.y = -0.23;
+    previewGround.receiveShadow = true;
+    scene.add(previewGround);
+
+    // -------------------------------------------------------------------------
+    // Exported asset root
+    // -------------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "Subsea_Pressure_Gate_Asset";
+    scene.add(asset);
+
+    const materials = {
+      concrete: new THREE.MeshStandardMaterial({
+        color: 0x35434a,
+        roughness: 0.94,
+        metalness: 0.03,
+        flatShading: true
+      }),
+
+      concreteDark: new THREE.MeshStandardMaterial({
+        color: 0x26333a,
+        roughness: 0.96,
+        metalness: 0.02,
+        flatShading: true
+      }),
+
+      steel: new THREE.MeshStandardMaterial({
+        color: 0x43616a,
+        roughness: 0.58,
+        metalness: 0.7,
+        flatShading: true
+      }),
+
+      steelDark: new THREE.MeshStandardMaterial({
+        color: 0x202d33,
+        roughness: 0.67,
+        metalness: 0.68,
+        flatShading: true
+      }),
+
+      teal: new THREE.MeshStandardMaterial({
+        color: 0x28757b,
+        roughness: 0.52,
+        metalness: 0.55,
+        flatShading: true
+      }),
+
+      rust: new THREE.MeshStandardMaterial({
+        color: 0xa65d36,
+        roughness: 0.78,
+        metalness: 0.38,
+        flatShading: true
+      }),
+
+      brass: new THREE.MeshStandardMaterial({
+        color: 0xc18a3d,
+        roughness: 0.42,
+        metalness: 0.78,
+        flatShading: true
+      }),
+
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x111719,
+        roughness: 0.94,
+        metalness: 0.02,
+        flatShading: true
+      }),
+
+      glass: new THREE.MeshStandardMaterial({
+        color: 0x69d7e5,
+        emissive: 0x0b3941,
+        emissiveIntensity: 0.75,
+        roughness: 0.13,
+        metalness: 0.18,
+        transparent: true,
+        opacity: 0.72,
+        flatShading: true
+      }),
+
+      water: new THREE.MeshStandardMaterial({
+        color: 0x2b91a0,
+        emissive: 0x052c35,
+        emissiveIntensity: 0.45,
+        roughness: 0.2,
+        metalness: 0.08,
+        transparent: true,
+        opacity: 0.68,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        flatShading: true
+      }),
+
+      rock: new THREE.MeshStandardMaterial({
+        color: 0x405158,
+        roughness: 0.98,
+        metalness: 0.01,
+        flatShading: true
+      }),
+
+      rockDark: new THREE.MeshStandardMaterial({
+        color: 0x293840,
+        roughness: 0.99,
+        metalness: 0,
+        flatShading: true
+      }),
+
+      seaweed: new THREE.MeshStandardMaterial({
+        color: 0x4c7950,
+        roughness: 0.92,
+        metalness: 0,
+        flatShading: true
+      }),
+
+      seaweedLight: new THREE.MeshStandardMaterial({
+        color: 0x6d9359,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+
+      bubble: new THREE.MeshBasicMaterial({
+        color: 0xa5edf2,
+        transparent: true,
+        opacity: 0.22,
+        depthWrite: false
+      }),
+
+      amber: new THREE.MeshStandardMaterial({
+        color: 0xffb347,
+        emissive: 0xff7b18,
+        emissiveIntensity: 2.2,
+        roughness: 0.3,
+        metalness: 0.15
+      }),
+
+      cyan: new THREE.MeshStandardMaterial({
+        color: 0x6eeafa,
+        emissive: 0x1bbbd4,
+        emissiveIntensity: 2.0,
+        roughness: 0.3,
+        metalness: 0.12
+      })
+    };
+
+    function addMesh(geometry, material, name, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function chamferBox(width, height, depth, cut = 0.08) {
+      const x = width / 2;
+      const y = height / 2;
+      const c = Math.min(cut, x * 0.45, y * 0.45);
+
+      const shape = new THREE.Shape();
+      shape.moveTo(-x + c, -y);
+      shape.lineTo(x - c, -y);
+      shape.lineTo(x, -y + c);
+      shape.lineTo(x, y - c);
+      shape.lineTo(x - c, y);
+      shape.lineTo(-x + c, y);
+      shape.lineTo(-x, y - c);
+      shape.lineTo(-x, -y + c);
+      shape.closePath();
+
+      const bevel = Math.min(c * 0.45, depth * 0.14);
+      const geometry = new THREE.ExtrudeGeometry(shape, {
+        depth,
+        steps: 1,
+        curveSegments: 1,
+        bevelEnabled: true,
+        bevelSegments: 1,
+        bevelSize: bevel,
+        bevelThickness: bevel
+      });
+
+      geometry.center();
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    function cylinderZ(
+      radiusTop,
+      radiusBottom,
+      depth,
+      segments,
+      material,
+      name,
+      position
+    ) {
+      const geometry = new THREE.CylinderGeometry(
+        radiusTop,
+        radiusBottom,
+        depth,
+        segments
+      );
+
+      geometry.rotateX(Math.PI / 2);
+
+      const mesh = addMesh(geometry, material, name);
+      mesh.position.copy(position);
+      return mesh;
+    }
+
+    function cylinderBetween(
+      start,
+      end,
+      radius,
+      material,
+      name,
+      segments = 8
+    ) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const length = direction.length();
+      const midpoint = new THREE.Vector3()
+        .addVectors(start, end)
+        .multiplyScalar(0.5);
+
+      const geometry = new THREE.CylinderGeometry(
+        radius,
+        radius,
+        length,
+        segments
+      );
+
+      const mesh = addMesh(geometry, material, name);
+      mesh.position.copy(midpoint);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    function torus(
+      radius,
+      tube,
+      material,
+      name,
+      position,
+      radialSegments = 6,
+      tubularSegments = 20
+    ) {
+      const geometry = new THREE.TorusGeometry(
+        radius,
+        tube,
+        radialSegments,
+        tubularSegments
+      );
+
+      const mesh = addMesh(geometry, material, name);
+      mesh.position.copy(position);
+      return mesh;
+    }
+
+    // -------------------------------------------------------------------------
+    // Foundation, water, and threshold
+    // -------------------------------------------------------------------------
+
+    const foundation = addMesh(
+      chamferBox(5.8, 0.42, 3.35, 0.13),
+      materials.concrete,
+      "Foundation_Slab"
+    );
+    foundation.position.set(0, 0, 0);
+
+    const upperFoundation = addMesh(
+      chamferBox(5.58, 0.16, 3.15, 0.07),
+      materials.concreteDark,
+      "Foundation_Upper_Cap"
+    );
+    upperFoundation.position.set(0, 0.25, 0);
+
+    const waterGeometry = new THREE.PlaneGeometry(
+      5.18,
+      2.78,
+      10,
+      5
+    );
+
+    waterGeometry.rotateX(-Math.PI / 2);
+
+    const waterPositions = waterGeometry.attributes.position;
+    for (let i = 0; i < waterPositions.count; i++) {
+      const x = waterPositions.getX(i);
+      const z = waterPositions.getZ(i);
+      const wave =
+        Math.sin(x * 1.35 + z * 0.8) * 0.035 +
+        Math.cos(z * 1.8 - x * 0.45) * 0.018;
+
+      waterPositions.setY(i, 0.34 + wave);
+    }
+
+    waterPositions.needsUpdate = true;
+
+    const water = addMesh(
+      waterGeometry,
+      materials.water,
+      "Submerged_Water_Surface"
+    );
+    water.castShadow = false;
+    water.receiveShadow = false;
+    water.renderOrder = 1;
+
+    const thresholdStripes = addMesh(
+      new THREE.BoxGeometry(0.18, 0.055, 0.38),
+      materials.brass,
+      "Threshold_Warning_Stripes"
+    );
+
+    for (let i = -3; i <= 3; i++) {
+      const stripe = thresholdStripes.clone();
+      stripe.name = `Threshold_Warning_Stripe_${i + 4}`;
+      stripe.position.set(i * 0.22, 0.365, 1.48);
+      stripe.rotation.y = 0.48;
+      asset.add(stripe);
+    }
+
+    // -------------------------------------------------------------------------
+    // Heavy square pressure frame
+    // -------------------------------------------------------------------------
+
+    const leftPillar = addMesh(
+      chamferBox(0.7, 3.22, 0.88, 0.11),
+      materials.concrete,
+      "Pressure_Frame_Left_Pillar"
+    );
+    leftPillar.position.set(-2.16, 1.87, 0);
+
+    const rightPillar = addMesh(
+      chamferBox(0.7, 3.22, 0.88, 0.11),
+      materials.concrete,
+      "Pressure_Frame_Right_Pillar"
+    );
+    rightPillar.position.set(2.16, 1.87, 0);
+
+    const lintel = addMesh(
+      chamferBox(5.62, 0.7, 0.9, 0.12),
+      materials.concrete,
+      "Pressure_Frame_Lintel"
+    );
+    lintel.position.set(0, 3.56, 0);
+
+    const rearBase = addMesh(
+      chamferBox(4.9, 0.26, 1.25, 0.08),
+      materials.concreteDark,
+      "Rear_Frame_Base"
+    );
+    rearBase.position.set(0, 0.4, -0.55);
+
+    // Inner frame trim.
+    const leftTrim = addMesh(
+      new THREE.BoxGeometry(0.12, 2.95, 0.94),
+      materials.steelDark,
+      "Inner_Frame_Left_Trim"
+    );
+    leftTrim.position.set(-1.77, 1.88, 0);
+
+    const rightTrim = addMesh(
+      new THREE.BoxGeometry(0.12, 2.95, 0.94),
+      materials.steelDark,
+      "Inner_Frame_Right_Trim"
+    );
+    rightTrim.position.set(1.77, 1.88, 0);
+
+    const topTrim = addMesh(
+      new THREE.BoxGeometry(3.72, 0.12, 0.94),
+      materials.steelDark,
+      "Inner_Frame_Top_Trim"
+    );
+    topTrim.position.set(0, 3.25, 0);
+
+    // -------------------------------------------------------------------------
+    // Door and pressure seal
+    // -------------------------------------------------------------------------
+
+    const door = cylinderZ(
+      1.35,
+      1.35,
+      0.28,
+      20,
+      materials.teal,
+      "Pressure_Door",
+      new THREE.Vector3(0, 1.95, 0.08)
+    );
+
+    const rearDoor = cylinderZ(
+      1.31,
+      1.31,
+      0.18,
+      20,
+      materials.steelDark,
+      "Pressure_Door_Rear_Plates",
+      new THREE.Vector3(0, 1.95, -0.1)
+    );
+
+    torus(
+      1.42,
+      0.19,
+      materials.steelDark,
+      "Heavy_Outer_Pressure_Seal",
+      new THREE.Vector3(0, 1.95, 0.24),
+      6,
+      24
+    );
+
+    torus(
+      1.355,
+      0.075,
+      materials.rubber,
+      "Door_Inner_Gasket",
+      new THREE.Vector3(0, 1.95, 0.33),
+      6,
+      24
+    );
+
+    torus(
+      1.28,
+      0.055,
+      materials.brass,
+      "Outer_Metal_Band",
+      new THREE.Vector3(0, 1.95, 0.37),
+      6,
+      24
+    );
+
+    // Radial reinforcement plates.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const plate = addMesh(
+        new THREE.BoxGeometry(0.62, 0.14, 0.065),
+        materials.steel,
+        `Door_Radial_Plate_${i + 1}`
+      );
+
+      plate.position.set(
+        Math.cos(angle) * 0.82,
+        1.95 + Math.sin(angle) * 0.82,
+        0.375
+      );
+      plate.rotation.z = angle;
+    }
+
+    // -------------------------------------------------------------------------
+    // Locking hardware
+    // -------------------------------------------------------------------------
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const x = Math.cos(angle) * 1.18;
+      const y = 1.95 + Math.sin(angle) * 1.18;
+
+      const bolt = cylinderZ(
+        0.105,
+        0.105,
+        0.13,
+        6,
+        materials.brass,
+        `Locking_Bolt_Hex_${i + 1}`,
+        new THREE.Vector3(x, y, 0.45)
+      );
+
+      bolt.rotation.z = angle;
+
+      const shaft = cylinderZ(
+        0.045,
+        0.045,
+        0.22,
+        8,
+        materials.steel,
+        `Locking_Bolt_Shaft_${i + 1}`,
+        new THREE.Vector3(x, y, 0.39)
+      );
+
+      shaft.rotation.z = angle;
+    }
+
+    // Four smaller portholes, offset between the main locking bolts.
+    for (let i = 0; i < 4; i++) {
+      const angle = Math.PI / 4 + (i / 4) * Math.PI * 2;
+      const x = Math.cos(angle) * 0.87;
+      const y = 1.95 + Math.sin(angle) * 0.87;
+
+      torus(
+        0.205,
+        0.055,
+        materials.brass,
+        `Porthole_Rim_${i + 1}`,
+        new THREE.Vector3(x, y, 0.41),
+        6,
+        12
+      );
+
+      const lens = addMesh(
+        new THREE.CircleGeometry(0.145, 12),
+        materials.glass,
+        `Porthole_Lens_${i + 1}`
+      );
+      lens.position.set(x, y, 0.365);
+      lens.castShadow = false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Central operating wheel
+    // -------------------------------------------------------------------------
+
+    const wheel = torus(
+      0.53,
+      0.078,
+      materials.rust,
+      "Operating_Wheel_Rim",
+      new THREE.Vector3(0, 1.95, 0.56),
+      6,
+      18
+    );
+
+    const wheelInner = torus(
+      0.31,
+      0.038,
+      materials.brass,
+      "Operating_Wheel_Inner_Ring",
+      new THREE.Vector3(0, 1.95, 0.565),
+      6,
+      16
+    );
+
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      const start = new THREE.Vector3(
+        Math.cos(angle) * 0.1,
+        1.95 + Math.sin(angle) * 0.1,
+        0.57
+      );
+      const end = new THREE.Vector3(
+        Math.cos(angle) * 0.49,
+        1.95 + Math.sin(angle) * 0.49,
+        0.57
+      );
+
+      cylinderBetween(
+        start,
+        end,
+        0.038,
+        materials.brass,
+        `Operating_Wheel_Spoke_${i + 1}`,
+        8
+      );
+    }
+
+    const wheelHub = cylinderZ(
+      0.16,
+      0.16,
+      0.19,
+      10,
+      materials.steel,
+      "Operating_Wheel_Hub",
+      new THREE.Vector3(0, 1.95, 0.58)
+    );
+
+    const wheelCenter = cylinderZ(
+      0.085,
+      0.085,
+      0.23,
+      8,
+      materials.brass,
+      "Operating_Wheel_Center_Cap",
+      new THREE.Vector3(0, 1.95, 0.62)
+    );
+
+    // -------------------------------------------------------------------------
+    // Pressure pipes and couplings
+    // -------------------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      const pipeX = side * 2.37;
+
+      const pipe = addMesh(
+        new THREE.CylinderGeometry(0.16, 0.16, 2.95, 10),
+        materials.teal,
+        side < 0 ? "Left_Pressure_Pipe" : "Right_Pressure_Pipe"
+      );
+      pipe.position.set(pipeX, 1.84, 0.02);
+
+      const lowerCap = addMesh(
+        new THREE.CylinderGeometry(0.21, 0.21, 0.2, 10),
+        materials.steelDark,
+        side < 0 ? "Left_Lower_Pipe_Coupling" : "Right_Lower_Pipe_Coupling"
+      );
+      lowerCap.position.set(pipeX, 0.62, 0.02);
+
+      const upperCap = addMesh(
+        new THREE.CylinderGeometry(0.21, 0.21, 0.2, 10),
+        materials.steelDark,
+        side < 0 ? "Left_Upper_Pipe_Coupling" : "Right_Upper_Pipe_Coupling"
+      );
+      upperCap.position.set(pipeX, 3.08, 0.02);
+
+      for (const y of [0.92, 2.45]) {
+        const band = torus(
+          0.18,
+          0.032,
+          materials.brass,
+          side < 0 ? "Left_Pipe_Band" : "Right_Pipe_Band",
+          new THREE.Vector3(pipeX, y, 0.02),
+          6,
+          12
+        );
+        band.rotation.x = Math.PI / 2;
+      }
+
+      const sideGate Valve = cylinderZ(
+        0.24,
+        0.24,
+        0.18,
+        10,
+        materials.rust,
+        side < 0 ? "Left_Valve_Handle" : "Right_Valve_Handle",
+        new THREE.Vector3(side * 2.37, 1.95, 0.23)
+      );
+
+      const valveStem = cylinderBetween(
+        new THREE.Vector3(side * 2.37, 1.95, 0.15),
+        new THREE.Vector3(side * 2.37, 1.95, 0.39),
+        0.055,
+        materials.steel,
+        side < 0 ? "Left_Valve_Stem" : "Right_Valve_Stem",
+        8
+      );
+    }
+
+    cylinderBetween(
+      new THREE.Vector3(-2.37, 3.43, 0.04),
+      new THREE.Vector3(2.37, 3.43, 0.04),
+      0.14,
+      materials.teal,
+      "Top_Pressure_Conduit",
+      10
+    );
+
+    // Rear diagonal braces.
+    cylinderBetween(
+      new THREE.Vector3(-2.13, 2.85, -0.34),
+      new THREE.Vector3(-1.0, 1.92, -0.34),
+      0.085,
+      materials.steelDark,
+      "Left_Rear_Diagonal_Brace",
+      8
+    );
+
+    cylinderBetween(
+      new THREE.Vector3(2.13, 2.85, -0.34),
+      new THREE.Vector3(1.0, 1.92, -0.34),
+      0.085,
+      materials.steelDark,
+      "Right_Rear_Diagonal_Brace",
+      8
+    );
+
+    // -------------------------------------------------------------------------
+    // Header plaque
+    // -------------------------------------------------------------------------
+
+    const plaqueHost = addMesh(
+      chamferBox(2.78, 0.58, 0.14, 0.065),
+      materials.steelDark,
+      "Pressure_Gate_Plaque_Housing"
+    );
+    plaqueHost.position.set(0, 3.56, 0.51);
+
+    const plaqueCanvas = document.createElement("canvas");
+    plaqueCanvas.width = 1024;
+    plaqueCanvas.height = 256;
+
+    const plaqueContext = plaqueCanvas.getContext("2d");
+
+    plaqueContext.fillStyle = "#0b1b22";
+    plaqueContext.fillRect(0, 0, 1024, 256);
+
+    plaqueContext.strokeStyle = "#d1a24f";
+    plaqueContext.lineWidth = 9;
+    plaqueContext.strokeRect(12, 12, 1000, 232);
+
+    plaqueContext.fillStyle = "#e3b85f";
+    plaqueContext.fillRect(36, 35, 952, 7);
+
+    plaqueContext.fillStyle = "#d9e8e7";
+    plaqueContext.font = "700 78px monospace";
+    plaqueContext.textBaseline = "middle";
+    plaqueContext.fillText("PRESSURE GATE", 55, 112);
+
+    plaqueContext.fillStyle = "#73d8e3";
+    plaqueContext.font = "600 31px monospace";
+    plaqueContext.fillText("MAXAC 07  /  AIDE 4.8 BAR", 58, 180);
+
+    plaqueContext.fillStyle = "#d9a24f";
+    plaqueContext.font = "700 23px monospace";
+    plaqueContext.fillText("RATING: 1200m / 600m", 58, 220);
+
+    const plaqueTexture = new THREE.CanvasTexture(plaqueCanvas);
+    plaqueTexture.colorSpace = THREE.SRGBColorSpace;
+    plaqueTexture.anisotropy = Math.min(
+      8,
+      renderer.capabilities.getMaxAnisotropy()
+    );
+
+    const plaqueFaceMaterial = new THREE.MeshBasicMaterial({
+      map: plaqueTexture,
+      emissiveMap: plaqueTexture,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.28,
+      side: THREE.DoubleSide
+    });
+
+    const plaqueFace = addMesh(
+      new THREE.PlaneGeometry(2.61, 0.46),
+      plaqueFaceMaterial,
+      "Pressure_Gate_Plaque_Face"
+    );
+    plaqueFace.position.set(0, 3.56, 0.585);
+
+    // -------------------------------------------------------------------------
+    // Small pressure gauge
+    // -------------------------------------------------------------------------
+
+    const gaugeHousing = cylinderZ(
+      0.21,
+      0.21,
+      0.12,
+      12,
+      materials.brass,
+      "Pressure_Gauge_Housing",
+      new THREE.Vector3(1.93, 3.56, 0.55)
+    );
+
+    const gaugeFace = addMesh(
+      new THREE.CircleGeometry(0.16, 16),
+      materials.glass,
+      "Pressure_Gauge_Face",
+      asset
+    );
+    gaugeFace.position.set(1.93, 3.56, 0.615);
+    gaugeFace.castShadow = false;
+
+    torus(
+      0.175,
+      0.032,
+      materials.rust,
+      "Pressure_Gauge_Rim",
+      new THREE.Vector3(1.93, 3.56, 0.625),
+      6,
+      16
+    );
+
+    for (let i = 0; i < 8; i++) {
+      const angle = -0.85 + (i / 7) * 1.7;
+      const tick = addMesh(
+        new THREE.BoxGeometry(0.018, 0.045, 0.015),
+        materials.steelDark,
+        `Gauge_Tick_${i + 1}`
+      );
+
+      tick.position.set(
+        1.93 + Math.cos(angle) * 0.125,
+        3.56 + Math.sin(angle) * 0.125,
+        0.63
+      );
+      tick.rotation.z = angle - Math.PI / 2;
+    }
+
+    const needle = addMesh(
+      new THREE.BoxGeometry(0.023, 0.12, 0.018),
+      materials.rust,
+      "Pressure_Gauge_Needle"
+    );
+    needle.position.set(1.93, 3.59, 0.64);
+    needle.rotation.z = -0.58;
+
+    // -------------------------------------------------------------------------
+    // Rocks and seabed debris
+    // -------------------------------------------------------------------------
+
+    let randomSeed = 9137;
+    function random() {
+      randomSeed = (randomSeed * 16807) % 2147483647;
+      return (randomSeed - 1) / 2147483646;
+    }
+
+    for (let i = 0; i < 18; i++) {
+      const side = random() > 0.5 ? 1 : -1;
+      const rock = addMesh(
+        new THREE.IcosahedronGeometry(0.18 + random() * 0.28, 0),
+        i % 3 === 0 ? materials.rockDark : materials.rock,
+        `Seabed_Rock_${i + 1}`
+      );
+
+      rock.position.set(
+        side * (2.35 + random() * 0.85),
+        0.3 + random() * 0.15,
+        -1.25 + random() * 2.5
+      );
+
+      rock.scale.set(
+        0.75 + random() * 0.8,
+        0.45 + random() * 0.55,
+        0.7 + random() * 0.8
+      );
+
+      rock.rotation.set(
+        random() * Math.PI,
+        random() * Math.PI,
+        random() * Math.PI
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Seaweed and small submerged vegetation
+    // -------------------------------------------------------------------------
+
+    for (let i = 0; i < 15; i++) {
+      const side = random() > 0.5 ? 1 : -1;
+      const height = 0.45 + random() * 0.75;
+      const blade = addMesh(
+        new THREE.ConeGeometry(0.1, height, 4),
+        i % 2 === 0 ? materials.seaweed : materials.seaweedLight,
+        `Seaweed_Blade_${i + 1}`
+      );
+
+      blade.position.set(
+        side * (2.25 + random() * 0.65),
+        0.48 + height * 0.2,
+        -1.1 + random() * 2.2
+      );
+
+      blade.scale.x = 0.35 + random() * 0.25;
+      blade.rotation.z = side * (0.12 + random() * 0.24);
+      blade.rotation.x = (random() - 0.5) * 0.3;
+    }
+
+    // Small barnacle clusters.
+    for (let i = 0; i < 11; i++) {
+      const side = random() > 0.5 ? 1 : -1;
+      const cluster = addMesh(
+        new THREE.IcosahedronGeometry(0.07 + random() * 0.06, 0),
+        materials.rust,
+        `Barnacle_Cluster_${i + 1}`
+      );
+
+      cluster.position.set(
+        side * (1.95 + random() * 0.5),
+        0.42,
+        -1.1 + random() * 2.2
+      );
+
+      cluster.scale.set(1.0, 0.6, 0.8);
+    }
+
+    // Static bubbles above the gate.
+    for (let i = 0; i < 11; i++) {
+      const bubble = addMesh(
+        new THREE.IcosahedronGeometry(0.035 + random() * 0.065, 1),
+        materials.bubble,
+        `Static_Bubble_${i + 1}`
+      );
+
+      bubble.position.set(
+        -2.3 + random() * 4.6,
+        0.75 + random() * 2.8,
+        -1.1 + random() * 2.2
+      );
+
+      bubble.scale.y = 1.4 + random() * 1.4;
+      bubble.castShadow = false;
+      bubble.renderOrder = 2;
+    }
+
+    // -------------------------------------------------------------------------
+    // Export GLB
+    // -------------------------------------------------------------------------
+
+    const exportButton = document.querySelector("#exportButton");
+    const status = document.querySelector("#status");
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building GLB…";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "subsea-pressure-gate.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
+
+          status.textContent = "GLB exported successfully";
+          exportButton.disabled = false;
+        },
+        (error) => {
+          console.error("GLB export failed:", error);
+          status.textContent = "Export failed — see console";
+          exportButton.disabled = false;
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: true,
+          maxTextureSize: 2048
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Render loop
+    // -------------------------------------------------------------------------
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+  </script>
+</body>
+</html>

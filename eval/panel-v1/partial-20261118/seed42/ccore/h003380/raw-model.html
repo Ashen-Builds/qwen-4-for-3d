@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Balance Puzzle Platform</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --panel: rgba(15, 27, 40, 0.88);
+      --border: rgba(255, 255, 255, 0.12);
+      --accent: #43a7e8;
+      --accent-dark: #1769aa;
+      --text: #eef7ff;
+      --muted: #9eb0c2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #dce6ef;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: 0 16px 45px rgba(16, 31, 47, 0.2);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .info {
+      top: 22px;
+      left: 22px;
+      width: min(350px, calc(100vw - 44px));
+      padding: 18px 20px;
+      border-radius: 16px;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 7px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(21px, 3vw, 29px);
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .description {
+      margin: 10px 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tag {
+      padding: 5px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.055);
+      color: #d8e8f6;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .actions {
+      top: 22px;
+      right: 22px;
+      display: flex;
+      gap: 9px;
+      padding: 9px;
+      border-radius: 14px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 9px;
+      background: rgba(255, 255, 255, 0.075);
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition:
+        transform 120ms ease,
+        background 120ms ease,
+        border-color 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.primary {
+      border-color: #4a9ed8;
+      background: var(--accent);
+      color: #08253b;
+      box-shadow: 0 6px 18px rgba(35, 126, 205, 0.28);
+    }
+
+    button.primary:hover {
+      background: #58b9f0;
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    .hint {
+      position: fixed;
+      z-index: 10;
+      left: 50%;
+      bottom: 20px;
+      padding: 9px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      background: rgba(15, 27, 40, 0.78);
+      color: #d8e8f6;
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: 0.025em;
+      transform: translateX(-50%);
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+      white-space: nowrap;
+    }
+
+    #status {
+      position: fixed;
+      z-index: 20;
+      right: 24px;
+      bottom: 22px;
+      max-width: min(340px, calc(100vw - 48px));
+      padding: 10px 13px;
+      border-radius: 9px;
+      background: rgba(15, 27, 40, 0.9);
+      color: #d8e8f6;
+      font-size: 12px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+      pointer-events: none;
+    }
+
+    #status.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 680px) {
+      .info {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 14px 16px;
+      }
+
+      .description {
+        display: none;
+      }
+
+      .actions {
+        top: auto;
+        right: 12px;
+        bottom: 52px;
+      }
+
+      .hint {
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel info">
+    <div class="eyebrow">Godot Game Asset</div>
+    <h1>Balance Puzzle Platform</h1>
+    <p class="description">
+      A static, low-poly industrial balance puzzle with a weighted base,
+      blue steel I-beam, central pivot, broad left platform, and two smaller
+      right platforms.
+    </p>
+    <div class="tags">
+      <span class="tag">Low Poly</span>
+      <span class="tag">Static</span>
+      <span class="tag">PBR Materials</span>
+      <span class="tag">GLB Ready</span>
+    </div>
+  </section>
+
+  <nav class="panel actions">
+    <button id="resetView" type="button">Reset View</button>
+    <button id="exportButton" class="primary" type="button">Export GLB</button>
+  </nav>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const resetViewButton = document.getElementById("resetView");
+    const statusElement = document.getElementById("status");
+
+    // ------------------------------------------------------------------
+    // Renderer, camera, and lighting
+    // ------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdce6ef);
+    scene.fog = new THREE.Fog(0xdce6ef, 13, 27);
+
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const initialCameraPosition = new THREE.Vector3(6.5, 5.25, 7.5);
+    const initialTarget = new THREE.Vector3(-0.1, 1.02, 0);
+
+    camera.position.copy(initialCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(initialTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 4.2;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+    controls.saveState();
+
+    const hemisphereLight = new THREE.HemisphereLight(
+      0xe8f7ff,
+      0x596576,
+      2.15
+    );
+    scene.add(hemisphereLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.6);
+    keyLight.position.set(4.5, 7.5, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -6;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 22;
+    keyLight.shadow.bias = -0.00035;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xa8d8ff, 1.35);
+    fillLight.position.set(-5, 3.5, -4);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    rimLight.position.set(0, 4, -6);
+    scene.add(rimLight);
+
+    // Preview-only floor and grid. These are not included in the GLB.
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(200, 200),
+      new THREE.MeshStandardMaterial({
+        color: 0xe4ecef,
+        roughness: 0.94,
+        metalness: 0.02
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.012;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(20, 40, 0x8296aa, 0xb7c5d2);
+    grid.position.y = 0.002;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.22;
+    scene.add(grid);
+
+    // ------------------------------------------------------------------
+    // Exportable asset
+    // ------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "BalancePuzzlePlatform";
+    asset.userData = {
+      assetType: "Static balance puzzle platform",
+      intendedEngine: "Godot",
+      polyStyle: "Low-poly",
+      units: "meters"
+    };
+    scene.add(asset);
+
+    const materials = {
+      base: new THREE.MeshStandardMaterial({
+        name: "Base_SlateSteel",
+        color: 0x173149,
+        metalness: 0.72,
+        roughness: 0.43,
+        flatShading: true
+      }),
+      steel: new THREE.MeshStandardMaterial({
+        name: "Steel_Blue",
+        color: 0x1e6eaa,
+        metalness: 0.76,
+        roughness: 0.32,
+        flatShading: true
+      }),
+      steelLight: new THREE.MeshStandardMaterial({
+        name: "Steel_BlueLight",
+        color: 0x3b8bc8,
+        metalness: 0.7,
+        roughness: 0.3,
+        flatShading: true
+      }),
+      steelDark: new THREE.MeshStandardMaterial({
+        name: "Steel_Dark",
+        color: 0x102f4b,
+        metalness: 0.78,
+        roughness: 0.38,
+        flatShading: true
+      }),
+      silver: new THREE.MeshStandardMaterial({
+        name: "Bolt_Steel",
+        color: 0xb9c8d4,
+        metalness: 0.9,
+        roughness: 0.23,
+        flatShading: true
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        name: "Rubber",
+        color: 0x101820,
+        metalness: 0.05,
+        roughness: 0.88,
+        flatShading: true
+      }),
+      accent: new THREE.MeshStandardMaterial({
+        name: "Safety_Orange",
+        color: 0xf09a3c,
+        metalness: 0.25,
+        roughness: 0.34,
+        flatShading: true
+      })
+    };
+
+    function addMesh(geometry, material, name, position, rotation = [0, 0, 0]) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.set(...position);
+      mesh.rotation.set(...rotation);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      asset.add(mesh);
+      return mesh;
+    }
+
+    function roundedBox(
+      width,
+      height,
+      depth,
+      radius,
+      material,
+      name,
+      position,
+      rotation = [0, 0, 0]
+    ) {
+      const geometry = new RoundedBoxGeometry(
+        width,
+        height,
+        depth,
+        1,
+        radius
+      );
+      return addMesh(
+        geometry,
+        material,
+        name,
+        position,
+        rotation
+      );
+    }
+
+    function cylinder(
+      radiusTop,
+      radiusBottom,
+      height,
+      material,
+      name,
+      position,
+      rotation = [0, 0, 0],
+      radialSegments = 12
+    ) {
+      const geometry = new THREE.CylinderGeometry(
+        radiusTop,
+        radiusBottom,
+        height,
+        radialSegments,
+        1,
+        false
+      );
+      return addMesh(
+        geometry,
+        material,
+        name,
+        position,
+        rotation
+      );
+    }
+
+    // Weighted base
+    roundedBox(
+      4.7,
+      0.18,
+      2.14,
+      0.075,
+      materials.rubber,
+      "Base_RubberFoot",
+      [0, 0.08, 0]
+    );
+
+    roundedBox(
+      4.38,
+      0.44,
+      1.86,
+      0.105,
+      materials.base,
+      "Base_WeightedBody",
+      [0, 0.34, 0]
+    );
+
+    roundedBox(
+      4.02,
+      0.12,
+      1.54,
+      0.05,
+      materials.steelDark,
+      "Base_TopInset",
+      [0, 0.61, 0]
+    );
+
+    // Anchor bolts
+    const anchorPositions = [
+      [-1.72, 0.70, -0.66],
+      [-1.72, 0.70, 0.66],
+      [1.72, 0.70, -0.66],
+      [1.72, 0.70, 0.66]
+    ];
+
+    anchorPositions.forEach((position, index) => {
+      cylinder(
+        0.105,
+        0.115,
+        0.09,
+        materials.silver,
+        `Base_AnchorBolt_${index + 1}`,
+        position,
+        [0, 0, 0],
+        6
+      );
+
+      cylinder(
+        0.047,
+        0.047,
+        0.025,
+        materials.steelDark,
+        `Base_AnchorSlot_${index + 1}`,
+        [position[0], 0.752, position[2]],
+        [0, 0, 0],
+        6
+      );
+    });
+
+    // Small recessed front identification panel
+    roundedBox(
+      0.88,
+      0.17,
+      0.045,
+      0.025,
+      materials.steelDark,
+      "Base_FrontPanel",
+      [-1.18, 0.35, 0.946]
+    );
+
+    roundedBox(
+      0.24,
+      0.055,
+      0.025,
+      0.012,
+      materials.accent,
+      "Base_FrontIndicator_Left",
+      [-1.38, 0.35, 0.976]
+    );
+
+    roundedBox(
+      0.24,
+      0.055,
+      0.025,
+      0.012,
+      materials.accent,
+      "Base_FrontIndicator_Right",
+      [-1.08, 0.35, 0.976]
+    );
+
+    // Central support pedestal
+    roundedBox(
+      0.72,
+      0.8,
+      0.68,
+      0.09,
+      materials.steel,
+      "Pivot_SupportPedestal",
+      [0, 0.96, 0]
+    );
+
+    roundedBox(
+      0.46,
+      0.39,
+      0.055,
+      0.025,
+      materials.steelDark,
+      "Pivot_SupportBadge",
+      [0, 0.98, 0.36]
+    );
+
+    roundedBox(
+      0.11,
+      0.17,
+      0.025,
+      0.012,
+      materials.accent,
+      "Pivot_SupportBadge_Marker",
+      [0, 1.02, 0.397]
+    );
+
+    // Broad left platform
+    roundedBox(
+      1.68,
+      0.18,
+      0.92,
+      0.065,
+      materials.steelDark,
+      "Left_Platform_Support",
+      [-1.28, 1.49, 0]
+    );
+
+    roundedBox(
+      1.64,
+      0.18,
+      1.2,
+      0.065,
+      materials.steel,
+      "Left_Platform",
+      [-1.28, 1.67, 0]
+    );
+
+    roundedBox(
+      1.31,
+      0.035,
+      0.88,
+      0.015,
+      materials.steelLight,
+      "Left_Platform_Inset",
+      [-1.28, 1.777, 0]
+    );
+
+    const leftBoltPositions = [
+      [-1.79, 1.805, -0.43],
+      [-1.79, 1.805, 0.43],
+      [-0.77, 1.805, -0.43],
+      [-0.77, 1.805, 0.43]
+    ];
+
+    leftBoltPositions.forEach((position, index) => {
+      cylinder(
+        0.052,
+        0.052,
+        0.04,
+        materials.silver,
+        `Left_Platform_Bolt_${index + 1}`,
+        position,
+        [0, 0, 0],
+        6
+      );
+    });
+
+    // Two smaller right platforms
+    function createRightPlatform(index, x, length, width, height, name) {
+      roundedBox(
+        length,
+        0.17,
+        width,
+        0.055,
+        materials.steelDark,
+        `${name}_Support`,
+        [x, 1.49, 0]
+      );
+
+      roundedBox(
+        length,
+        0.16,
+        width,
+        0.055,
+        materials.steel,
+        `${name}_Platform`,
+        [x, height, 0]
+      );
+
+      roundedBox(
+        length - 0.15,
+        0.03,
+        width - 0.15,
+        0.012,
+        materials.steelLight,
+        `${name}_Inset`,
+        [x, height + 0.092, 0]
+      );
+
+      const boltOffsets = [
+        [-length * 0.34, -width * 0.34],
+        [-length * 0.34, width * 0.34],
+        [length * 0.34, -width * 0.34],
+        [length * 0.34, width * 0.34]
+      ];
+
+      boltOffsets.forEach((offset, index) => {
+        cylinder(
+          0.043,
+          0.043,
+          0.035,
+          materials.silver,
+          `${name}_Bolt_${index + 1}`,
+          [
+            x + offset[0],
+            height + 0.112,
+            offset[1]
+          ],
+          [0, 0, 0],
+          6
+        );
+      });
+    }
+
+    createRightPlatform(
+      1,
+      0.79,
+      0.8,
+      1.02,
+      1.65,
+      "Right_Platform_Inner"
+    );
+
+    createRightPlatform(
+      2,
+      1.42,
+      0.56,
+      0.78,
+      1.625,
+      "Right_Platform_Outer"
+    );
+
+    // Continuous blue steel I-beam
+    roundedBox(
+      3.92,
+      0.2,
+      0.36,
+      0.045,
+      materials.steel,
+      "I_Beam_Web",
+      [-0.16, 1.21, 0]
+    );
+
+    roundedBox(
+      3.92,
+      0.14,
+      0.1,
+      0.03,
+      materials.steel,
+      "I_Beam_FrontFlange",
+      [-0.16, 1.24, 0.255]
+    );
+
+    roundedBox(
+      3.92,
+      0.14,
+      0.1,
+      0.03,
+      materials.steel,
+      "I_Beam_BackFlange",
+      [-0.16, 1.24, -0.255]
+    );
+
+    roundedBox(
+      3.72,
+      0.028,
+      0.27,
+      0.01,
+      materials.steelDark,
+      "I_Beam_TopWearStrip",
+      [-0.16, 1.326, 0]
+    );
+
+    // Central pivot housing
+    cylinder(
+      0.405,
+      0.405,
+      0.78,
+      materials.steel,
+      "Pivot_CentralHousing",
+      [0, 1.46, 0],
+      [Math.PI / 2, 0, 0],
+      16
+    );
+
+    cylinder(
+      0.335,
+      0.335,
+      0.08,
+      materials.steelLight,
+      "Pivot_FrontCap",
+      [0, 1.46, 0.435],
+      [Math.PI / 2, 0, 0],
+      16
+    );
+
+    cylinder(
+      0.285,
+      0.285,
+      0.08,
+      materials.steelDark,
+      "Pivot_RearCap",
+      [0, 1.46, -0.435],
+      [Math.PI / 2, 0, 0],
+      16
+    );
+
+    cylinder(
+      0.12,
+      0.12,
+      0.105,
+      materials.silver,
+      "Pivot_FrontBolt",
+      [0, 1.46, 0.515],
+      [Math.PI / 2, 0, 0],
+      10
+    );
+
+    cylinder(
+      0.06,
+      0.06,
+      0.035,
+      materials.accent,
+      "Pivot_OrangeIndicator",
+      [0, 1.46, 0.582],
+      [Math.PI / 2, 0, 0],
+      10
+    );
+
+    // Make sure the exported meshes have sensible shadow settings.
+    asset.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
+
+    // ------------------------------------------------------------------
+    // Interaction and export
+    // ------------------------------------------------------------------
+
+    resetViewButton.addEventListener("click", () => {
+      camera.position.copy(initialCameraPosition);
+      controls.target.copy(initialTarget);
+      controls.update();
+    });
+
+    function showStatus(message, duration = 2600) {
+      statusElement.textContent = message;
+      statusElement.classList.add("visible");
+
+      window.clearTimeout(showStatus.timeoutId);
+      showStatus.timeoutId = window.setTimeout(() => {
+        statusElement.classList.remove("visible");
+      }, duration);
+    }
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting…";
+      showStatus("Building binary GLB…", 10000);
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        asset,
+        (result) => {
+          if (!(result instanceof ArrayBuffer)) {
+            exportButton.disabled = false;
+            exportButton.textContent = "Export GLB";
+            showStatus("Unexpected GLB exporter result.", 5000);
+            return;
+          }
+
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "balance-puzzle-platform.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          window.setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1500);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          showStatus("balance-puzzle-platform.glb downloaded.", 4000);
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          showStatus("GLB export failed. Check the browser console.", 5000);
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 4096
+        }
+      );
+    });
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

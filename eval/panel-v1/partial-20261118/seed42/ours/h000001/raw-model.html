@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medieval Shepherd Wright</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #101722;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      top: 22px;
+      left: 22px;
+      width: min(360px, calc(100vw - 44px));
+      padding: 18px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 14px;
+      background: rgba(15, 22, 31, 0.84);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      color: #f3ead6;
+      font-family: Georgia, serif;
+      font-size: 25px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 0 0 15px;
+      color: #aeb9c6;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px 16px;
+      border: 1px solid #c79a52;
+      border-radius: 8px;
+      color: #20180d;
+      background: linear-gradient(#e5bc75, #bd8944);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 750;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    button:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #hint {
+      position: fixed;
+      z-index: 10;
+      right: 22px;
+      bottom: 18px;
+      padding: 8px 11px;
+      border-radius: 7px;
+      color: #aeb9c6;
+      background: rgba(15, 22, 31, 0.72);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 14px 16px;
+      }
+
+      h1 {
+        font-size: 21px;
+      }
+
+      .subtitle {
+        margin-bottom: 10px;
+      }
+
+      #hint {
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <h1>Medieval Shepherd Wright</h1>
+    <p class="subtitle">
+      A low-poly medieval shipwright with a green shirt, leather apron,
+      brass compass, lantern, and weathered beard.
+    </p>
+    <button id="exportButton" type="button">Export GLB</button>
+  </section>
+
+  <div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+
+    // ------------------------------------------------------------
+    // Renderer, camera, and controls
+    // ------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x101722);
+    scene.fog = new THREE.Fog(0x101722, 8, 18);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(4.6, 3.35, 6.7);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.65, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 3.4;
+    controls.maxDistance = 10;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // ------------------------------------------------------------
+    // Lighting
+    // ------------------------------------------------------------
+
+    scene.add(new THREE.HemisphereLight(0xb9d8ff, 0x332218, 1.7));
+
+    const keyLight = new THREE.DirectionalLight(0xffe5bd, 3.4);
+    keyLight.position.set(4, 7, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x8db9ff, 2.2);
+    rimLight.position.set(-4, 4, -5);
+    scene.add(rimLight);
+
+    const lanternLight = new THREE.PointLight(0xffb347, 2.3, 3.5, 2);
+    lanternLight.position.set(-1.0, 1.25, 0.55);
+    scene.add(lanternLight);
+
+    // ------------------------------------------------------------
+    // Character root: only this group is exported
+    // ------------------------------------------------------------
+
+    const character = new THREE.Group();
+    character.name = "Medieval_Shepherd_Bright";
+    scene.add(character);
+
+    const materials = {
+      skin: new THREE.MeshStandardMaterial({
+        color: 0xd8a276,
+        roughness: 0.88,
+        metalness: 0,
+        flatShading: true
+      }),
+      skinDark: new THREE.MeshStandardMaterial({
+        color: 0x9b6847,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+      hair: new THREE.MeshStandardMaterial({
+        color: 0x3d281d,
+        roughness: 0.96,
+        metalness: 0,
+        flatShading: true
+      }),
+      beard: new THREE.MeshStandardMaterial({
+        color: 0x5a3824,
+        roughness: 0.96,
+        metalness: 0,
+        flatShading: true
+      }),
+      shirt: new THREE.MeshStandardMaterial({
+        color: 0x315e4b,
+        roughness: 0.85,
+        metalness: 0,
+        flatShading: true
+      }),
+      shirtDark: new THREE.MeshStandardMaterial({
+        color: 0x234638,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+      leather: new THREE.MeshStandardMaterial({
+        color: 0x68422a,
+        roughness: 0.88,
+        metalness: 0,
+        flatShading: true
+      }),
+      leatherDark: new THREE.MeshStandardMaterial({
+        color: 0x3d291b,
+        roughness: 0.92,
+        metalness: 0,
+        flatShading: true
+      }),
+      leatherLight: new THREE.MeshStandardMaterial({
+        color: 0x89603a,
+        roughness: 0.85,
+        metalness: 0,
+        flatShading: true
+      }),
+      brass: new THREE.MeshStandardMaterial({
+        color: 0xb9893d,
+        roughness: 0.42,
+        metalness: 0.72,
+        flatShading: true
+      }),
+      steel: new THREE.MeshStandardMaterial({
+        color: 0x8b969c,
+        roughness: 0.4,
+        metalness: 0.78,
+        flatShading: true
+      }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0xffc766,
+        emissive: 0xff8f20,
+        emissiveIntensity: 1.5,
+        roughness: 0.25,
+        transparent: true,
+        opacity: 0.78,
+        flatShading: true
+      }),
+      eye: new THREE.MeshStandardMaterial({
+        color: 0xfff3cf,
+        roughness: 0.7,
+        flatShading: true
+      }),
+      black: new THREE.MeshStandardMaterial({
+        color: 0x171614,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+      cream: new THREE.MeshStandardMaterial({
+        color: 0xe6d2a0,
+        roughness: 0.88,
+        metalness: 0,
+        flatShading: true
+      })
+    };
+
+    function addMesh(geometry, material, position, rotation, parent = character) {
+      const mesh = new THREE.Mesh(geometry, material);
+      if (position) mesh.position.set(...position);
+      if (rotation) mesh.rotation.set(...rotation);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(size, material, position, rotation, parent = character) {
+      return addMesh(
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        material,
+        position,
+        rotation,
+        parent
+      );
+    }
+
+    function addCylinder(
+      radiusTop,
+      radiusBottom,
+      height,
+      material,
+      position,
+      rotation,
+      segments = 10,
+      parent = character
+    ) {
+      return addMesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments
+        ),
+        material,
+        position,
+        rotation,
+        parent
+      );
+    }
+
+    function addSphere(
+      radius,
+      material,
+      position,
+      scale = [1, 1, 1],
+      parent = character
+    ) {
+      const mesh = addMesh(
+        new THREE.SphereGeometry(radius, 12, 8),
+        material,
+        position,
+        null,
+        parent
+      );
+      mesh.scale.set(...scale);
+      return mesh;
+    }
+
+    function addBetween(start, end, radius, material, parent = character, segments = 8) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+      const midpoint = a.clone().add(b).multiplyScalar(0.5);
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(radius, radius, length, segments),
+        material,
+        midpoint.toArray(),
+        null,
+        parent
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Boots and lower body
+    // ------------------------------------------------------------
+
+    addBox([0.38, 0.28, 0.58], materials.leatherDark, [-0.23, 0.18, 0.12]);
+    addBox([0.38, 0.28, 0.58], materials.leatherDark, [0.23, 0.18, 0.12]);
+
+    addBox([0.40, 0.08, 0.59], materials.leather, [-0.23, 0.32, 0.12]);
+    addBox([0.40, 0.08, 0.59], materials.leather, [0.23, 0.32, 0.12]);
+
+    addCylinder(0.19, 0.23, 0.72, materials.leatherDark, [-0.23, 0.78, 0], null, 8);
+    addCylinder(0.19, 0.23, 0.72, materials.leatherDark, [0.23, 0.78, 0], null, 8);
+
+    // Belt and buckle.
+    addMesh(
+      new THREE.TorusGeometry(0.46, 0.035, 6, 16),
+      materials.leatherDark,
+      [0, 1.31, 0],
+      [Math.PI / 2, 0, 0]
+    );
+    addBox([0.15, 0.12, 0.06], materials.brass, [0, 1.31, 0.47]);
+
+    // ------------------------------------------------------------
+    // Shirt and torso
+    // ------------------------------------------------------------
+
+    addCylinder(0.43, 0.50, 1.16, materials.shirt, [0, 1.83, 0], null, 10);
+    addCylinder(0.18, 0.20, 0.20, materials.skinDark, [0, 2.42, 0], null, 8);
+
+    // Collar.
+    addMesh(
+      new THREE.TorusGeometry(0.25, 0.055, 6, 12),
+      materials.shirtDark,
+      [0, 2.36, 0],
+      [Math.PI / 2, 0, 0]
+    );
+
+    // Front seam and buttons.
+    addBox([0.035, 0.94, 0.035], materials.shirtDark, [0, 1.83, 0.425]);
+    for (let i = 0; i < 3; i++) {
+      addMesh(
+        new THREE.SphereGeometry(0.032, 7, 5),
+        materials.brass,
+        [0, 2.10 - i * 0.22, 0.455]
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Leather apron
+    // ------------------------------------------------------------
+
+    addBox([0.68, 0.88, 0.07], materials.leather, [0, 1.53, 0.405], [-0.03, 0, 0]);
+    addBox([0.52, 0.31, 0.06], materials.leather, [0, 2.06, 0.365], [-0.03, 0, 0]);
+
+    addBox([0.08, 0.66, 0.05], materials.leatherLight, [-0.23, 2.02, 0.37], [0.03, 0, -0.08]);
+    addBox([0.08, 0.66, 0.05], materials.leatherLight, [0.23, 2.02, 0.37], [0.03, 0, 0.08]);
+
+    addBox([0.29, 0.25, 0.055], materials.leatherLight, [0, 1.42, 0.465], [-0.03, 0, 0]);
+    addBox([0.29, 0.25, 0.055], materials.leatherLight, [-0.20, 1.42, 0.465], [-0.03, 0, 0]);
+    addBox([0.29, 0.25, 0.055], materials.leatherLight, [0.20, 1.42, 0.465], [-0.03, 0, 0]);
+
+    // ------------------------------------------------------------
+    // Arms and hands
+    // ------------------------------------------------------------
+
+    // Character's right arm, holding the compass.
+    addBetween([0.43, 2.17, 0], [0.66, 1.73, 0.10], 0.135, materials.shirt);
+    addBetween([0.66, 1.73, 0.10], [0.76, 1.32, 0.28], 0.115, materials.shirt);
+    addSphere(0.13, materials.skin, [0.76, 1.28, 0.32], [0.85, 1.1, 0.85]);
+
+    // Character's left arm, holding the lantern.
+    addBetween([-0.43, 2.17, 0], [-0.67, 1.74, 0.10], 0.135, materials.shirt);
+    addBetween([-0.67, 1.74, 0.10], [-0.91, 1.39, 0.29], 0.115, materials.shirt);
+    addSphere(0.13, materials.skin, [-0.94, 1.37, 0.32], [0.85, 1.1, 0.85]);
+
+    // Sleeve cuffs.
+    addCylinder(0.13, 0.12, 0.18, materials.leatherDark, [-0.90, 1.45, 0.25], [0.2, 0, 0.25], 8);
+    addCylinder(0.13, 0.12, 0.18, materials.leatherDark, [0.73, 1.44, 0.23], [0.15, 0, -0.25], 8);
+
+    // ------------------------------------------------------------
+    // Head, face, beard, and hair
+    // ------------------------------------------------------------
+
+    addSphere(0.39, materials.hair, [0, 2.69, -0.025], [1.03, 1.08, 0.92]);
+    addSphere(0.37, materials.skin, [0, 2.64, 0.025], [0.96, 1.06, 0.91]);
+
+    addSphere(0.10, materials.skinDark, [-0.38, 2.64, 0], [0.72, 1.05, 0.75]);
+    addSphere(0.10, materials.skinDark, [0.38, 2.64, 0], [0.72, 1.05, 0.75]);
+
+    // Eyes.
+    addSphere(0.055, materials.black, [-0.13, 2.69, 0.335], [1, 0.85, 0.55]);
+    addSphere(0.055, materials.black, [0.13, 2.69, 0.335], [1, 0.85, 0.55]);
+    addSphere(0.025, materials.eye, [-0.13, 2.69, 0.37], [1, 1, 0.5]);
+    addSphere(0.025, materials.eye, [0.13, 2.69, 0.37], [1, 1, 0.5]);
+
+    // Brows, nose, and mouth.
+    addBox([0.15, 0.035, 0.04], materials.hair, [-0.13, 2.76, 0.35], [0, 0, 0.08]);
+    addBox([0.15, 0.035, 0.04], materials.hair, [0.13, 2.76, 0.35], [0, 0, -0.08]);
+    addMesh(
+      new THREE.ConeGeometry(0.095, 0.18, 5),
+      materials.skin,
+      [0, 2.61, 0.405],
+      [Math.PI / 2, 0, 0]
+    );
+
+    addBox([0.18, 0.035, 0.035], materials.hair, [0, 2.47, 0.365]);
+    addBox([0.11, 0.025, 0.03], materials.leatherDark, [-0.055, 2.42, 0.36]);
+    addBox([0.11, 0.025, 0.03], materials.leatherDark, [0.055, 2.42, 0.36]);
+
+    // Beard and mustache.
+    addMesh(
+      new THREE.ConeGeometry(0.32, 0.48, 7),
+      materials.beard,
+      [0, 2.43, 0.20],
+      [0.04, 0, 0]
+    );
+    addBox([0.24, 0.09, 0.08], materials.beard, [-0.10, 2.53, 0.365], [0, 0, 0.10]);
+    addBox([0.24, 0.09, 0.08], materials.beard, [0.10, 2.53, 0.365], [0, 0, -0.10]);
+
+    // Sideburns.
+    addBox([0.07, 0.28, 0.10], materials.hair, [-0.34, 2.58, 0.02], [0, 0, -0.05]);
+    addBox([0.07, 0.28, 0.10], materials.hair, [0.34, 2.58, 0.02], [0, 0, 0.05]);
+
+    // ------------------------------------------------------------
+    // Medieval shipwright cap
+    // ------------------------------------------------------------
+
+    addCylinder(0.51, 0.51, 0.09, materials.leatherDark, [0, 3.01, 0], null, 12);
+    addMesh(
+      new THREE.SphereGeometry(0.44, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+      materials.shirt,
+      [0, 3.06, 0]
+    );
+
+    addMesh(
+      new THREE.SphereGeometry(0.44, 12, 6, 0, Math.PI * 2, 0, Math.PI / 2),
+      materials.shirt,
+      [0, 3.06, 0]
+    );
+
+    addSphere(0.085, materials.brass, [0, 3.10, 0.435], [1, 1, 0.45]);
+    addBox([0.25, 0.08, 0.035], materials.brass, [0, 3.12, 0.435]);
+
+    // A small cream feather.
+    addMesh(
+      new THREE.ConeGeometry(0.06, 0.38, 4),
+      materials.cream,
+      [0.25, 3.18, -0.02],
+      [0.1, 0, -0.48]
+    );
+
+    // ------------------------------------------------------------
+    // Lantern
+    // ------------------------------------------------------------
+
+    const lantern = new THREE.Group();
+    lantern.name = "Shipwright_Lantern";
+    lantern.position.set(-1.02, 1.24, 0.34);
+    character.add(lantern);
+
+    addMesh(
+      new THREE.TorusGeometry(0.13, 0.025, 6, 14),
+      materials.brass,
+      [0, 0.37, 0],
+      null,
+      lantern
+    );
+
+    addBox([0.24, 0.07, 0.24], materials.brass, [0, 0.22, 0], null, lantern);
+    addBox([0.24, 0.07, 0.24], materials.brass, [0, -0.22, 0], null, lantern);
+    addBox([0.16, 0.29, 0.16], materials.glass, [0, 0, 0], null, lantern);
+
+    // Four protective cage bars.
+    for (const x of [-0.105, 0.105]) {
+      for (const z of [-0.105, 0.105]) {
+        addBox([0.025, 0.45, 0.025], materials.brass, [x, 0, z], null, lantern);
+      }
+    }
+
+    addBox([0.28, 0.055, 0.28], materials.brass, [0, -0.28, 0], null, lantern);
+    addBox([0.28, 0.055, 0.28], materials.brass, [0, 0.28, 0], null, lantern);
+
+    // ------------------------------------------------------------
+    // Brass shipwright's compass
+    // ------------------------------------------------------------
+
+    const compass = new THREE.Group();
+    compass.name = "Shipwright_Compass";
+    compass.position.set(0.83, 1.31, 0.46);
+    compass.rotation.set(0.02, -0.12, 0.08);
+    character.add(compass);
+
+    addMesh(
+      new THREE.CylinderGeometry(0.17, 0.17, 0.07, 16),
+      materials.brass,
+      [0, 0, 0],
+      [Math.PI / 2, 0, 0],
+      compass
+    );
+
+    addMesh(
+      new THREE.CylinderGeometry(0.142, 0.142, 0.018, 16),
+      materials.leatherDark,
+      [0, 0, 0.043],
+      [Math.PI / 2, 0, 0],
+      compass
+    );
+
+    addMesh(
+      new THREE.TorusGeometry(0.158, 0.022, 6, 18),
+      materials.brass,
+      [0, 0, 0.05],
+      null,
+      compass
+    );
+
+    // Compass needle.
+    addBox([0.025, 0.18, 0.018], materials.glass, [0, 0, 0.061], [0, 0, 0.18], compass);
+    addMesh(
+      new THREE.ConeGeometry(0.07, 0.15, 3),
+      materials.cream,
+      [0, 0, 0.064],
+      [Math.PI / 2, 0, 0],
+      compass
+    );
+
+    addSphere(0.025, materials.brass, [0, 0, 0.085], [1, 1, 0.45], compass);
+
+    // ------------------------------------------------------------
+    // Satchel, strap, rope coil, and small belt accessories
+    // ------------------------------------------------------------
+
+    addBox([0.39, 0.48, 0.23], materials.leather, [-0.70, 1.58, -0.24], [0, 0, -0.08]);
+    addBox([0.40, 0.18, 0.25], materials.leatherLight, [-0.70, 1.73, -0.25], [0, 0, -0.08]);
+    addBox([0.10, 0.10, 0.06], materials.brass, [-0.70, 1.70, -0.39]);
+
+    addBox([0.065, 0.90, 0.055], materials.leatherDark, [-0.43, 1.97, -0.31], [0, 0, -0.12]);
+    addBox([0.065, 0.90, 0.055], materials.leatherDark, [-0.03, 1.97, -0.31], [0, 0, -0.12]);
+
+    addMesh(
+      new THREE.TorusGeometry(0.18, 0.035, 6, 14),
+      materials.cream,
+      [-0.62, 1.17, 0.10],
+      [Math.PI / 2, 0, 0]
+    );
+
+    // Small wooden shipwright's tool hanging from the belt.
+    addBetween(
+      [0.39, 1.20, 0.22],
+      [0.52, 0.72, 0.12],
+      0.035,
+      materials.leatherLight,
+      character,
+      7
+    );
+    addBetween(
+      [0.52, 0.72, 0.12],
+      [0.57, 0.52, 0.10],
+      0.022,
+      materials.steel,
+      character,
+      6
+    );
+    addMesh(
+      new THREE.SphereGeometry(0.055, 7, 5),
+      materials.brass,
+      [0.52, 0.72, 0.12]
+    );
+
+    // ------------------------------------------------------------
+    // Presentation ground — excluded from GLB export
+    // ------------------------------------------------------------
+
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(8, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x182431,
+        roughness: 0.95,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const pedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.65, 1.85, 0.12, 32),
+      new THREE.MeshStandardMaterial({
+        color: 0x263444,
+        roughness: 0.82,
+        metalness: 0.05
+      })
+    );
+    pedestal.position.y = 0.06;
+    pedestal.receiveShadow = true;
+    scene.add(pedestal);
+
+    // ------------------------------------------------------------
+    // Export
+    // ------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Preparing GLB…";
+
+      exporter.parse(
+        character,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "medieval_shepherd_bright.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          alert("The GLB export failed. Please try again.");
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 4096
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Resize and render loop
+    // ------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

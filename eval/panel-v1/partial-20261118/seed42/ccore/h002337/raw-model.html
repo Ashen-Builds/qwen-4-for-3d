@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turntable Irrigation Unit</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e9eef2;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      width: min(340px, calc(100vw - 40px));
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 16px;
+      background: rgba(250, 252, 253, 0.9);
+      box-shadow: 0 14px 40px rgba(31, 45, 55, 0.18);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: #d66a18;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #24333b;
+      font-size: 22px;
+      line-height: 1.15;
+    }
+
+    .description {
+      margin: 10px 0 16px;
+      color: #64717a;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 10px;
+      background: #e8751d;
+      color: white;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 5px 14px rgba(232, 117, 29, 0.28);
+      transition:
+        transform 120ms ease,
+        background 120ms ease,
+        opacity 120ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: #f08229;
+      transform: translateY(-1px);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    #status {
+      min-height: 17px;
+      margin-top: 9px;
+      color: #64717a;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .hint {
+      position: fixed;
+      right: 20px;
+      bottom: 18px;
+      z-index: 10;
+      padding: 9px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.75);
+      border-radius: 999px;
+      background: rgba(250, 252, 253, 0.82);
+      color: #5d6971;
+      font-size: 12px;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 14px;
+      }
+
+      .hint {
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div class="panel">
+    <div class="eyebrow">Godot / GLB Asset</div>
+    <h1>Turntable Irrigation Unit</h1>
+    <p class="description">
+      Low-poly mobile irrigation rig with a rugged chassis, six wheels,
+      operator cab, water tank, hose reel, and sprinkler boom.
+    </p>
+
+    <button id="exportButton" type="button">Export GLB</button>
+    <div id="status">Preparing asset…</div>
+  </div>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // ---------------------------------------------------------------------
+    // Renderer and scene
+    // ---------------------------------------------------------------------
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe9eef2);
+    scene.fog = new THREE.Fog(0xe9eef2, 18, 38);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(8.4, 5.7, 8.6);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      preserveDrawingBuffer: true
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0.1, 1.15, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 5;
+    controls.maxDistance = 18;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.65;
+
+    const hemisphere = new THREE.HemisphereLight(0xf4fbff, 0x68706a, 2.25);
+    scene.add(hemisphere);
+
+    const sun = new THREE.DirectionalLight(0xfff3df, 3.1);
+    sun.position.set(6, 10, 7);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -8;
+    sun.shadow.camera.right = 8;
+    sun.shadow.camera.top = 8;
+    sun.shadow.camera.bottom = -8;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 28;
+    sun.shadow.bias = -0.00035;
+    scene.add(sun);
+
+    const rimLight = new THREE.DirectionalLight(0xb8d9ff, 1.15);
+    rimLight.position.set(-7, 5, -6);
+    scene.add(rimLight);
+
+    // Ground is scene-only and is not included in the GLB.
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({
+        color: 0xdde4e7,
+        roughness: 0.96,
+        metalness: 0
+      })
+    );
+    ground.name = "Preview_Ground";
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // ---------------------------------------------------------------------
+    // Exportable asset root
+    // ---------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "Turntable_Irrigation_Unit";
+    asset.userData = {
+      assetType: "Static low-poly irrigation vehicle",
+      units: "meters",
+      orientation: "Front points toward positive X"
+    };
+    scene.add(asset);
+
+    const materials = {
+      orange: new THREE.MeshStandardMaterial({
+        color: 0xee7d24,
+        roughness: 0.48,
+        metalness: 0.18
+      }),
+      orangeDark: new THREE.MeshStandardMaterial({
+        color: 0xb85515,
+        roughness: 0.55,
+        metalness: 0.2
+      }),
+      yellow: new THREE.MeshStandardMaterial({
+        color: 0xf2b72d,
+        roughness: 0.42,
+        metalness: 0.14
+      }),
+      steel: new THREE.MeshStandardMaterial({
+        color: 0x78858b,
+        roughness: 0.42,
+        metalness: 0.72
+      }),
+      darkSteel: new THREE.MeshStandardMaterial({
+        color: 0x39444a,
+        roughness: 0.52,
+        metalness: 0.62
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x15191c,
+        roughness: 0.94,
+        metalness: 0.02
+      }),
+      tread: new THREE.MeshStandardMaterial({
+        color: 0x202529,
+        roughness: 0.98,
+        metalness: 0
+      }),
+      hub: new THREE.MeshStandardMaterial({
+        color: 0xaeb7ba,
+        roughness: 0.34,
+        metalness: 0.82
+      }),
+      teal: new THREE.MeshStandardMaterial({
+        color: 0x287f8b,
+        roughness: 0.42,
+        metalness: 0.28
+      }),
+      tealDark: new THREE.MeshStandardMaterial({
+        color: 0x174a55,
+        roughness: 0.48,
+        metalness: 0.22
+      }),
+      white: new THREE.MeshStandardMaterial({
+        color: 0xf2f4ef,
+        roughness: 0.48,
+        metalness: 0.05
+      }),
+      glass: new THREE.MeshPhysicalMaterial({
+        color: 0x214653,
+        roughness: 0.18,
+        metalness: 0.08,
+        side: THREE.DoubleSide
+      }),
+      light: new THREE.MeshStandardMaterial({
+        color: 0xfff5d2,
+        emissive: 0xffd77b,
+        emissiveIntensity: 2.2,
+        roughness: 0.25,
+        metalness: 0.08
+      }),
+      beacon: new THREE.MeshStandardMaterial({
+        color: 0xff9d16,
+        emissive: 0xff6200,
+        emissiveIntensity: 1.8,
+        roughness: 0.28,
+        transparent: true,
+        opacity: 0.9
+      }),
+      red: new THREE.MeshStandardMaterial({
+        color: 0xc73825,
+        roughness: 0.45,
+        metalness: 0.1
+      }),
+      hose: new THREE.MeshStandardMaterial({
+        color: 0x17333d,
+        roughness: 0.8,
+        metalness: 0.05
+      }),
+      spray: new THREE.MeshBasicMaterial({
+        color: 0x72d8ed,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending
+      })
+    };
+
+    function addBox(
+      parent,
+      name,
+      size,
+      position,
+      material,
+      rotation = [0, 0, 0]
+    ) {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        material
+      );
+      mesh.name = name;
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addCylinder(
+      parent,
+      name,
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      rotation = [0, 0, 0],
+      segments = 12
+    ) {
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments
+        ),
+        material
+      );
+      mesh.name = name;
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addRod(
+      parent,
+      name,
+      start,
+      end,
+      radius,
+      material,
+      segments = 10
+    ) {
+      const startVector = new THREE.Vector3(...start);
+      const endVector = new THREE.Vector3(...end);
+      const direction = endVector.clone().sub(startVector);
+      const length = direction.length();
+
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius, radius, length, segments),
+        material
+      );
+      mesh.name = name;
+      mesh.position.copy(startVector).add(endVector).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addRectBeam(
+      parent,
+      name,
+      start,
+      end,
+      width,
+      depth,
+      material
+    ) {
+      const startVector = new THREE.Vector3(...start);
+      const endVector = new THREE.Vector3(...end);
+      const direction = endVector.clone().sub(startVector);
+      const length = direction.length();
+
+      const mesh = addBox(
+        parent,
+        name,
+        [width, length, depth],
+        startVector.clone().add(endVector).multiplyScalar(0.5).toArray(),
+        material
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    // ---------------------------------------------------------------------
+    // Chassis and deck
+    // ---------------------------------------------------------------------
+
+    const chassis = new THREE.Group();
+    chassis.name = "Chassis";
+    asset.add(chassis);
+
+    addBox(
+      chassis,
+      "Main_Frame_Left",
+      [5.7, 0.25, 0.18],
+      [-0.1, 0.72, -0.72],
+      materials.orange
+    );
+
+    addBox(
+      chassis,
+      "Main_Frame_Right",
+      [5.7, 0.25, 0.18],
+      [-0.1, 0.72, 0.72],
+      materials.orange
+    );
+
+    [-2.35, -0.85, 0.65, 1.8].forEach((x, index) => {
+      addBox(
+        chassis,
+        `Frame_Crossmember_${index}`,
+        [0.2, 0.25, 1.62],
+        [x, 0.72, 0],
+        materials.darkSteel
+      );
+    });
+
+    addBox(
+      chassis,
+      "Running_Gear_Deck",
+      [5.1, 0.14, 1.62],
+      [-0.1, 0.99, 0],
+      materials.darkSteel
+    );
+
+    addBox(
+      chassis,
+      "Rear_Bumper",
+      [0.2, 0.34, 1.9],
+      [-2.82, 0.73, 0],
+      materials.steel
+    );
+
+    addBox(
+      chassis,
+      "Front_Bumper",
+      [0.18, 0.28, 1.75],
+      [1.93, 0.68, 0],
+      materials.steel
+    );
+
+    addBox(
+      chassis,
+      "Hazard_Panel",
+      [0.08, 0.2, 0.65],
+      [-2.945, 0.77, 0],
+      materials.yellow
+    );
+
+    for (let i = 0; i < 5; i++) {
+      addBox(
+        chassis,
+        `Hazard_Stripe_${i}`,
+        [0.09, 0.2, 0.12],
+        [-2.99, 0.77, -0.25 + i * 0.125],
+        materials.darkSteel
+      );
+    }
+
+    // Low side guards.
+    addBox(
+      chassis,
+      "Left_Side_Guard",
+      [4.8, 0.18, 0.09],
+      [-0.1, 1.18, -0.79],
+      materials.orangeDark
+    );
+
+    addBox(
+      chassis,
+      "Right_Side_Guard",
+      [4.8, 0.18, 0.09],
+      [-0.1, 1.18, 0.79],
+      materials.orangeDark
+    );
+
+    // ---------------------------------------------------------------------
+    // Six wheels with chunky low-poly tread
+    // ---------------------------------------------------------------------
+
+    function createWheel(name, x, y, z, radius, width) {
+      const wheel = new THREE.Group();
+      wheel.name = name;
+      wheel.position.set(x, y, z);
+      asset.add(wheel);
+
+      addCylinder(
+        wheel,
+        `${name}_Tire`,
+        radius,
+        radius,
+        width,
+        [0, 0, 0],
+        materials.rubber,
+        [Math.PI / 2, 0, 0],
+        16
+      );
+
+      addCylinder(
+        wheel,
+        `${name}_Hub`,
+        radius * 0.44,
+        radius * 0.44,
+        width + 0.055,
+        [0, 0, 0],
+        materials.hub,
+        [Math.PI / 2, 0, 0],
+        12
+      );
+
+      addCylinder(
+        wheel,
+        `${name}_Hubcap`,
+        radius * 0.18,
+        radius * 0.18,
+        width + 0.1,
+        [0, 0, 0],
+        materials.orange,
+        [Math.PI / 2, 0, 0],
+        10
+      );
+
+      const outward = Math.sign(z) || 1;
+
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const tread = addBox(
+          wheel,
+          `${name}_Tread_${i}`,
+          [radius * 0.18, radius * 0.105, width * 1.06],
+          [
+            Math.cos(angle) * (radius + 0.012),
+            Math.sin(angle) * (radius + 0.012),
+            0
+          ],
+          materials.tread
+        );
+        tread.rotation.z = angle;
+      }
+
+      for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2;
+        addCylinder(
+          wheel,
+          `${name}_Wheelbolt_${i}`,
+          0.032,
+          0.032,
+          0.045,
+          [
+            Math.cos(angle) * radius * 0.3,
+            Math.sin(angle) * radius * 0.3,
+            outward * (width * 0.5 + 0.035)
+          ],
+          materials.darkSteel,
+          [Math.PI / 2, 0, 0],
+          6
+        );
+      }
+
+      return wheel;
+    }
+
+    const wheelPositions = [
+      { name: "Rear_Left_Wheel", x: -2.15, y: 0.68, z: -1.05 },
+      { name: "Rear_Right_Wheel", x: -2.15, y: 0.68, z: 1.05 },
+      { name: "Middle_Left_Wheel", x: -0.45, y: 0.55, z: -1.02 },
+      { name: "Middle_Right_Wheel", x: -0.45, y: 0.55, z: 1.02 },
+      { name: "Front_Left_Wheel", x: 1.2, y: 0.46, z: -0.96 },
+      { name: "Front_Right_Wheel", x: 1.2, y: 0.46, z: 0.96 }
+    ];
+
+    wheelPositions.forEach((position, index) => {
+      addCylinder(
+        chassis,
+        `${position.name}_Axle`,
+        0.11,
+        0.11,
+        2.2,
+        [position.x, position.y, 0],
+        materials.darkSteel,
+        [Math.PI / 2, 0, 0],
+        10
+      );
+
+      createWheel(
+        position.name,
+        position.x,
+        position.y,
+        position.z,
+        position.name.includes("Left") ? 0.68 : 0.68,
+        position.name.includes("Left") ? 0.42 : 0.42
+      );
+    });
+
+    addBox(
+      chassis,
+      "Rear_Left_Fender",
+      [1.5, 0.11, 0.54],
+      [-2.15, 1.39, -1.05],
+      materials.orange
+    );
+
+    addBox(
+      chassis,
+      "Rear_Right_Fender",
+      [1.5, 0.11, 0.54],
+      [-2.15, 1.39, 1.05],
+      materials.orange
+    );
+
+    addBox(
+      chassis,
+      "Middle_Left_Fender",
+      [1.18, 0.1, 0.48],
+      [-0.45, 1.13, -1.02],
+      materials.orange
+    );
+
+    addBox(
+      chassis,
+      "Middle_Right_Fender",
+      [1.18, 0.1, 0.48],
+      [-0.45, 1.13, 1.02],
+      materials.orange
+    );
+
+    addBox(
+      chassis,
+      "Front_Left_Fender",
+      [0.92, 0.09, 0.44],
+      [1.2, 1.08, -0.96],
+      materials.orange
+    );
+
+    addBox(
+      chassis,
+      "Front_Right_Fender",
+      [0.92, 0.09, 0.44],
+      [1.2, 1.08, 0.96],
+      materials.orange
+    );
+
+    // ---------------------------------------------------------------------
+    // Angular operator cab
+    // ---------------------------------------------------------------------
+
+    const cab = new THREE.Group();
+    cab.name = "Operator_Cab";
+    cab.position.y = 0.94;
+    asset.add(cab);
+
+    const cabShape = new THREE.Shape();
+    cabShape.moveTo(-1.7, 0);
+    cabShape.lineTo(0.05, 0);
+    cabShape.lineTo(0.62, 1.4);
+    cabShape.lineTo(1.02, 1.4);
+    cabShape.lineTo(0.72, 0.72);
+    cabShape.closePath();
+
+    const cabGeometry = new THREE.ExtrudeGeometry(cabShape, {
+      depth: 1.45,
+      steps: 1,
+      bevelEnabled: true,
+      bevelThickness: 0.045,
+      bevelSize: 0.045,
+      bevelSegments: 1,
+      curveSegments: 1
+    });
+    cabGeometry.translate(0, 0, -0.725);
+    cabGeometry.computeVertexNormals();
+
+    const cabBody = new THREE.Mesh(cabGeometry, materials.orange);
+    cabBody.name = "Cab_Body";
+    cabBody.castShadow = true;
+    cabBody.receiveShadow = true;
+    cab.add(cabBody);
+
+    const windshield = addBox(
+      cab,
+      "Front_Windshield",
+      [0.05, 0.78, 1.34],
+      [0.66, 1.11, 0],
+      materials.glass
+    );
+    windshield.rotation.z = 1.97;
+
+    const sideWindowShape = new THREE.Shape();
+    sideWindowShape.moveTo(-0.72, 0.04);
+    sideWindowShape.lineTo(0.23, 0.04);
+    sideWindowShape.lineTo(0.47, 0.67);
+    sideWindowShape.lineTo(-0.56, 0.67);
+    sideWindowShape.closePath();
+
+    const sideWindowGeometry = new THREE.ShapeGeometry(sideWindowShape);
+
+    [-1, 1].forEach((side) => {
+      const window = new THREE.Mesh(
+        sideWindowGeometry,
+        materials.glass
+      );
+      window.name = side < 0 ? "Left_Side_Window" : "Right_Side_Window";
+      window.position.set(-0.2, 0.96, side * 0.743);
+      cab.add(window);
+    });
+
+    addBox(
+      cab,
+      "Cab_Roof",
+      [1.18, 0.13, 1.56],
+      [0.13, 2.37, 0],
+      materials.orange
+    );
+
+    addBox(
+      cab,
+      "Control_Console",
+      [0.38, 0.42, 0.55],
+      [0.38, 1.27, 0.18],
+      materials.darkSteel
+    );
+
+    addBox(
+      cab,
+      "Dashboard",
+      [0.18, 0.3, 1.12],
+      [0.64, 1.39, 0],
+      materials.darkSteel
+    );
+
+    [-1, 1].forEach((side) => {
+      addRod(
+        cab,
+        side < 0 ? "Left_A_Pillar" : "Right_A_Pillar",
+        [0.67, 0.98, side * 0.75],
+        [0.67, 2.33, side * 0.75],
+        0.047,
+        materials.orange
+      );
+
+      addRod(
+        cab,
+        side < 0 ? "Left_Rear_Pillar" : "Right_Rear_Pillar",
+        [-1.65, 1.0, side * 0.73],
+        [-1.65, 2.33, side * 0.73],
+        0.045,
+        materials.orange
+      );
+
+      addBox(
+        cab,
+        side < 0 ? "Left_Step" : "Right_Step",
+        [0.72, 0.1, 0.3],
+        [-0.05, 0.5, side * 0.94],
+        materials.steel
+      );
+
+      addBox(
+        cab,
+        side < 0 ? "Left_Door_Handle" : "Right_Door_Handle",
+        [0.2, 0.055, 0.065],
+        [-0.2, 1.22, side * 0.785],
+        materials.darkSteel
+      );
+
+      addBox(
+        cab,
+        side < 0 ? "Left_Headlight" : "Right_Headlight",
+        [0.08, 0.18, 0.27],
+        [0.84, 1.12, side * 0.53],
+        materials.light
+      );
+
+      addRod(
+        cab,
+        side < 0 ? "Left_Mirror_Arm" : "Right_Mirror_Arm",
+        [0.55, 1.55, side * 0.72],
+        [0.55, 1.55, side * 0.98],
+        0.022,
+        materials.darkSteel
+      );
+
+      addBox(
+        cab,
+        side < 0 ? "Left_Mirror" : "Right_Mirror",
+        [0.19, 0.3, 0.085],
+        [0.55, 1.47, side * 1.0],
+        materials.darkSteel
+      );
+    });
+
+    addBox(
+      cab,
+      "Rear_Grille",
+      [0.055, 0.27, 0.73],
+      [-1.76, 1.1, 0],
+      materials.darkSteel
+    );
+
+    addBox(
+      cab,
+      "Roof_Beacon_Base",
+      [0.22, 0.07, 0.22],
+      [-0.38, 2.48, 0.45],
+      materials.darkSteel
+    );
+
+    addCylinder(
+      cab,
+      "Roof_Beacon",
+      0.095,
+      0.11,
+      0.19,
+      [-0.38, 2.61, 0.45],
+      materials.beacon,
+      [0, 0, 0],
+      10
+    );
+
+    addCylinder(
+      cab,
+      "Exhaust_Stack",
+      0.06,
+      0.07,
+      0.68,
+      [-1.48, 1.7, 0.5],
+      materials.darkSteel,
+      [0, 0, 0],
+      8
+    );
+
+    addCylinder(
+      cab,
+      "Exhaust_Cap",
+      0.1,
+      0.08,
+      0.09,
+      [-1.48, 2.06, 0.5],
+      materials.darkSteel,
+      [0, 0, 0],
+      8
+    );
+
+    // ---------------------------------------------------------------------
+    // Side-mounted water tank
+    // ---------------------------------------------------------------------
+
+    const tank = new THREE.Group();
+    tank.name = "Water_Tank";
+    tank.position.set(-0.68, 1.48, 0.98);
+    asset.add(tank);
+
+    addCylinder(
+      tank,
+      "Tank_Body",
+      0.34,
+      0.34,
+      1.28,
+      [0, 0, 0],
+      materials.teal,
+      [0, 0, Math.PI / 2],
+      12
+    );
+
+    [-0.48, 0.48].forEach((x, index) => {
+      addCylinder(
+        tank,
+        `Tank_End_Cap_${index}`,
+        0.36,
+        0.36,
+        0.08,
+        [x, 0, 0],
+        materials.tealDark,
+        [0, 0, Math.PI / 2],
+        12
+      );
+    });
+
+    [-0.38, 0, 0.38].forEach((x, index) => {
+      const strap = new THREE.Mesh(
+        new THREE.TorusGeometry(0.35, 0.028, 6, 16),
+        materials.darkSteel
+      );
+      strap.name = `Tank_Strap_${index}`;
+      strap.position.set(x, 0, 0);
+      strap.rotation.y = Math.PI / 2;
+      strap.castShadow = true;
+      tank.add(strap);
+    });
+
+    addBox(
+      tank,
+      "Tank_Label",
+      [0.62, 0.24, 0.025],
+      [0, 0, 0.35],
+      materials.white
+    );
+
+    addBox(
+      tank,
+      "Tank_Label_Stripe",
+      [0.54, 0.055, 0.03],
+      [0, 0.06, 0.367],
+      materials.tealDark
+    );
+
+    addBox(
+      chassis,
+      "Tank_Pump_Housing",
+      [0.48, 0.38, 0.32],
+      [0.18, 1.32, 0.94],
+      materials.darkSteel
+    );
+
+    addCylinder(
+      chassis,
+      "Tank_Pump_Inlet",
+      0.12,
+      0.12,
+      0.24,
+      [0.18, 1.54, 0.94],
+      materials.steel,
+      [0, 0, 0],
+      10
+    );
+
+    // ---------------------------------------------------------------------
+    // Rear hose reel
+    // ---------------------------------------------------------------------
+
+    const reel = new THREE.Group();
+    reel.name = "Hose_Reel";
+    reel.position.set(-2.02, 1.48, -0.6);
+    asset.add(reel);
+
+    addRod(
+      reel,
+      "Reel_Mount_Left",
+      [-2.15, 1.12, -0.72],
+      [-2.15, 1.47, -0.6],
+      0.055,
+      materials.steel
+    );
+
+    addRod(
+      reel,
+      "Reel_Mount_Right",
+      [-1.9, 1.12, -0.72],
+      [-1.9, 1.47, -0.6],
+      0.055,
+      materials.steel
+    );
+
+    [-0.22, 0.22].forEach((z, index) => {
+      addCylinder(
+        reel,
+        `Reel_Flange_${index}`,
+        0.51,
+        0.51,
+        0.075,
+        [0, 0, z],
+        materials.steel,
+        [Math.PI / 2, 0, 0],
+        16
+      );
+    });
+
+    addCylinder(
+      reel,
+      "Reel_Drum",
+      0.18,
+      0.18,
+      0.48,
+      [0, 0, 0],
+      materials.darkSteel,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    [-0.13, 0, 0.13].forEach((z, index) => {
+      const coil = new THREE.Mesh(
+        new THREE.TorusGeometry(0.37, 0.052, 6, 18),
+        materials.hose
+      );
+      coil.name = `Hose_Coil_${index}`;
+      coil.position.set(0, 0, z);
+      coil.castShadow = true;
+      reel.add(coil);
+    });
+
+    addRod(
+      reel,
+      "Reel_Crank",
+      [0.24, 0, 0.28],
+      [0.38, -0.2, 0.28],
+      0.025,
+      materials.darkSteel
+    );
+
+    addCylinder(
+      reel,
+      "Reel_Crank_Handle",
+      0.045,
+      0.045,
+      0.16,
+      [0.38, -0.2, 0.35],
+      materials.rubber,
+      [Math.PI / 2, 0, 0],
+      8
+    );
+
+    const hoseCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-2.02, 1.2, -0.42),
+      new THREE.Vector3(-1.7, 1.1, -0.54),
+      new THREE.Vector3(-1.35, 1.24, -0.83),
+      new THREE.Vector3(-0.92, 1.4, -0.94)
+    ]);
+
+    const hose = new THREE.Mesh(
+      new THREE.TubeGeometry(hoseCurve, 18, 0.043, 6, false),
+      materials.hose
+    );
+    hose.name = "Supply_Hose";
+    hose.castShadow = true;
+    asset.add(hose);
+
+    // ---------------------------------------------------------------------
+    // Irrigation boom and hydraulic hardware
+    // ---------------------------------------------------------------------
+
+    const boom = new THREE.Group();
+    boom.name = "Irrigation_Boom";
+    asset.add(boom);
+
+    addBox(
+      boom,
+      "Boom_Mount_Plate",
+      [0.52, 0.14, 0.48],
+      [0.52, 1.16, 0],
+      materials.steel
+    );
+
+    addRod(
+      boom,
+      "Boom_Vertical_Post",
+      [0.52, 1.18, 0],
+      [0.52, 2.05, 0],
+      0.085,
+      materials.orange
+    );
+
+    addRectBeam(
+      boom,
+      "Boom_Left_Brace",
+      [-0.42, 1.16, 0],
+      [0.52, 2.03, 0],
+      0.12,
+      0.14,
+      materials.orange
+    );
+
+    addRectBeam(
+      boom,
+      "Boom_Right_Brace",
+      [0.92, 1.16, 0],
+      [0.52, 2.03, 0],
+      0.12,
+      0.14,
+      materials.orange
+    );
+
+    addRectBeam(
+      boom,
+      "Main_Boom_Arm",
+      [0.52, 2.05, 0],
+      [2.25, 2.05, 0],
+      0.17,
+      0.17,
+      materials.yellow
+    );
+
+    addCylinder(
+      boom,
+      "Boom_Pivot_Pin",
+      0.14,
+      0.14,
+      0.34,
+      [0.52, 2.05, 0],
+      materials.darkSteel,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    addCylinder(
+      boom,
+      "Boom_Tip_Pin",
+      0.12,
+      0.12,
+      0.32,
+      [2.25, 2.05, 0],
+      materials.darkSteel,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    const ramStart = new THREE.Vector3(0.72, 1.3, 0);
+    const ramEnd = new THREE.Vector3(1.23, 1.92, 0);
+    const ramDirection = ramEnd.clone().sub(ramStart).normalize();
+
+    addRod(
+      boom,
+      "Hydraulic_Ram_Rod",
+      ramStart.toArray(),
+      ramEnd.toArray(),
+      0.037,
+      materials.hub,
+      10
+    );
+
+    const barrelCenter = ramStart.clone().addScaledVector(ramDirection, 0.2);
+    addCylinder(
+      boom,
+      "Hydraulic_Ram_Barrel",
+      0.085,
+      0.085,
+      0.43,
+      barrelCenter.toArray(),
+      materials.darkSteel,
+      [0, 0, 0],
+      10
+    ).quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0),
+      ramDirection
+    );
+
+    // ---------------------------------------------------------------------
+    // Sprinkler head and static spray cone
+    // ---------------------------------------------------------------------
+
+    addCylinder(
+      boom,
+      "Sprinkler_Neck",
+      0.14,
+      0.16,
+      0.25,
+      [2.2, 2.11, 0],
+      materials.darkSteel,
+      [0, 0, 0],
+      10
+    );
+
+    addCylinder(
+      boom,
+      "Sprinkler_Housing",
+      0.23,
+      0.23,
+      0.36,
+      [2.25, 2.08, 0],
+      materials.steel,
+      [0, 0, Math.PI / 2],
+      12
+    );
+
+    addCylinder(
+      boom,
+      "Sprinkler_Nozzle",
+      0.105,
+      0.18,
+      0.22,
+      [2.47, 2.08, 0],
+      materials.darkSteel,
+      [0, 0, Math.PI / 2],
+      10
+    );
+
+    const spray = new THREE.Mesh(
+      new THREE.ConeGeometry(0.78, 1.65, 24, 1, true),
+      materials.spray
+    );
+    spray.name = "Static_Spraying_Cone";
+    spray.position.set(2.27, 1.14, 0);
+    spray.renderOrder = 3;
+    asset.add(spray);
+
+    const dropletPositions = [
+      [-0.25, 1.22, 0.16],
+      [0.04, 1.19, 0.27],
+      [0.3, 1.24, 0.12],
+      [-0.12, 1.3, -0.22]
+    ];
+
+    dropletPositions.forEach((position, index) => {
+      const droplet = new THREE.Mesh(
+        new THREE.SphereGeometry(0.045, 6, 4),
+        materials.spray
+      );
+      droplet.name = `Water_Droplet_${index}`;
+      droplet.position.set(...position);
+      droplet.renderOrder = 3;
+      asset.add(droplet);
+    });
+
+    // ---------------------------------------------------------------------
+    // Front towing hitch
+    // ---------------------------------------------------------------------
+
+    const hitch = new THREE.Group();
+    hitch.name = "Towing_Hitch";
+    asset.add(hitch);
+
+    addRectBeam(
+      hitch,
+      "Hitch_Tongue",
+      [1.8, 0.68, 0],
+      [2.68, 0.68, 0],
+      0.16,
+      0.16,
+      materials.steel
+    );
+
+    addCylinder(
+      hitch,
+      "Hitch_Coupler",
+      0.13,
+      0.15,
+      0.38,
+      [2.78, 0.68, 0],
+      materials.darkSteel,
+      [0, 0, Math.PI / 2],
+      10
+    );
+
+    addCylinder(
+      hitch,
+      "Hitch_Safety_Jack",
+      0.075,
+      0.09,
+      0.58,
+      [2.43, 0.43, 0],
+      materials.steel,
+      [0, 0, 0],
+      10
+    );
+
+    addBox(
+      hitch,
+      "Hitch_Jack_Pad",
+      [0.28, 0.08, 0.25],
+      [2.43, 0.15, 0],
+      materials.rubber
+    );
+
+    addCylinder(
+      hitch,
+      "Hitch_Tongue_Pin",
+      0.08,
+      0.08,
+      0.28,
+      [2.48, 0.68, 0],
+      materials.darkSteel,
+      [Math.PI / 2, 0, 0],
+      10
+    );
+
+    // ---------------------------------------------------------------------
+    // Small utility details
+    // ---------------------------------------------------------------------
+
+    addBox(
+      chassis,
+      "Rear_Tow_Loop",
+      [0.18, 0.12, 0.28],
+      [-2.99, 0.98, 0],
+      materials.darkSteel
+    );
+
+    addBox(
+      tank,
+      "Tank_Manual_Valve",
+      [0.28, 0.11, 0.11],
+      [-0.05, 1.62, 0.98],
+      materials.yellow
+    );
+
+    addCylinder(
+      tank,
+      "Tank_Valve_Handle",
+      0.035,
+      0.035,
+      0.2,
+      [-0.05, 1.69, 0.98],
+      materials.red,
+      [0, 0, Math.PI / 2],
+      8
+    );
+
+    // ---------------------------------------------------------------------
+    // Export
+    // ---------------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building GLB…";
+
+      asset.updateMatrixWorld(true);
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "turntable_irrigation_unit.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 2000);
+
+          exportButton.disabled = false;
+          status.textContent = "GLB downloaded successfully.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          truncateDrawRange: true
+        }
+      );
+    });
+
+    // ---------------------------------------------------------------------
+    // Resize and render loop
+    // ---------------------------------------------------------------------
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", onResize);
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+
+    status.textContent = "Ready — static asset, pivot at ground level.";
+  </script>
+</body>
+</html>

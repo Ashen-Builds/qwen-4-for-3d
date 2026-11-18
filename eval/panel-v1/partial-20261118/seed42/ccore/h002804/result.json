@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "external_requests": [],
+  "export_buttons": 1,
+  "glb": {
+    "suggested_name": "low-poly-wooden-egg-house.glb",
+    "bytes": 1173480,
+    "sha256": "34bfc5545aea4f3d0ac33b672541c5349e85751592b29959ecc102c664d8f251",
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "meshes": 116,
+    "nodes": 117,
+    "materials": 10,
+    "skins": 0,
+    "textures": 0,
+    "triangles": 13140,
+    "animations": [],
+    "size_xyz": [
+      3.7799999713897705,
+      3.389999997764826,
+      2.6989502044289337
+    ]
+  }
+}

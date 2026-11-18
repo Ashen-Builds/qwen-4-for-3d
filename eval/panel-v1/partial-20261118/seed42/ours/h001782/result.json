@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "external_requests": [],
+  "export_buttons": 1,
+  "glb": {
+    "suggested_name": "transit-terral.glb",
+    "bytes": 1176240,
+    "sha256": "f496d94d10275647e24f414c6af11cd3a7d445805b4316f97d5d44d788fc39d2",
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "meshes": 61,
+    "nodes": 63,
+    "materials": 10,
+    "skins": 0,
+    "textures": 2,
+    "triangles": 10856,
+    "animations": [],
+    "size_xyz": [
+      2.680000066757202,
+      3.3849999970197677,
+      1.8600000143051147
+    ]
+  }
+}

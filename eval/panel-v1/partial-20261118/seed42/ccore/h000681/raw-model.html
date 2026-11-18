@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Steam Knight — Low-Poly Robot Asset</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --panel: rgba(13, 19, 27, 0.84);
+      --line: rgba(255, 255, 255, 0.12);
+      --muted: #91a0ad;
+      --text: #edf4fa;
+      --accent: #f2a34a;
+      --accent-bright: #ffc27a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #090d13;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    #scene {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    .ui {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .header {
+      position: absolute;
+      top: 26px;
+      left: 28px;
+      width: min(390px, calc(100vw - 56px));
+    }
+
+    .eyebrow {
+      margin-bottom: 8px;
+      color: var(--accent-bright);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(30px, 4vw, 52px);
+      font-weight: 850;
+      letter-spacing: -0.045em;
+      line-height: 0.98;
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .subtitle {
+      max-width: 340px;
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .toolbar {
+      position: absolute;
+      top: 26px;
+      right: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 15px;
+      color: var(--text);
+      background: rgba(16, 23, 32, 0.86);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      transition:
+        transform 150ms ease,
+        border-color 150ms ease,
+        background 150ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(27, 36, 47, 0.94);
+    }
+
+    button.primary {
+      border-color: rgba(255, 195, 122, 0.5);
+      color: #241507;
+      background: linear-gradient(135deg, #ffc27a, #e9963e);
+      box-shadow: 0 9px 30px rgba(233, 150, 62, 0.22);
+    }
+
+    button.primary:hover {
+      border-color: #ffc58b;
+      background: linear-gradient(135deg, #ffd08d, #f2a044);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    .palette {
+      position: absolute;
+      bottom: 26px;
+      left: 28px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .swatch {
+      width: 20px;
+      height: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 50%;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+    }
+
+    .hint {
+      position: absolute;
+      right: 28px;
+      bottom: 28px;
+      color: rgba(184, 199, 211, 0.65);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+    }
+
+    #toast {
+      position: absolute;
+      left: 50%;
+      bottom: 32px;
+      transform: translate(-50%, 18px);
+      padding: 11px 16px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      opacity: 0;
+      color: var(--text);
+      background: rgba(12, 18, 25, 0.94);
+      font-size: 12px;
+      pointer-events: none;
+      transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+    }
+
+    #toast.visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 700px) {
+      .header {
+        top: 18px;
+        left: 18px;
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      .toolbar {
+        top: auto;
+        right: 18px;
+        bottom: 64px;
+      }
+
+      .palette {
+        bottom: 18px;
+        left: 18px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <canvas id="scene"></canvas>
+
+  <div class="ui">
+    <header class="header">
+      <div class="eyebrow">Low-poly Character Asset</div>
+      <h1>Steam Knight</h1>
+      <p class="subtitle">
+        A rugged industrial automaton with a glowing reactor core,
+        articulated siege machinery, and low-poly thermal armor.
+      </p>
+    </header>
+
+    <div class="toolbar">
+      <button id="reset-view" type="button">Reset View</button>
+      <button id="export-glb" class="primary" type="button">Export GLB</button>
+    </div>
+
+    <div class="palette" aria-label="Asset color palette">
+      <span class="swatch" style="background:#222b35"></span>
+      <span class="swatch" style="background:#8b542b"></span>
+      <span class="swatch" style="background:#d39a3b"></span>
+      <span class="swatch" style="background:#ff6a1a"></span>
+      <span class="swatch" style="background:#4dd8c1"></span>
+    </div>
+
+    <div class="hint">Drag to orbit · Scroll to zoom</div>
+    <div id="toast"></div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // ---------------------------------------------------------------------
+    // Renderer and scene
+    // ---------------------------------------------------------------------
+
+    const canvas = document.querySelector("#scene");
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x090d13);
+    scene.fog = new THREE.Fog(0x090d13, 11, 24);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const initialCameraPosition = new THREE.Vector3(6.3, 4.5, 8.4);
+    const initialTarget = new THREE.Vector3(0, 2.05, 0.35);
+    camera.position.copy(initialCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(initialTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 5;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // ---------------------------------------------------------------------
+    // Lighting
+    // ---------------------------------------------------------------------
+
+    scene.add(new THREE.HemisphereLight(0xa9d5ff, 0x25150c, 1.7));
+
+    const keyLight = new THREE.DirectionalLight(0xffe1bd, 3.8);
+    keyLight.position.set(5.5, 8.5, 6.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.bias = -0.00025;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x5dbfff, 2.6);
+    rimLight.position.set(-5, 4.5, -5);
+    scene.add(rimLight);
+
+    const warmLight = new THREE.PointLight(0xff5718, 18, 9, 2);
+    warmLight.position.set(-2.7, 2.4, 2.5);
+    scene.add(warmLight);
+
+    const coreLight = new THREE.PointLight(0x4ed8bf, 7, 4, 2);
+    coreLight.position.set(0, 2.25, 1.05);
+    scene.add(coreLight);
+
+    // Preview pedestal, intentionally excluded from the exported asset.
+    const pedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.75, 2.95, 0.12, 48),
+      new THREE.MeshStandardMaterial({
+        color: 0x101720,
+        roughness: 0.82,
+        metalness: 0.25
+      })
+    );
+    pedestal.position.y = -0.08;
+    pedestal.receiveShadow = true;
+    scene.add(pedestal);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0x0a0f16,
+        roughness: 0.95,
+        metalness: 0.05
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.15;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // ---------------------------------------------------------------------
+    // Materials
+    // ---------------------------------------------------------------------
+
+    const materials = {
+      steel: new THREE.MeshStandardMaterial({
+        color: 0x222b35,
+        metalness: 0.78,
+        roughness: 0.5,
+        flatShading: true
+      }),
+      steelLight: new THREE.MeshStandardMaterial({
+        color: 0x3c4956,
+        metalness: 0.72,
+        roughness: 0.43,
+        flatShading: true
+      }),
+      steelDark: new THREE.MeshStandardMaterial({
+        color: 0x11171e,
+        metalness: 0.68,
+        roughness: 0.58,
+        flatShading: true
+      }),
+      black: new THREE.MeshStandardMaterial({
+        color: 0x080b0f,
+        metalness: 0.35,
+        roughness: 0.72,
+        flatShading: true
+      }),
+      bronze: new THREE.MeshStandardMaterial({
+        color: 0x8b542b,
+        metalness: 0.76,
+        roughness: 0.4,
+        flatShading: true
+      }),
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xd39a3b,
+        metalness: 0.8,
+        roughness: 0.34,
+        flatShading: true
+      }),
+      copper: new THREE.MeshStandardMaterial({
+        color: 0xb66b32,
+        metalness: 0.74,
+        roughness: 0.42,
+        flatShading: true
+      }),
+      orange: new THREE.MeshStandardMaterial({
+        color: 0xff5a1a,
+        emissive: 0xff3c08,
+        emissiveIntensity: 3.6,
+        metalness: 0.15,
+        roughness: 0.36,
+        flatShading: true
+      }),
+      cool: new THREE.MeshStandardMaterial({
+        color: 0x4dd8c1,
+        emissive: 0x1fbda5,
+        emissiveIntensity: 3.1,
+        metalness: 0.1,
+        roughness: 0.28,
+        flatShading: true
+      }),
+      white: new THREE.MeshStandardMaterial({
+        color: 0xd8f3ff,
+        emissive: 0x8bcfff,
+        emissiveIntensity: 3.4,
+        metalness: 0.05,
+        roughness: 0.25,
+        flatShading: true
+      })
+    };
+
+    // ---------------------------------------------------------------------
+    // Geometry helpers
+    // ---------------------------------------------------------------------
+
+    function makeChamferedBox(width, height, depth, chamfer = 0.07) {
+      if (chamfer <= 0) {
+        return new THREE.BoxGeometry(width, height, depth);
+      }
+
+      const c = Math.min(
+        chamfer,
+        width * 0.22,
+        height * 0.22,
+        depth * 0.22
+      );
+
+      const x = width / 2 - c;
+      const y = height / 2 - c;
+
+      const shape = new THREE.Shape();
+      shape.moveTo(-x, -y);
+      shape.lineTo(x, -y);
+      shape.lineTo(width / 2, -y + c);
+      shape.lineTo(width / 2, y - c);
+      shape.lineTo(x, y);
+      shape.lineTo(-x, y);
+      shape.lineTo(-width / 2, y - c);
+      shape.lineTo(-width / 2, -y + c);
+      shape.closePath();
+
+      const geometry = new THREE.ExtrudeGeometry(shape, {
+        depth: Math.max(0.001, depth - c * 2),
+        bevelEnabled: true,
+        bevelSegments: 1,
+        steps: 1,
+        bevelSize: c,
+        bevelThickness: c,
+        curveSegments: 1
+      });
+
+      geometry.center();
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    function addMesh(parent, geometry, material, position, rotation) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...position);
+
+      if (rotation) {
+        mesh.rotation.set(...rotation);
+      }
+
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(
+      parent,
+      size,
+      position,
+      material,
+      chamfer = 0.07,
+      rotation
+    ) {
+      return addMesh(
+        parent,
+        makeChamferedBox(size[0], size[1], size[2], chamfer),
+        material,
+        position,
+        rotation
+      );
+    }
+
+    function addCylinder(
+      parent,
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      rotation = [0, 0, 0],
+      segments = 12
+    ) {
+      return addMesh(
+        parent,
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments,
+          1,
+          false
+        ),
+        material,
+        position,
+        rotation
+      );
+    }
+
+    function addGear(
+      parent,
+      radius,
+      position,
+      material,
+      teeth = 12,
+      thickness = 0.22
+    ) {
+      const group = new THREE.Group();
+      group.name = "Gear";
+      group.position.set(...position);
+      parent.add(group);
+
+      const diskMaterial = material.clone();
+      diskMaterial.color *= 0.88;
+      diskMaterial.metalness = 0.72;
+      diskMaterial.roughness = 0.45;
+
+      addCylinder(
+        group,
+        radius * 0.86,
+        radius * 0.86,
+        thickness,
+        [0, 0, 0],
+        diskMaterial,
+        [Math.PI / 2, 0, 0],
+        12
+      );
+
+      const toothGeometry = new THREE.BoxGeometry(
+        radius * 0.24,
+        radius * 0.16,
+        thickness * 1.14
+      );
+
+      for (let i = 0; i < teeth; i++) {
+        const angle = (i / teeth) * Math.PI * 2;
+        const tooth = new THREE.Mesh(toothGeometry, material);
+
+        tooth.position.set(
+          Math.cos(angle) * (radius + 0.015),
+          Math.sin(angle) * (radius + 0.015),
+          0
+        );
+        tooth.rotation.z = angle - Math.PI / 2;
+        tooth.castShadow = true;
+        tooth.receiveShadow = true;
+        group.add(tooth);
+      }
+
+      addCylinder(
+        group,
+        radius * 0.25,
+        radius * 0.25,
+        thickness * 1.18,
+        [0, 0, 0],
+        materials.gold,
+        [Math.PI / 2, 0, 0],
+        10
+      );
+
+      addMesh(
+        group,
+        new THREE.TorusGeometry(radius * 0.78, thickness * 0.15, 5, 16),
+        materials.bronze,
+        [0, 0, thickness * 0.52]
+      );
+
+      return group;
+    }
+
+    function addSpike(
+      parent,
+      radius,
+      height,
+      position,
+      material,
+      rotation = [0, 0, 0],
+      sides = 4
+    ) {
+      return addMesh(
+        parent,
+        new THREE.ConeGeometry(radius, height, sides),
+        material,
+        position,
+        rotation
+      );
+    }
+
+    function addTorus(
+      parent,
+      radius,
+      tube,
+      position,
+      material,
+      rotation = [0, 0, 0],
+      radialSegments = 6,
+      tubularSegments = 18
+    ) {
+      return addMesh(
+        parent,
+        new THREE.TorusGeometry(
+          radius,
+          tube,
+          radialSegments,
+          tubularSegments
+        ),
+        material,
+        position,
+        rotation
+      );
+    }
+
+    function addBolt(parent, position, material = materials.gold) {
+      return addCylinder(
+        parent,
+        0.055,
+        0.055,
+        0.035,
+        position,
+        material,
+        [Math.PI / 2, 0, 0],
+        8
+      );
+    }
+
+    // ---------------------------------------------------------------------
+    // Robot asset
+    // ---------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "Steam_Knight_Robot";
+    scene.add(asset);
+
+    // Torso and waist.
+    addBox(
+      asset,
+      [1.5, 1.55, 0.86],
+      [0, 2.25, 0],
+      materials.steel,
+      0.1
+    );
+
+    addBox(
+      asset,
+      [1.18, 0.92, 0.16],
+      [0, 2.3, 0.49],
+      materials.steelLight,
+      0.07
+    );
+
+    addBox(
+      asset,
+      [0.3, 0.65, 0.13],
+      [-0.67, 2.38, 0.55],
+      materials.steel,
+      0.05,
+      [0, 0, 0.06]
+    );
+
+    addBox(
+      asset,
+      [0.3, 0.65, 0.13],
+      [0.67, 2.38, 0.55],
+      materials.steel,
+      0.05,
+      [0, 0, -0.06]
+    );
+
+    for (let i = 0; i < 3; i++) {
+      addBox(
+        asset,
+        [0.82 - i * 0.08, 0.12, 0.18],
+        [0, 1.78 + i * 0.19, 0.52],
+        i === 1 ? materials.bronze : materials.steelDark,
+        0.035
+      );
+    }
+
+    // Reactor assembly.
+    addCylinder(
+      asset,
+      0.43,
+      0.43,
+      0.16,
+      [0, 2.28, 0.65],
+      materials.bronze,
+      [Math.PI / 2, 0, 0],
+      16
+    );
+
+    addTorus(
+      asset,
+      0.43,
+      0.075,
+      [0, 2.28, 0.75],
+      materials.gold
+    );
+
+    addCylinder(
+      asset,
+      0.25,
+      0.25,
+      0.13,
+      [0, 2.28, 0.73],
+      materials.steelDark,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    addCylinder(
+      asset,
+      0.14,
+      0.14,
+      0.045,
+      [0, 2.28, 0.815],
+      materials.orange,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2;
+      addBox(
+        asset,
+        [0.08, 0.31, 0.07],
+        [
+          Math.cos(angle) * 0.34,
+          2.28 + Math.sin(angle) * 0.34,
+          0.79
+        ],
+        materials.gold,
+        0.02,
+        [0, 0, angle - Math.PI / 2]
+      );
+    }
+
+    // Chest bolts and heat vents.
+    for (const x of [-0.45, -0.22, 0.22, 0.45]) {
+      addBolt(asset, [x, 2.57, 0.6]);
+    }
+
+    for (let i = 0; i < 3; i++) {
+      addBox(
+        asset,
+        [0.27, 0.045, 0.05],
+        [0, 2.03 + i * 0.12, 0.61],
+        i === 1 ? materials.cool : materials.orange,
+        0.01
+      );
+    }
+
+    // Backpack and boiler.
+    addBox(
+      asset,
+      [1.22, 1.25, 0.55],
+      [0, 2.3, -0.69],
+      materials.steelDark,
+      0.08
+    );
+
+    for (const x of [-0.42, 0.42]) {
+      addCylinder(
+        asset,
+        0.27,
+        0.27,
+        1.12,
+        [x, 2.34, -0.88],
+        materials.steel,
+        [0, 0, 0],
+        12
+      );
+
+      for (const y of [1.92, 2.34, 2.76]) {
+        addTorus(
+          asset,
+          0.275,
+          0.045,
+          [x, y, -0.88],
+          materials.bronze,
+          [Math.PI / 2, 0, 0],
+          5,
+          12
+        );
+      }
+    }
+
+    // Curved exhaust pipes.
+    for (const side of [-1, 1]) {
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(side * 0.36, 2.75, -0.88),
+        new THREE.Vector3(side * 0.62, 2.96, -1.02),
+        new THREE.Vector3(side * 0.82, 3.18, -0.91),
+        new THREE.Vector3(side * 0.74, 3.38, -0.7)
+      ]);
+
+      addMesh(
+        asset,
+        new THREE.TubeGeometry(curve, 10, 0.105, 6, false),
+        materials.steelDark
+      );
+
+      addCylinder(
+        asset,
+        0.11,
+        0.11,
+        0.17,
+        [side * 0.74, 3.39, -0.7],
+        materials.orange,
+        [0.78, 0, 0],
+        8
+      );
+    }
+
+    // Neck and head.
+    addCylinder(
+      asset,
+      0.35,
+      0.39,
+      0.3,
+      [0, 2.99, 0.02],
+      materials.steelDark,
+      [0, 0, 0],
+      12
+    );
+
+    addBox(
+      asset,
+      [1.25, 0.95, 0.88],
+      [0, 3.47, 0.01],
+      materials.steel,
+      0.12
+    );
+
+    addBox(
+      asset,
+      [0.94, 0.48, 0.16],
+      [0, 3.44, 0.49],
+      materials.black,
+      0.055
+    );
+
+    addBox(
+      asset,
+      [0.65, 0.095, 0.055],
+      [0, 3.51, 0.595],
+      materials.orange,
+      0.018
+    );
+
+    // Small central nose sensor.
+    addBox(
+      asset,
+      [0.16, 0.1, 0.08],
+      [0, 3.33, 0.61],
+      materials.cool,
+      0.025
+    );
+
+    for (const side of [-1, 1]) {
+      addGear(
+        asset,
+        0.34,
+        [side * 0.78, 3.48, -0.02],
+        materials.steelDark,
+        12,
+        0.22
+      );
+
+      addSpike(
+        asset,
+        0.16,
+        0.58,
+        [side * 0.69, 3.98, -0.04],
+        materials.bronze,
+        [0, 0, side * 0.24],
+        4
+      );
+    }
+
+    // Helmet crest.
+    addSpike(
+      asset,
+      0.46,
+      1.08,
+      [0, 4.15, -0.02],
+      materials.gold,
+      [0, Math.PI / 2, 0],
+      3
+    );
+
+    addBox(
+      asset,
+      [0.72, 0.12, 0.65],
+      [0, 3.9, -0.02],
+      materials.bronze,
+      0.035
+    );
+
+    // Shoulder armor and massive mechanical gears.
+    for (const side of [-1, 1]) {
+      addBox(
+        asset,
+        [0.82, 0.68, 0.78],
+        [side * 1.31, 2.66, 0],
+        materials.steelLight,
+        0.1,
+        [0, 0, -side * 0.12]
+      );
+
+      addGear(
+        asset,
+        0.55,
+        [side * 1.37, 2.58, 0.46],
+        materials.steelDark,
+        14,
+        0.3
+      );
+
+      addTorus(
+        asset,
+        0.55,
+        0.055,
+        [side * 1.37, 2.58, 0.63],
+        materials.bronze
+      );
+
+      addSpike(
+        asset,
+        0.18,
+        0.55,
+        [side * 1.76, 2.83, -0.03],
+        materials.bronze,
+        [0, 0, -side * Math.PI / 2],
+        4
+      );
+
+      addBox(
+        asset,
+        [0.46, 0.82, 0.5],
+        [side * 1.55, 2.0, 0],
+        materials.steel,
+        0.08,
+        [0, 0, side * 0.11]
+      );
+
+      addGear(
+        asset,
+        0.31,
+        [side * 1.67, 1.59, 0.08],
+        materials.copper,
+        10,
+        0.25
+      );
+
+      addBox(
+        asset,
+        [0.56, 0.72, 0.53],
+        [side * 1.69, 1.25, 0.03],
+        materials.steelLight,
+        0.08,
+        [0, 0, side * 0.06]
+      );
+
+      addBox(
+        asset,
+        [0.61, 0.4, 0.59],
+        [side * 1.72, 0.84, 0.08],
+        materials.steel,
+        0.08
+      );
+
+      // Fingers.
+      for (let finger = 0; finger < 3; finger++) {
+        addBox(
+          asset,
+          [0.11, 0.26, 0.16],
+          [
+            side * 1.72 + (finger - 1) * 0.16,
+            0.58,
+            0.22
+          ],
+          materials.steelDark,
+          0.025,
+          [0.2, 0, 0]
+        );
+      }
+    }
+
+    // Hips.
+    addBox(
+      asset,
+      [1.25, 0.36, 0.72],
+      [0, 1.48, 0],
+      materials.steelDark,
+      0.07
+    );
+
+    // Legs.
+    for (const side of [-1, 1]) {
+      addBox(
+        asset,
+        [0.59, 0.83, 0.59],
+        [side * 0.53, 0.98, 0],
+        materials.steelLight,
+        0.09,
+        [0, 0, side * 0.025]
+      );
+
+      addGear(
+        asset,
+        0.35,
+        [side * 0.56, 0.66, 0.1],
+        materials.bronze,
+        12,
+        0.27
+      );
+
+      addBox(
+        asset,
+        [0.51, 0.64, 0.54],
+        [side * 0.58, 0.39, 0.01],
+        materials.steel,
+        0.08
+      );
+
+      addBox(
+        asset,
+        [0.69, 0.31, 0.92],
+        [side * 0.59, 0.16, 0.17],
+        materials.steelDark,
+        0.09
+      );
+
+      addBox(
+        asset,
+        [0.56, 0.16, 0.25],
+        [side * 0.59, 0.31, 0.6],
+        materials.bronze,
+        0.04
+      );
+
+      for (let toe = 0; toe < 3; toe++) {
+        addSpike(
+          asset,
+          0.085,
+          0.22,
+          [
+            side * 0.59 + (toe - 1) * 0.17,
+            0.13,
+            0.69
+          ],
+          materials.gold,
+          [Math.PI / 2, 0, 0],
+          4
+        );
+      }
+    }
+
+    // Main cannon barrel.
+    addBox(
+      asset,
+      [0.72, 0.6, 0.48],
+      [0, 2.26, 0.76],
+      materials.steelDark,
+      0.08
+    );
+
+    addCylinder(
+      asset,
+      0.22,
+      0.27,
+      1.65,
+      [0, 2.26, 1.5],
+      materials.steel,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      addBox(
+        asset,
+        [0.085, 0.32, 0.5],
+        [
+          Math.cos(angle) * 0.285,
+          2.26 + Math.sin(angle) * 0.285,
+          1.47
+        ],
+        materials.bronze,
+        0.015,
+        [0, 0, angle - Math.PI / 2]
+      );
+    }
+
+    addTorus(
+      asset,
+      0.275,
+      0.085,
+      [0, 2.26, 2.36],
+      materials.gold
+    );
+
+    addCylinder(
+      asset,
+      0.235,
+      0.235,
+      0.18,
+      [0, 2.26, 2.37],
+      materials.steelDark,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    addCylinder(
+      asset,
+      0.16,
+      0.16,
+      0.035,
+      [0, 2.26, 2.475],
+      materials.cool,
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    // ---------------------------------------------------------------------
+    // Export
+    // ---------------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+    const exportButton = document.querySelector("#export-glb");
+    const toast = document.querySelector("#toast");
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("visible");
+
+      window.clearTimeout(showToast.timeout);
+      showToast.timeout = window.setTimeout(() => {
+        toast.classList.remove("visible");
+      }, 2600);
+    }
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting…";
+
+      asset.updateMatrixWorld(true);
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "steam_KNIGHT_robot.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          window.setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1500);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          showToast("GLB exported successfully");
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          showToast("Export failed — see console for details");
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          truncateDrawRange: true
+        }
+      );
+    });
+
+    document.querySelector("#reset-view").addEventListener("click", () => {
+      camera.position.copy(initialCameraPosition);
+      controls.target.copy(initialTarget);
+      controls.update();
+    });
+
+    // ---------------------------------------------------------------------
+    // Resize and render loop
+    // ---------------------------------------------------------------------
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Snare Drum</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e9eef5;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(340px, calc(100vw - 44px));
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 12px 35px rgba(31, 45, 70, 0.14);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      color: #17243a;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      margin: 0 0 15px;
+      color: #647186;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #fff;
+      background: linear-gradient(135deg, #1677c9, #0b529d);
+      box-shadow: 0 7px 18px rgba(11, 82, 157, 0.28);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 9px 22px rgba(11, 82, 157, 0.34);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    .hint {
+      margin-top: 12px;
+      margin-bottom: 0;
+      color: #7a8494;
+      font-size: 11px;
+      text-align: center;
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="panel">
+    <h1>Low-Poly Snare Drum</h1>
+    <p>
+      A stylized static drum with a blue shell, ivory drumheads, gold hoops,
+      dark lacing, tension rods, and wooden tripod feet.
+    </p>
+    <button id="exportButton" type="button">Export GLB</button>
+    <p class="hint">Drag to orbit · Scroll to zoom</p>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe9eef5);
+
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(3.45, 2.75, 5.15);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.9, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 3.1;
+    controls.maxDistance = 8;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // -------------------------------------------------------------------------
+    // Lighting
+    // -------------------------------------------------------------------------
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x657184, 2.1));
+
+    const keyLight = new THREE.DirectionalLight(0xfff3dc, 3.4);
+    keyLight.position.set(4.5, 6.5, 5.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 4;
+    keyLight.shadow.camera.bottom = -4;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 15;
+    keyLight.shadow.normalBias = 0.025;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xb9d7ff, 1.35);
+    fillLight.position.set(-4, 3.5, 3);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffd37a, 1.8);
+    rimLight.position.set(1, 4, -5);
+    scene.add(rimLight);
+
+    // Preview-only ground plane.
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(20, 20),
+      new THREE.MeshStandardMaterial({
+        color: 0xdde5ef,
+        roughness: 0.95,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // -------------------------------------------------------------------------
+    // Asset group: only this group is exported.
+    // -------------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "LowPoly_SnareDrum";
+    scene.add(asset);
+
+    const materials = {
+      shell: new THREE.MeshStandardMaterial({
+        color: 0x1677c9,
+        roughness: 0.48,
+        metalness: 0.12,
+        flatShading: true
+      }),
+      shellDark: new THREE.MeshStandardMaterial({
+        color: 0x0c4d96,
+        roughness: 0.55,
+        metalness: 0.1,
+        flatShading: true
+      }),
+      ivory: new THREE.MeshStandardMaterial({
+        color: 0xf2ead7,
+        roughness: 0.72,
+        metalness: 0,
+        flatShading: true
+      }),
+      ivoryDark: new THREE.MeshStandardMaterial({
+        color: 0xd8c9a9,
+        roughness: 0.78,
+        metalness: 0,
+        flatShading: true
+      }),
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xd9a441,
+        roughness: 0.3,
+        metalness: 0.58,
+        flatShading: true
+      }),
+      darkMetal: new THREE.MeshStandardMaterial({
+        color: 0x182438,
+        roughness: 0.38,
+        metalness: 0.52,
+        flatShading: true
+      }),
+      lacing: new THREE.MeshStandardMaterial({
+        color: 0x253142,
+        roughness: 0.68,
+        metalness: 0.08,
+        flatShading: true
+      }),
+      wood: new THREE.MeshStandardMaterial({
+        color: 0xc68a4d,
+        roughness: 0.72,
+        metalness: 0,
+        flatShading: true
+      }),
+      foot: new THREE.MeshStandardMaterial({
+        color: 0x202630,
+        roughness: 0.78,
+        metalness: 0.05,
+        flatShading: true
+      })
+    };
+
+    // -------------------------------------------------------------------------
+    // Geometry helpers
+    // -------------------------------------------------------------------------
+
+    function addMesh(geometry, material, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function cylinderBetween(
+      start,
+      end,
+      radius,
+      material,
+      radialSegments = 8,
+      parent = asset
+    ) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radius,
+        radius,
+        length,
+        radialSegments,
+        1,
+        false
+      );
+
+      const mesh = addMesh(geometry, material, parent);
+      mesh.position.copy(start).add(end).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    function radialScrew(position, direction) {
+      const geometry = new THREE.CylinderGeometry(0.047, 0.047, 0.045, 8);
+      const screw = addMesh(geometry, materials.gold);
+      screw.position.copy(position);
+      screw.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.clone().normalize()
+      );
+      return screw;
+    }
+
+    function surfacePoint(angle, y, radius) {
+      return new THREE.Vector3(
+        Math.sin(angle) * radius,
+        y,
+        Math.cos(angle) * radius
+      );
+    }
+
+    function bodyRadius(y) {
+      const profile = [
+        new THREE.Vector2(0.86, 0.58),
+        new THREE.Vector2(1.00, 0.66),
+        new THREE.Vector2(1.10, 0.82),
+        new THREE.Vector2(1.12, 0.98),
+        new THREE.Vector2(1.08, 1.20),
+        new THREE.Vector2(1.00, 1.40),
+        new THREE.Vector2(0.94, 1.53),
+        new THREE.Vector2(0.94, 1.58)
+      ];
+
+      for (let i = 0; i < profile.length - 1; i++) {
+        const a = profile[i];
+        const b = profile[i + 1];
+
+        if (y <= b.y) {
+          const t = (y - a.y) / (b.y - a.y);
+          return THREE.MathUtils.lerp(a.x, b.x, t);
+        }
+      }
+
+      return profile[profile.length - 1].x;
+    }
+
+    // -------------------------------------------------------------------------
+    // Drum shell
+    // -------------------------------------------------------------------------
+
+    const shellProfile = [
+      new THREE.Vector2(0.86, 0.58),
+      new THREE.Vector2(1.00, 0.66),
+      new THREE.Vector2(1.10, 0.82),
+      new THREE.Vector2(1.12, 0.98),
+      new THREE.Vector2(1.08, 1.20),
+      new THREE.Vector2(1.00, 1.40),
+      new THREE.Vector2(0.94, 1.53),
+      new THREE.Vector2(0.94, 1.58)
+    ];
+
+    const shell = addMesh(
+      new THREE.LatheGeometry(shellProfile, 24),
+      materials.shell
+    );
+    shell.name = "Blue_DrumShell";
+
+    // Drumheads.
+    const bottomHead = addMesh(
+      new THREE.CircleGeometry(0.885, 24),
+      materials.ivory
+    );
+    bottomHead.rotation.x = -Math.PI / 2;
+    bottomHead.position.y = 0.582;
+    bottomHead.name = "BottomDrumhead";
+
+    const topHead = addMesh(
+      new THREE.CircleGeometry(0.90, 24),
+      materials.ivory
+    );
+    topHead.rotation.x = -Math.PI / 2;
+    topHead.position.y = 1.582;
+    topHead.name = "TopDrumhead";
+
+    // Subtle inset rings on the drumheads.
+    const topInset = addMesh(
+      new THREE.TorusGeometry(0.72, 0.014, 6, 24),
+      materials.shellDark
+    );
+    topInset.rotation.x = Math.PI / 2;
+    topInset.position.y = 1.592;
+
+    const bottomInset = addMesh(
+      new THREE.TorusGeometry(0.68, 0.012, 6, 24),
+      materials.shellDark
+    );
+    bottomInset.rotation.x = Math.PI / 2;
+    bottomInset.position.y = 0.592;
+
+    // Gold hoops.
+    const bottomHoop = addMesh(
+      new THREE.TorusGeometry(0.905, 0.046, 8, 28),
+      materials.gold
+    );
+    bottomHoop.rotation.x = Math.PI / 2;
+    bottomHoop.position.y = 0.655;
+
+    const topHoop = addMesh(
+      new THREE.TorusGeometry(0.955, 0.052, 8, 28),
+      materials.gold
+    );
+    topHoop.rotation.x = Math.PI / 2;
+    topHoop.position.y = 1.555;
+
+    // Dark vertical tension straps.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const bottom = surfacePoint(angle, 0.66, bodyRadius(0.66) + 0.018);
+      const top = surfacePoint(angle, 1.47, bodyRadius(1.47) + 0.018);
+
+      cylinderBetween(
+        bottom,
+        top,
+        0.031,
+        materials.darkMetal,
+        6
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Lacing: crossed lines on the front and back halves
+    // -------------------------------------------------------------------------
+
+    function addLacingHalf(sign) {
+      const bottomAngle = sign * Math.PI;
+      const topAngle = sign * (Math.PI * 0.5);
+
+      const bottom = surfacePoint(
+        bottomAngle,
+        0.78,
+        bodyRadius(0.78) + 0.035
+      );
+      const top = surfacePoint(
+        topAngle,
+        1.38,
+        bodyRadius(1.38) + 0.035
+      );
+
+      const otherBottom = surfacePoint(
+        bottomAngle,
+        0.78,
+        bodyRadius(0.78) + 0.035
+      );
+      const otherTop = surfacePoint(
+        topAngle,
+        1.38,
+        bodyRadius(1.38) + 0.035
+      );
+
+      cylinderBetween(
+        bottom,
+        top,
+        0.025,
+        materials.lacing,
+        6
+      );
+      cylinderBetween(
+        otherBottom,
+        otherTop,
+        0.025,
+        materials.lacing,
+        6
+      );
+    }
+
+    addLacingHalf(1);
+    addLacingHalf(-1);
+
+    // Decorative knots at the center of each lacing crossing.
+    for (const sign of [1, -1]) {
+      const knot = addMesh(
+        new THREE.SphereGeometry(0.048, 8, 6),
+        materials.gold
+      );
+      knot.position.copy(
+        surfacePoint(
+          sign * Math.PI * 0.5,
+          1.18,
+          bodyRadius(1.18) + 0.055
+        )
+      );
+      knot.scale.set(1, 1, 0.65);
+    }
+
+    // -------------------------------------------------------------------------
+    // Vertical tension rods and screw heads
+    // -------------------------------------------------------------------------
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+
+      const bottom = surfacePoint(
+        angle,
+        0.65,
+        bodyRadius(0.65) + 0.035
+      );
+      const top = surfacePoint(
+        angle,
+        1.48,
+        bodyRadius(1.48) + 0.035
+      );
+
+      cylinderBetween(
+        bottom,
+        top,
+        0.027,
+        materials.gold,
+        6
+      );
+
+      const bottomDirection = new THREE.Vector3(
+        Math.sin(angle),
+        0,
+        Math.cos(angle)
+      );
+      const topDirection = new THREE.Vector3(
+        Math.sin(angle),
+        0,
+        Math.cos(angle)
+      );
+
+      radialScrew(
+        bottom.clone().addScaledVector(bottomDirection, 0.012),
+        bottomDirection
+      );
+      radialScrew(
+        top.clone().addScaledVector(topDirection, 0.012),
+        topDirection
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Wooden tripod
+    // -------------------------------------------------------------------------
+
+    const legAngles = [
+      0,
+      (Math.PI * 2) / 3,
+      (Math.PI * 4) / 3
+    ];
+
+    const legStarts = [];
+    const legEnds = [];
+
+    for (const angle of legAngles) {
+      const start = surfacePoint(angle, 0.62, bodyRadius(0.62) - 0.04);
+      const end = surfacePoint(angle, 0.13, 1.43 - 0.035);
+
+      legStarts.push(start);
+      legEnds.push(end);
+
+      cylinderBetween(
+        start,
+        end,
+        0.088,
+        materials.wood,
+        8
+      );
+
+      // Dark collar near the body.
+      const direction = end.clone().sub(start).normalize();
+      cylinderBetween(
+        start.clone(),
+        start.clone().addScaledVector(direction, 0.16),
+        0.108,
+        materials.darkMetal,
+        8
+      );
+
+      // Broad rubber foot.
+      const footEnd = end.clone().addScaledVector(direction, 0.22);
+      cylinderBetween(
+        end,
+        footEnd,
+        0.118,
+        materials.foot,
+        8
+      );
+    }
+
+    // Small wooden pegs visible where the legs meet the shell.
+    for (const start of legStarts) {
+      const peg = addMesh(
+        new THREE.CylinderGeometry(0.115, 0.115, 0.13, 8),
+        materials.wood
+      );
+      peg.position.copy(start);
+      peg.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        legEnds[legStarts.indexOf(start)]
+          .clone()
+          .sub(legStarts[legStarts.indexOf(start)])
+          .normalize()
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Export GLB
+    // -------------------------------------------------------------------------
+
+    const exportButton = document.getElementById("exportButton");
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting…";
+
+      asset.updateMatrixWorld(true);
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low-poly-snare-drum.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+        },
+        (error) => {
+          console.error("GLB export failed:", error);
+          exportButton.disabled = false;
+          exportButton.textContent = "Export Failed — Try Again";
+        },
+        {
+          binary: true,
+          onlyVisible: true
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

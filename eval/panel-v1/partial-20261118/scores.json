@@ -1,0 +1,98 @@
+{
+ "arms": [
+  "ccore",
+  "ours"
+ ],
+ "scores": {
+  "all": {
+   "pairs": 22,
+   "ccore": {
+    "working": 15,
+    "rate": 0.682
+   },
+   "ours": {
+    "working": 16,
+    "rate": 0.727
+   },
+   "both": 10,
+   "only_ccore": 5,
+   "only_ours": 6,
+   "neither": 1,
+   "sign_test_p": 1.0
+  },
+  "kind=heldout-render": {
+   "pairs": 22,
+   "ccore": {
+    "working": 15,
+    "rate": 0.682
+   },
+   "ours": {
+    "working": 16,
+    "rate": 0.727
+   },
+   "both": 10,
+   "only_ccore": 5,
+   "only_ours": 6,
+   "neither": 1,
+   "sign_test_p": 1.0
+  },
+  "category=character": {
+   "pairs": 7,
+   "ccore": {
+    "working": 5,
+    "rate": 0.714
+   },
+   "ours": {
+    "working": 6,
+    "rate": 0.857
+   },
+   "both": 4,
+   "only_ccore": 1,
+   "only_ours": 2,
+   "neither": 0,
+   "sign_test_p": 1.0
+  },
+  "category=not character": {
+   "pairs": 15,
+   "ccore": {
+    "working": 10,
+    "rate": 0.667
+   },
+   "ours": {
+    "working": 10,
+    "rate": 0.667
+   },
+   "both": 6,
+   "only_ccore": 4,
+   "only_ours": 4,
+   "neither": 1,
+   "sign_test_p": 1.0
+  },
+  "seed42": {
+   "pairs": 22,
+   "ccore": {
+    "working": 15,
+    "rate": 0.682
+   },
+   "ours": {
+    "working": 16,
+    "rate": 0.727
+   },
+   "both": 10,
+   "only_ccore": 5,
+   "only_ours": 6,
+   "neither": 1,
+   "sign_test_p": 1.0
+  }
+ },
+ "failure_kinds": {
+  "ours": {
+   "invalid_glb": 1,
+   "page_error": 4,
+   "no_export": 1
+  },
+  "ccore": {
+   "page_error": 7
+  }
+ }
+}

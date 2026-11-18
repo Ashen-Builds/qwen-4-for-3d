@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Industrial Steampunk Automaton</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #10151a;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .panel {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(360px, calc(100vw - 44px));
+      padding: 18px 20px;
+      border: 1px solid rgba(180, 199, 211, 0.18);
+      border-radius: 14px;
+      background: rgba(13, 18, 23, 0.84);
+      box-shadow: 0 18px 55px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      color: #e9edf0;
+      font-size: 19px;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      margin: 0;
+      color: #90a0ac;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+      margin-top: 16px;
+    }
+
+    button {
+      min-height: 40px;
+      border: 0;
+      border-radius: 8px;
+      padding: 0 15px;
+      color: #10161a;
+      background: #d8a254;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    .secondary {
+      color: #d8e0e5;
+      border: 1px solid rgba(210, 222, 229, 0.2);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    #status {
+      min-height: 16px;
+      margin-top: 11px;
+      color: #72c7d5;
+      font-size: 11px;
+    }
+
+    .hint {
+      position: fixed;
+      right: 20px;
+      bottom: 16px;
+      z-index: 10;
+      color: rgba(208, 220, 227, 0.58);
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 14px 16px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div class="panel">
+    <h1>Industrial Steampunk Automaton</h1>
+    <p>
+      Small mechanical automaton with a copper core, articulated arms,
+      service wrench, exposed steam line, and low-poly industrial detailing.
+    </p>
+
+    <div class="actions">
+      <button id="exportButton" type="button">Export GLB</button>
+      <button id="resetButton" class="secondary" type="button">Reset View</button>
+    </div>
+
+    <div id="status" aria-live="polite"></div>
+  </div>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const resetButton = document.getElementById("resetButton");
+    const statusElement = document.getElementById("status");
+
+    // -------------------------------------------------------------------------
+    // Renderer and editor-style scene
+    // -------------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x10151a);
+    scene.fog = new THREE.Fog(0x10151a, 8, 18);
+
+    const camera = new THREE.PerspectiveCamera(
+      34,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const initialCameraPosition = new THREE.Vector3(3.65, 2.75, 4.85);
+    const initialTarget = new THREE.Vector3(0, 1.15, 0);
+
+    camera.position.copy(initialCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(initialTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 2.3;
+    controls.maxDistance = 9;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    scene.add(new THREE.HemisphereLight(0xbad8e8, 0x15100b, 2.25));
+
+    const keyLight = new THREE.DirectionalLight(0xfff0d6, 4.1);
+    keyLight.position.set(4, 6, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 5;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 15;
+    keyLight.shadow.bias = -0.0003;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x5bb7d4, 2.5);
+    rimLight.position.set(-4, 3.2, -3);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.PointLight(0x9d6133, 16, 8, 2);
+    fillLight.position.set(-2.5, 1.2, 3);
+    scene.add(fillLight);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0x11181d,
+        roughness: 0.93,
+        metalness: 0.08
+      })
+    );
+
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.012;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(12, 24, 0x354650, 0x202c34);
+    grid.position.y = -0.008;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.28;
+    scene.add(grid);
+
+    // -------------------------------------------------------------------------
+    // Materials
+    // -------------------------------------------------------------------------
+
+    const materials = {
+      steel: new THREE.MeshStandardMaterial({
+        name: "Charcoal steel",
+        color: 0x26313a,
+        metalness: 0.78,
+        roughness: 0.48,
+        flatShading: true
+      }),
+      steelLight: new THREE.MeshStandardMaterial({
+        name: "Blue steel",
+        color: 0x46535c,
+        metalness: 0.72,
+        roughness: 0.43,
+        flatShading: true
+      }),
+      copper: new THREE.MeshStandardMaterial({
+        name: "Copper",
+        color: 0xb96932,
+        metalness: 0.82,
+        roughness: 0.32,
+        flatShading: true
+      }),
+      brass: new THREE.MeshStandardMaterial({
+        name: "Aged brass",
+        color: 0xd2a04e,
+        metalness: 0.84,
+        roughness: 0.3,
+        flatShading: true
+      }),
+      dark: new THREE.MeshStandardMaterial({
+        name: "Deep black metal",
+        color: 0x11171a,
+        metalness: 0.68,
+        roughness: 0.55,
+        flatShading: true
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        name: "Rubber",
+        color: 0x15191b,
+        metalness: 0.05,
+        roughness: 0.9,
+        flatShading: true
+      }),
+      cyan: new THREE.MeshStandardMaterial({
+        name: "Arc cyan",
+        color: 0x8bf5ff,
+        emissive: 0x16b9d2,
+        emissiveIntensity: 2.8,
+        metalness: 0.25,
+        roughness: 0.25,
+        flatShading: true
+      }),
+      amber: new THREE.MeshStandardMaterial({
+        name: "Amber indicator",
+        color: 0xffbf52,
+        emissive: 0x8a3c00,
+        emissiveIntensity: 1.6,
+        roughness: 0.35,
+        flatShading: true
+      })
+    };
+
+    // -------------------------------------------------------------------------
+    // Asset hierarchy and geometry helpers
+    // -------------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "IndustrialSteampunkAutomaton";
+    scene.add(asset);
+
+    const bodyAssembly = new THREE.Group();
+    bodyAssembly.name = "BodyAssembly";
+    asset.add(bodyAssembly);
+
+    const headAssembly = new THREE.Group();
+    headAssembly.name = "HeadAssembly";
+    bodyAssembly.add(headAssembly);
+
+    const leftArmAssembly = new THREE.Group();
+    leftArmAssembly.name = "LeftArmAssembly";
+    bodyAssembly.add(leftArmAssembly);
+
+    const rightArmAssembly = new THREE.Group();
+    rightArmAssembly.name = "RightArmAssembly";
+    bodyAssembly.add(rightArmAssembly);
+
+    const leftLegAssembly = new THREE.Group();
+    leftLegAssembly.name = "LeftLegAssembly";
+    bodyAssembly.add(leftLegAssembly);
+
+    const rightLegAssembly = new THREE.Group();
+    rightLegAssembly.name = "RightLegAssembly";
+    bodyAssembly.add(rightLegAssembly);
+
+    function addMesh(geometry, material, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function box(w, h, d, material, parent, position = [0, 0, 0], rotation = [0, 0, 0]) {
+      const mesh = addMesh(new THREE.BoxGeometry(w, h, d), material, parent);
+      mesh.position.set(...position);
+      mesh.rotation.set(...rotation);
+      return mesh;
+    }
+
+    function cylinder(
+      radiusTop,
+      radiusBottom,
+      height,
+      material,
+      parent,
+      position = [0, 0, 0],
+      rotation = [0, 0, 0],
+      segments = 12
+    ) {
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(radiusTop, radiusBottom, height, segments, 1, false),
+        material,
+        parent
+      );
+      mesh.position.set(...position);
+      mesh.rotation.set(...rotation);
+      return mesh;
+    }
+
+    function ball(radius, material, parent, position, scale = [1, 1, 1]) {
+      const mesh = addMesh(
+        new THREE.SphereGeometry(radius, 12, 8),
+        material,
+        parent
+      );
+      mesh.position.set(...position);
+      mesh.scale.set(...scale);
+      return mesh;
+    }
+
+    function rod(start, end, radius, material, parent, segments = 8) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = new THREE.Vector3().subVectors(b, a);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(radius, radius, length, segments, 1, false),
+        material,
+        parent
+      );
+
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    function gear(
+      outerRadius,
+      innerRadius,
+      teeth,
+      depth,
+      material,
+      parent,
+      position = [0, 0, 0],
+      rotation = [0, 0, 0]
+    ) {
+      const shape = new THREE.Shape();
+      const pointCount = teeth * 4;
+
+      for (let i = 0; i < pointCount; i++) {
+        const phase = i % 4;
+        const radius = phase === 0 || phase === 1 ? outerRadius : innerRadius;
+        const angle = (i / pointCount) * Math.PI * 2;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+
+        if (i === 0) {
+          shape.moveTo(x, y);
+        } else {
+          shape.lineTo(x, y);
+        }
+      }
+
+      shape.closePath();
+
+      const geometry = new THREE.ExtrudeGeometry(shape, {
+        depth,
+        steps: 1,
+        curveSegments: 1,
+        bevelEnabled: false
+      });
+
+      geometry.translate(0, 0, -depth / 2);
+
+      const mesh = addMesh(geometry, material, parent);
+      mesh.position.set(...position);
+      mesh.rotation.set(...rotation);
+      return mesh;
+    }
+
+    function rivet(parent, position, radius = 0.034) {
+      return cylinder(
+        radius,
+        radius,
+        0.025,
+        materials.brass,
+        parent,
+        position,
+        [Math.PI / 2, 0, 0],
+        8
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Torso and pelvis
+    // -------------------------------------------------------------------------
+
+    box(0.88, 0.72, 0.46, materials.steel, bodyAssembly, [0, 1.36, 0]);
+    box(0.76, 0.58, 0.08, materials.steelLight, bodyAssembly, [0, 1.37, 0.265]);
+    box(0.59, 0.055, 0.025, materials.brass, bodyAssembly, [0, 1.62, 0.315]);
+    box(0.59, 0.055, 0.025, materials.brass, bodyAssembly, [0, 1.10, 0.315]);
+
+    // Copper chest core and retaining ring.
+    cylinder(
+      0.16,
+      0.16,
+      0.075,
+      materials.copper,
+      bodyAssembly,
+      [0, 1.39, 0.34],
+      [Math.PI / 2, 0, 0],
+      16
+    );
+
+    const coreRing = addMesh(
+      new THREE.TorusGeometry(0.205, 0.025, 6, 18),
+      materials.brass,
+      bodyAssembly
+    );
+    coreRing.position.set(0, 1.39, 0.385);
+
+    gear(0.125, 0.067, 10, 0.055, materials.brass, bodyAssembly, [-0.29, 1.38, 0.32]);
+    gear(0.125, 0.067, 10, 0.055, materials.brass, bodyAssembly, [0.29, 1.38, 0.32]);
+
+    const chestBolts = [
+      [-0.32, 1.59],
+      [0.32, 1.59],
+      [-0.32, 1.16],
+      [0.32, 1.16]
+    ];
+
+    chestBolts.forEach(([x, y]) => rivet(bodyAssembly, [x, y, 0.323]));
+
+    // Side hip and pelvis blocks.
+    box(0.49, 0.19, 0.41, materials.steelLight, bodyAssembly, [0, 1.06, 0]);
+    box(0.12, 0.15, 0.43, materials.dark, bodyAssembly, [-0.18, 1.06, 0]);
+    box(0.12, 0.15, 0.43, materials.dark, bodyAssembly, [0.18, 1.06, 0]);
+
+    // -------------------------------------------------------------------------
+    // Backpack and steam hardware
+    // -------------------------------------------------------------------------
+
+    box(0.61, 0.58, 0.25, materials.dark, bodyAssembly, [0, 1.39, -0.32]);
+    box(0.48, 0.42, 0.065, materials.steelLight, bodyAssembly, [0, 1.39, -0.465]);
+
+    rod(
+      [0.22, 1.19, -0.49],
+      [0.22, 1.68, -0.49],
+      0.052,
+      materials.copper,
+      bodyAssembly,
+      8
+    );
+
+    ball(0.085, materials.copper, bodyAssembly, [0.22, 1.68, -0.49], [1, 1, 1]);
+    rod(
+      [0.22, 1.68, -0.49],
+      [0.28, 1.89, -0.49],
+      0.052,
+      materials.copper,
+      bodyAssembly,
+      8
+    );
+    cylinder(
+      0.075,
+      0.075,
+      0.055,
+      materials.brass,
+      bodyAssembly,
+      [0.28, 1.91, -0.49],
+      [Math.PI / 2, 0, 0],
+      8
+    );
+
+    // Small rear pressure gauge.
+    cylinder(
+      0.085,
+      0.085,
+      0.045,
+      materials.brass,
+      bodyAssembly,
+      [-0.19, 1.48, -0.49],
+      [Math.PI / 2, 0, 0],
+      12
+    );
+
+    // -------------------------------------------------------------------------
+    // Head, face, and antenna
+    // -------------------------------------------------------------------------
+
+    cylinder(
+      0.18,
+      0.2,
+      0.18,
+      materials.steelLight,
+      headAssembly,
+      [0, 1.79, 0],
+      [0, 0, 0],
+      12
+    );
+
+    box(0.64, 0.44, 0.48, materials.steel, headAssembly, [0, 2.02, 0]);
+    box(0.55, 0.30, 0.075, materials.dark, headAssembly, [0, 2.015, 0.265]);
+    box(0.59, 0.055, 0.09, materials.copper, headAssembly, [0, 2.19, 0.265]);
+
+    // Glowing eyes.
+    box(0.105, 0.065, 0.035, materials.cyan, headAssembly, [-0.145, 2.02, 0.311]);
+    box(0.105, 0.065, 0.035, materials.cyan, headAssembly, [0.145, 2.02, 0.311]);
+
+    // Brows.
+    box(0.13, 0.035, 0.035, materials.brass, headAssembly, [-0.145, 2.09, 0.316], [0, 0, -0.1]);
+    box(0.13, 0.035, 0.035, materials.brass, headAssembly, [0.145, 2.09, 0.316], [0, 0, 0.1]);
+
+    // Ear caps.
+    cylinder(
+      0.105,
+      0.105,
+      0.055,
+      materials.copper,
+      headAssembly,
+      [-0.335, 2.01, 0],
+      [0, 0, Math.PI / 2],
+      12
+    );
+    cylinder(
+      0.105,
+      0.105,
+      0.055,
+      materials.copper,
+      headAssembly,
+      [0.335, 2.01, 0],
+      [0, 0, Math.PI / 2],
+      12
+    );
+
+    // Flat copper cap.
+    box(0.57, 0.065, 0.44, materials.copper, headAssembly, [0, 2.265, 0]);
+    box(0.18, 0.055, 0.29, materials.brass, headAssembly, [0, 2.315, -0.03]);
+
+    // Antenna.
+    rod(
+      [0.19, 2.29, -0.02],
+      [0.24, 2.67, -0.06],
+      0.018,
+      materials.brass,
+      headAssembly,
+      6
+    );
+    ball(0.042, materials.amber, headAssembly, [0.24, 2.68, -0.06], [1, 1, 1]);
+
+    // -------------------------------------------------------------------------
+    // Arms
+    // -------------------------------------------------------------------------
+
+    function buildArm(parent, side) {
+      const shoulderX = side * 0.53;
+      const elbowX = side * 0.64;
+      const handX = side * 0.76;
+
+      ball(
+        0.13,
+        materials.brass,
+        parent,
+        [shoulderX, 1.59, 0.015],
+        [1, 1, 1]
+      );
+
+      gear(
+        0.165,
+        0.077,
+        12,
+        0.065,
+        materials.copper,
+        parent,
+        [shoulderX, 1.59, 0.235],
+        [0, 0, side * -0.08]
+      );
+
+      box(
+        0.18,
+        0.40,
+        0.19,
+        materials.steel,
+        parent,
+        [shoulderX, 1.41, 0.035],
+        [0, 0, side * -0.12]
+      );
+
+      ball(
+        0.115,
+        materials.steelLight,
+        parent,
+        [elbowX, 1.11, 0.08]
+      );
+
+      rod(
+        [elbowX, 1.08, 0.08],
+        [handX, 0.70, 0.18],
+        0.095,
+        materials.steelLight,
+        parent
+      );
+
+      rod(
+        [elbowX, 0.96, 0.105],
+        [handX - side * 0.035, 0.76, 0.175],
+        0.112,
+        materials.copper,
+        parent,
+        8
+      );
+
+      box(
+        0.21,
+        0.18,
+        0.21,
+        materials.dark,
+        parent,
+        [handX, 0.59, 0.19],
+        [0, 0, side * -0.12]
+      );
+
+      // Three compact fingers.
+      [-0.06, 0, 0.06].forEach((fingerOffset) => {
+        box(
+          0.035,
+          0.11,
+          0.075,
+          materials.steelLight,
+          parent,
+          [handX + fingerOffset, 0.49, 0.205]
+        );
+      });
+    }
+
+    buildArm(leftArmAssembly, -1);
+    buildArm(rightArmAssembly, 1);
+
+    // Service wrench held by the right hand.
+    const wrench = new THREE.Group();
+    wrench.name = "ServiceWrench";
+    wrench.position.set(0.77, 0.52, 0.265);
+    wrench.rotation.z = -0.12;
+    rightArmAssembly.add(wrench);
+
+    box(0.055, 0.29, 0.055, materials.brass, wrench, [0, 0, 0]);
+    box(0.09, 0.065, 0.06, materials.brass, wrench, [0, -0.22, 0]);
+    box(0.035, 0.10, 0.06, materials.brass, wrench, [-0.05, -0.25, 0]);
+    box(0.035, 0.10, 0.06, materials.brass, wrench, [0.05, -0.25, 0]);
+
+    gear(
+      0.105,
+      0.057,
+      10,
+      0.05,
+      materials.brass,
+      leftArmAssembly,
+      [-0.76, 0.59, 0.31],
+      [0, 0, 0.12]
+    );
+
+    // -------------------------------------------------------------------------
+    // Legs and feet
+    // -------------------------------------------------------------------------
+
+    function buildLeg(parent, side) {
+      const x = side * 0.285;
+
+      box(
+        0.28,
+        0.30,
+        0.29,
+        materials.steel,
+        parent,
+        [x, 0.84, 0.015],
+        [0, 0, side * -0.025]
+      );
+
+      gear(
+        0.125,
+        0.064,
+        10,
+        0.055,
+        materials.brass,
+        parent,
+        [x, 0.83, 0.175]
+      );
+
+      ball(
+        0.115,
+        materials.steelLight,
+        parent,
+        [x, 0.54, 0.025]
+      );
+
+      box(
+        0.235,
+        0.43,
+        0.24,
+        materials.steel,
+        parent,
+        [x, 0.48, 0.015]
+      );
+
+      box(
+        0.32,
+        0.16,
+        0.58,
+        materials.dark,
+        parent,
+        [x, 0.13, 0.13]
+      );
+
+      box(
+        0.30,
+        0.16,
+        0.15,
+        materials.steelLight,
+        parent,
+        [x, 0.14, 0.405]
+      );
+
+      box(
+        0.26,
+        0.055,
+        0.17,
+        materials.brass,
+        parent,
+        [x, 0.14, 0.49]
+      );
+
+      [-0.08, 0.08].forEach((footOffset) => {
+        cylinder(
+          0.034,
+          0.034,
+          0.025,
+          materials.brass,
+          parent,
+          [x + footOffset, 0.225, 0.31],
+          [Math.PI / 2, 0, 0],
+          8
+        );
+      });
+    }
+
+    buildLeg(leftLegAssembly, -1);
+    buildLeg(rightLegAssembly, 1);
+
+    // Small feet-to-leg mounting bolts.
+    [-0.285, 0.285].forEach((x) => {
+      cylinder(
+        0.033,
+        0.033,
+        0.035,
+        materials.brass,
+        bodyAssembly,
+        [x, 1.15, 0.22],
+        [Math.PI / 2, 0, 0],
+        8
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Export
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", async () => {
+      exportButton.disabled = true;
+      statusElement.textContent = "Preparing binary GLB…";
+
+      try {
+        asset.updateMatrixWorld(true);
+
+        const exporter = new GLTFExporter();
+        const result = await exporter.parseAsync(asset, {
+          binary: true,
+          onlyVisible: true,
+          trs: false
+        });
+
+        const blob = new Blob([result], {
+          type: "model/gltf-binary"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "industrial_steampunk_automaton.glb";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+        statusElement.textContent = "GLB exported successfully.";
+      } catch (error) {
+        console.error(error);
+        statusElement.textContent = "Export failed. See the browser console.";
+      } finally {
+        exportButton.disabled = false;
+      }
+    });
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(initialCameraPosition);
+      controls.target.copy(initialTarget);
+      controls.update();
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

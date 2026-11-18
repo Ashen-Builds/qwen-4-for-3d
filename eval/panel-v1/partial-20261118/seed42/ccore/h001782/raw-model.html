@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>City Service Kiosk — Three.js Asset</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 40%, #17323d 0%, #0a1720 48%, #050b10 100%);
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      border: 1px solid rgba(145, 225, 229, 0.18);
+      background: rgba(5, 15, 21, 0.76);
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .info {
+      top: 24px;
+      left: 24px;
+      width: min(350px, calc(100vw - 48px));
+      padding: 20px 22px;
+      border-radius: 18px;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: #64e6d8;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #64e6d8;
+      box-shadow: 0 0 14px #36d9c8;
+      content: "";
+    }
+
+    h1 {
+      margin: 0;
+      color: #effff9;
+      font-size: clamp(25px, 4vw, 36px);
+      line-height: 1.04;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: #91aeb5;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 16px;
+    }
+
+    .tag {
+      padding: 6px 9px;
+      border: 1px solid rgba(105, 225, 216, 0.16);
+      border-radius: 999px;
+      background: rgba(40, 113, 119, 0.12);
+      color: #a9d8d7;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .actions {
+      top: 24px;
+      right: 24px;
+      display: flex;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 16px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 43px;
+      padding: 0 17px;
+      border: 0;
+      border-radius: 11px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition:
+        transform 150ms ease,
+        filter 150ms ease,
+        opacity 150ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    #export {
+      color: #05201f;
+      background: linear-gradient(135deg, #72f0df, #32cfc2);
+      box-shadow: 0 8px 25px rgba(40, 215, 198, 0.22);
+    }
+
+    #reset {
+      color: #bdd0d3;
+      background: rgba(255, 255, 255, 0.065);
+    }
+
+    button svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    #status {
+      position: fixed;
+      z-index: 11;
+      right: 24px;
+      bottom: 24px;
+      max-width: min(360px, calc(100vw - 48px));
+      padding: 11px 15px;
+      border: 1px solid rgba(100, 225, 216, 0.2);
+      border-radius: 12px;
+      background: rgba(5, 15, 21, 0.86);
+      color: #a9d8d7;
+      font-size: 12px;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+    }
+
+    #status.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hint {
+      position: fixed;
+      z-index: 10;
+      bottom: 24px;
+      left: 24px;
+      color: rgba(177, 205, 208, 0.56);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 700px) {
+      .info {
+        top: 14px;
+        left: 14px;
+        width: calc(100vw - 28px);
+        padding: 16px;
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      .tags {
+        margin-top: 12px;
+      }
+
+      .actions {
+        top: auto;
+        right: 14px;
+        bottom: 14px;
+      }
+
+      #status {
+        right: 14px;
+        bottom: 74px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel info">
+    <div class="eyebrow">Low-poly city asset</div>
+    <h1>City Service Kiosk</h1>
+    <p class="subtitle">
+      A connected, accessible transit information station with a touchscreen,
+      service terminal, illuminated map board, solar roof, and 24/7 signage.
+    </p>
+    <div class="tags">
+      <span class="tag">Static model</span>
+      <span class="tag">GLB ready</span>
+      <span class="tag">PBR materials</span>
+      <span class="tag">24 / 7</span>
+    </div>
+  </section>
+
+  <nav class="panel actions">
+    <button id="reset" type="button" title="Reset camera">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 4v6h6" />
+        <path d="M5.5 15a7.5 7.5 0 1 0 1.1-7.5L4 10" />
+      </svg>
+      Reset
+    </button>
+    <button id="export" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 3v12" />
+        <path d="m7 10 5 5 5-5" />
+        <path d="M5 21h14" />
+      </svg>
+      Export GLB
+    </button>
+  </nav>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+  <div id="status" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("export");
+    const resetButton = document.getElementById("reset");
+    const status = document.getElementById("status");
+
+    // -------------------------------------------------------------------------
+    // Renderer, camera, and viewer controls
+    // -------------------------------------------------------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      preserveDrawingBuffer: false
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(
+      37,
+      window.innerWidth / window.innerHeight,
+      0.05,
+      100
+    );
+
+    const defaultCameraPosition = new THREE.Vector3(5.7, 3.9, 7.2);
+    const defaultTarget = new THREE.Vector3(0, 1.95, 0);
+
+    camera.position.copy(defaultCameraPosition);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(defaultTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.copy(defaultTarget);
+      controls.update();
+    });
+
+    // -------------------------------------------------------------------------
+    // Lighting and presentation-only ground
+    // -------------------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(0xbceeff, 0x152126, 2.0);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.1);
+    keyLight.position.set(4.5, 7.5, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.bias = -0.00035;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x35d9ff, 2.3);
+    rimLight.position.set(-5, 4, -4);
+    scene.add(rimLight);
+
+    const warmLight = new THREE.PointLight(0xffc888, 1.4, 9, 2);
+    warmLight.position.set(2.8, 2.2, 3.8);
+    scene.add(warmLight);
+
+    const shadowFloor = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.ShadowMaterial({ opacity: 0.24 })
+    );
+    shadowFloor.rotation.x = -Math.PI / 2;
+    shadowFloor.position.y = -0.006;
+    shadowFloor.receiveShadow = true;
+    scene.add(shadowFloor);
+
+    const grid = new THREE.GridHelper(16, 32, 0x2b7278, 0x193b43);
+    grid.position.y = -0.002;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.2;
+    grid.material.depthWrite = false;
+    scene.add(grid);
+
+    // -------------------------------------------------------------------------
+    // Exportable model
+    // -------------------------------------------------------------------------
+
+    const model = new THREE.Group();
+    model.name = "CityServiceKiosk";
+    model.userData = {
+      asset: "City Service Kiosk",
+      style: "Low-poly",
+      animated: false,
+      units: "meters"
+    };
+    scene.add(model);
+
+    const groups = {
+      base: new THREE.Group(),
+      body: new THREE.Group(),
+      head: new THREE.Group(),
+      screen: new THREE.Group(),
+      service: new THREE.Group(),
+      map: new THREE.Group(),
+      details: new THREE.Group()
+    };
+
+    Object.entries(groups).forEach(([name, group]) => {
+      group.name = name.charAt(0).toUpperCase() + name.slice(1);
+      model.add(group);
+    });
+
+    // -------------------------------------------------------------------------
+    // Materials
+    // -------------------------------------------------------------------------
+
+    const materials = {
+      body: new THREE.MeshStandardMaterial({
+        color: 0x172b34,
+        roughness: 0.48,
+        metalness: 0.5
+      }),
+      bodyInset: new THREE.MeshStandardMaterial({
+        color: 0x203943,
+        roughness: 0.42,
+        metalness: 0.48
+      }),
+      dark: new THREE.MeshStandardMaterial({
+        color: 0x081319,
+        roughness: 0.38,
+        metalness: 0.62
+      }),
+      black: new THREE.MeshStandardMaterial({
+        color: 0x030709,
+        roughness: 0.5,
+        metalness: 0.25
+      }),
+      teal: new THREE.MeshStandardMaterial({
+        color: 0x20d5c2,
+        emissive: 0x073c38,
+        emissiveIntensity: 0.65,
+        roughness: 0.3,
+        metalness: 0.3
+      }),
+      cyan: new THREE.MeshBasicMaterial({
+        color: 0x64fff0,
+        toneMapped: false
+      }),
+      amber: new THREE.MeshStandardMaterial({
+        color: 0xffbd42,
+        emissive: 0x6b3900,
+        emissiveIntensity: 0.35,
+        roughness: 0.3,
+        metalness: 0.3
+      }),
+      red: new THREE.MeshStandardMaterial({
+        color: 0xe94c42,
+        emissive: 0x4b0805,
+        emissiveIntensity: 0.3,
+        roughness: 0.35
+      }),
+      blue: new THREE.MeshStandardMaterial({
+        color: 0x123b59,
+        emissive: 0x071725,
+        emissiveIntensity: 0.4,
+        roughness: 0.25,
+        metalness: 0.65
+      }),
+      solar: new THREE.MeshStandardMaterial({
+        color: 0x153e61,
+        emissive: 0x08243c,
+        emissiveIntensity: 0.55,
+        roughness: 0.22,
+        metalness: 0.55
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x090d0f,
+        roughness: 0.85,
+        metalness: 0.05
+      })
+    };
+
+    // -------------------------------------------------------------------------
+    // Canvas textures
+    // -------------------------------------------------------------------------
+
+    function roundedRect(ctx, x, y, width, height, radius) {
+      const r = Math.min(radius, width * 0.5, height * 0.5);
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + width - r, y);
+      ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+      ctx.lineTo(x + width, y + height - r);
+      ctx.quadraticCurveTo(
+        x + width,
+        y + height,
+        x + width - r,
+        y + height
+      );
+      ctx.lineTo(x + r, y + height);
+      ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function makeTexture(width, height, draw) {
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      draw(ctx, width, height);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = Math.min(
+        8,
+        renderer.capabilities.getMaxAnisotropy()
+      );
+      texture.needsUpdate = true;
+      return texture;
+    }
+
+    const headerTexture = makeTexture(1024, 256, (ctx, w, h) => {
+      ctx.fillStyle = "#05131b";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.fillStyle = "#1bd5c6";
+      ctx.fillRect(0, 0, 26, h);
+
+      ctx.fillStyle = "#ecffff";
+      ctx.font = "800 54px Arial, sans-serif";
+      ctx.fillText("CITY SERVICE", 60, 91);
+
+      ctx.fillStyle = "#68858c";
+      ctx.font = "700 25px Arial, sans-serif";
+      ctx.fillText("INFORMATION  •  TRANSIT  •  TICKETS", 62, 139);
+
+      ctx.fillStyle = "#f5c64c";
+      ctx.fillRect(715, 46, 194, 11);
+
+      ctx.fillStyle = "#ecffff";
+      ctx.font = "800 40px Arial, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("24 / 7", 880, 87);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#274850";
+      ctx.fillRect(62, 171, 900, 2);
+    });
+
+    const displayTexture = makeTexture(512, 640, (ctx, w, h) => {
+      ctx.fillStyle = "#06151e";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.fillStyle = "#17343f";
+      ctx.fillRect(0, 0, w, 66);
+
+      ctx.fillStyle = "#20d5c6";
+      ctx.fillRect(0, 0, 18, 66);
+
+      ctx.fillStyle = "#effff9";
+      ctx.font = "800 25px Arial, sans-serif";
+      ctx.fillText("CITY SERVICES", 42, 39);
+
+      ctx.fillStyle = "#f5c64c";
+      ctx.font = "800 42px Arial, sans-serif";
+      ctx.fillText("WELCOME", 42, 91);
+
+      ctx.fillStyle = "#68858c";
+      ctx.font = "700 18px Arial, sans-serif";
+      ctx.fillText("How can we help?", 42, 122);
+
+      ctx.fillStyle = "#20d5c6";
+      ctx.fillRect(38, 166, 436, 5);
+
+      // welcome cards
+      const cards = [
+        { x: 38, w: 158, label: "DIRECTORY", values: ["TOURISM", "DOWNTOWN", "HARBOR"] },
+        { x: 244, w: 158, label: "TRANSIT", values: ["METRO", "BUS", "RAIL"] },
+        { x: 414, w: 158, label: "TICKETS", values: ["55", "24", "12"] }
+      ];
+
+      cards.forEach((card, index) => {
+        const y = 226 + index * 62;
+        const cardY = y + 30;
+
+        ctx.fillStyle = index === 1 ? "#17343f" : "#0c222c";
+        roundedRect(ctx, card.x, cardY - 58, card.w, 116, 14);
+        ctx.fill();
+
+        ctx.fillStyle = index === 1 ? "#28515e" : "#12313a";
+        roundedRect(ctx, card.x, cardY - 45, card.w - 18, 76, 11);
+        ctx.fill();
+
+        ctx.fillStyle = "#ecffff";
+        ctx.font = "800 19px Arial, sans-serif";
+        ctx.fillText(card.label, card.x + 20, cardY - 25);
+
+        ctx.fillStyle = "#f5c64c";
+        ctx.font = "700 13px Arial, sans-serif";
+        ctx.fillText(card.values[0], card.x + 20, cardY + 10);
+
+        ctx.fillStyle = "#83a5aa";
+        ctx.font = "600 11px Arial, sans-serif";
+        ctx.fillText(card.values[1], card.x + 20, cardY + 31);
+
+        ctx.fillStyle = "#3a7180";
+        ctx.beginPath();
+        ctx.arc(card.x + card.w * 0.5, cardY + 52, 7, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // bottom action strip
+      ctx.fillStyle = "#0c222c";
+      roundedRect(ctx, 38, 506, 436, 122, 18);
+      ctx.fill();
+
+      ctx.fillStyle = "#f5c64c";
+      ctx.font = "800 16px Arial, sans-serif";
+      ctx.fillText("GET HELP  • Show 01  •  24 HOURS", 62, 554);
+
+      ctx.fillStyle = "#2bd5c6";
+      ctx.beginPath();
+      ctx.arc(476, 506, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#85a7ad";
+      ctx.font = "600 11px Arial, sans-serif";
+      ctx.fillText("Active sessions", 414, 554);
+    });
+
+    const mapTexture = makeTexture(512, 512, (ctx, w, h) => {
+      ctx.fillStyle = "#06151e";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.fillStyle = "#0d2530";
+      ctx.fillRect(0, 0, w, 66);
+
+      ctx.fillStyle = "#2bd5c6";
+      ctx.font = "800 21px Arial, sans-serif";
+      ctx.fillText("CITY TRANSIT", 28, 38);
+
+      ctx.strokeStyle = "rgba(70, 205, 191, 0.12)";
+      ctx.lineWidth = 1;
+
+      for (let x = 0; x <= w; x += 64) {
+        ctx.beginPath();
+        ctx.moveTo(x, 70);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+
+      for (let y = 70; y <= h; y += 64) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      ctx.strokeStyle = "#2bd5c6";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(65, 394);
+      ctx.bezierCurveTo(125, 310, 170, 345, 225, 285);
+      ctx.bezierCurveTo(280, 220, 329, 245, 385, 184);
+      ctx.stroke();
+
+      const nodes = [
+        [65, 394, "METRO 42"],
+        [125, 310, "BUS 14"],
+        [170, 345, "RAIL 21"],
+        [225, 285, "CITY HALL"],
+        [385, 184, "HARBOR Docks"]
+      ];
+
+      nodes.forEach(([x, y, label], index) => {
+        ctx.fillStyle = index === 1 ? "#f5c64c" : "#2bd5c6";
+        ctx.beginPath();
+        ctx.arc(x, y, 11, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#8bb1b7";
+        ctx.font = "700 12px Arial, sans-serif";
+        ctx.fillText(label, x + 20, y + 18);
+      });
+
+      ctx.fillStyle = "#2bd5c6";
+      ctx.fillRect(28, 464, 456, 4);
+      ctx.fillStyle = "#f5c64c";
+      ctx.font = "700 12px Arial, sans-serif";
+      ctx.fillText("NEXT BUS  •  08:42", 28, 494);
+    });
+
+    const serviceStripTexture = makeTexture(640, 96, (ctx, w, h) => {
+      ctx.fillStyle = "#07151c";
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.fillStyle = "#2bd5c6";
+      ctx.font = "700 24px Arial, sans-serif";
+      ctx.fillText("CITY SERVICES  /  SELECT YOUR NEED", 32, 48);
+
+      ctx.fillStyle = "#f5c64c";
+      ctx.fillRect(548, 20, 12, 56);
+    });
+
+    // -------------------------------------------------------------------------
+    // Geometry helpers
+    // -------------------------------------------------------------------------
+
+    function addMesh(parent, geometry, material, position, name) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(position);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(parent, size, position, material, name) {
+      return addMesh(
+        parent,
+        new THREE.BoxGeometry(size.x, size.y, size.z),
+        material,
+        position,
+        name
+      );
+    }
+
+    function addRounded(
+      parent,
+      size,
+      position,
+      material,
+      radius = 0.05,
+      name = "RoundedBox"
+    ) {
+      const safeRadius = Math.min(
+        radius,
+        size.x * 0.45,
+        size.y * 0.45,
+        size.z * 0.45
+      );
+
+      return addMesh(
+        parent,
+        new RoundedBoxGeometry(
+          size.x,
+          size.y,
+          size.z,
+          2,
+          safeRadius
+        ),
+        material,
+        position,
+        name
+      );
+    }
+
+    function addCylinder(
+      parent,
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      name,
+      radialSegments = 12
+    ) {
+      return addMesh(
+        parent,
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          radialSegments
+        ),
+        material,
+        position,
+        name
+      );
+    }
+
+    function addFrontBolt(parent, x, y, z, name) {
+      const bolt = addCylinder(
+        parent,
+        0.034,
+        0.034,
+        0.025,
+        new THREE.Vector3(x, y, z),
+        materials.amber,
+        name,
+        10
+      );
+      bolt.rotation.x = Math.PI / 2;
+      return bolt;
+    }
+
+    // -------------------------------------------------------------------------
+    // Base and body
+    // -------------------------------------------------------------------------
+
+    addRounded(
+      groups.base,
+      new THREE.Vector3(2.5, 0.18, 1.48),
+      new THREE.Vector3(0, 0.09, 0),
+      materials.dark,
+      0.08,
+      "LowerPlinth"
+    );
+
+    addRounded(
+      groups.base,
+      new THREE.Vector3(2.3, 0.16, 1.3),
+      new THREE.Vector3(0, 0.26, 0),
+      materials.body,
+      0.055,
+      "UpperPlinth"
+    );
+
+    addRounded(
+      groups.body,
+      new THREE.Vector3(1.72, 2.32, 1.08),
+      new THREE.Vector3(0, 1.47, 0),
+      materials.body,
+      0.11,
+      "MainCabinet"
+    );
+
+    addRounded(
+      groups.body,
+      new THREE.Vector3(1.56, 2.15, 0.055),
+      new THREE.Vector3(0, 1.47, 0.567),
+      materials.bodyInset,
+      0.04,
+      "FrontInset"
+    );
+
+    addRounded(
+      groups.body,
+      new THREE.Vector3(1.62, 0.13, 0.07),
+      new THREE.Vector3(0, 0.37, 0.62),
+      materials.teal,
+      0.035,
+      "LowerAccentStrip"
+    );
+
+    addRounded(
+      groups.body,
+      new THREE.Vector3(1.5, 0.07, 0.075),
+      new THREE.Vector3(0, 2.64, 0.65),
+      materials.cyan,
+      0.025,
+      "UnderbodyLightStrip"
+    );
+
+    // Front corner fasteners.
+    addFrontBolt(groups.body, -0.73, 0.42, 0.625, "LowerLeftBolt");
+    addFrontBolt(groups.body, 0.73, 0.42, 0.625, "LowerRightBolt");
+    addFrontBolt(groups.body, -0.73, 2.57, 0.625, "UpperLeftBolt");
+    addFrontBolt(group.body, 0.73, 2.57, 0.625, "UpperRightBolt");
+
+    // Side accent rails.
+    addRounded(
+      groups.body,
+      new THREE.Vector3(0.045, 1.88, 0.055),
+      new THREE.Vector3(-0.755, 1.45, 0.57),
+      materials.teal,
+      0.018,
+      "LeftFrontAccent"
+    );
+
+    addRounded(
+      groups.body,
+      new THREE.Vector3(0.045, 1.88, 0.055),
+      new THREE.Vector3(0.755, 1.45, 0.57),
+      materials.teal,
+      0.018,
+      "RightFrontAccent"
+    );
+
+    // Side ventilation slots.
+    for (let i = 0; i < 5; i++) {
+      addBox(
+        groups.body,
+        new THREE.Vector3(0.025, 0.045, 0.35),
+        new THREE.Vector3(0.875, 1.12 + i * 0.105, -0.18),
+        materials.black,
+        `SideVent_${i + 1}`
+      );
+    }
+
+    // Rubber feet.
+    [
+      [-0.92, 0.04, 0.45],
+      [0.92, 0.04, 0.45],
+      [-0.92, 0.04, -0.43],
+      [0.92, 0.04, -0.43]
+    ].forEach((position, index) => {
+      addCylinder(
+        groups.base,
+        0.095,
+        0.105,
+        0.09,
+        new THREE.Vector3(...position),
+        materials.rubber,
+        `Foot_${index + 1}`,
+        10
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Head and roof
+    // -------------------------------------------------------------------------
+
+    addRounded(
+      groups.head,
+      new THREE.Vector3(2.04, 0.22, 1.21),
+      new THREE.Vector3(0, 2.72, 0),
+      materials.body,
+      0.075,
+      "Neck"
+    );
+
+    addRounded(
+      groups.head,
+      new THREE.Vector3(2.32, 0.88, 1.28),
+      new THREE.Vector3(0, 3.16, 0),
+      materials.body,
+      0.115,
+      "ServiceHead"
+    );
+
+    addRounded(
+      groups.head,
+      new THREE.Vector3(2.45, 0.14, 1.4),
+      new THREE.Vector3(0, 3.67, 0),
+      materials.dark,
+      0.055,
+      "RoofCap"
+    );
+
+    addRounded(
+      groups.head,
+      new THREE.Vector3(1.94, 0.56, 0.035),
+      new THREE.Vector3(0, 3.18, 0.655),
+      materials.dark,
+      0.035,
+      "HeaderSignBacking"
+    );
+
+    addMesh(
+      groups.head,
+      new THREE.PlaneGeometry(1.86, 0.52),
+      new THREE.MeshBasicMaterial({
+        map: headerTexture,
+        toneMapped: false
+      }),
+      new THREE.Vector3(0, 3.18, 0.678),
+      "HeaderSign"
+    );
+
+    // Side status indicators.
+    addMesh(
+      groups.head,
+      new THREE.SphereGeometry(0.045, 10, 6),
+      materials.amber,
+      new THREE.Vector3(-1.055, 3.17, 0.68),
+      "LeftStatusLight"
+    );
+
+    addMesh(
+      groups.head,
+      new THREE.SphereGeometry(0.045, 10, 6),
+      materials.teal,
+      new THREE.Vector3(1.055, 3.17, 0.68),
+      "RightStatusLight"
+    );
+
+    // Emergency stop button.
+    const emergencyBase = addCylinder(
+      groups.head,
+      0.09,
+      0.09,
+      0.045,
+      new THREE.Vector3(0.94, 2.83, 0.69),
+      materials.amber,
+      "EmergencyStopBase",
+      12
+    );
+    emergencyBase.rotation.x = Math.PI / 2;
+
+    const emergencyButton = addCylinder(
+      groups.head,
+      0.062,
+      0.062,
+      0.065,
+      new THREE.Vector3(0.94, 2.83, 0.735),
+      materials.red,
+      "EmergencyStopButton",
+      12
+    );
+    emergencyButton.rotation.x = Math.PI / 2;
+
+    // Solar panel.
+    addRounded(
+      groups.head,
+      new THREE.Vector3(1.52, 0.065, 0.77),
+      new THREE.Vector3(0, 3.78, -0.08),
+      materials.dark,
+      0.035,
+      "SolarPanelFrame"
+    );
+
+    const solarCellPositions = [
+      [-0.37, -0.17],
+      [0, -0.17],
+      [0.37, -0.17],
+      [-0.37, 0.15],
+      [0, 0.15],
+      [0.37, 0.15]
+    ];
+
+    solarCellPositions.forEach(([x, z], index) => {
+      addRounded(
+        groups.head,
+        new THREE.Vector3(0.62, 0.018, 0.31),
+        new THREE.Vector3(x, 3.819, z),
+        materials.solar,
+        0.012,
+        `SolarCell_${index + 1}`
+      );
+    });
+
+    // Antenna.
+    addCylinder(
+      groups.head,
+      0.085,
+      0.105,
+      0.09,
+      new THREE.Vector3(0.82, 3.81, -0.33),
+      materials.dark,
+      "AntennaBase",
+      10
+    );
+
+    addCylinder(
+      groups.head,
+      0.022,
+      0.03,
+      0.36,
+      new THREE.Vector3(0.82, 4.04, -0.33),
+      materials.amber,
+      "AntennaStem",
+      8
+    );
+
+    addMesh(
+      groups.head,
+      new THREE.SphereGeometry(0.055, 10, 6),
+      materials.cyan,
+      new THREE.Vector3(0.82, 4.24, -0.33),
+      "AntennaLight"
+    );
+
+    // -------------------------------------------------------------------------
+    // Main touchscreen
+    // -------------------------------------------------------------------------
+
+    addRounded(
+      groups.screen,
+      new THREE.Vector3(1.67, 1.35, 0.14),
+      new THREE.Vector3(0, 2.18, 0.635),
+      materials.dark,
+      0.075,
+      "DisplayBezel"
+    );
+
+    addMesh(
+      groups.screen,
+      new THREE.PlaneGeometry(1.52, 1.19),
+      new THREE.MeshBasicMaterial({
+        map: displayTexture,
+        toneMapped: false
+      }),
+      new THREE.Vector3(0, 2.18, 0.714),
+      "MainDisplay"
+    );
+
+    // Small status LED beside the display.
+    addMesh(
+      groups.screen,
+      new THREE.SphereGeometry(0.032, 8, 5),
+      materials.cyan,
+      new THREE.Vector3(0.755, 2.57, 0.68),
+      "DisplayStatusLED"
+    );
+
+    // -------------------------------------------------------------------------
+    // Lower service deck
+    // -------------------------------------------------------------------------
+
+    addRounded(
+      groups.service,
+      new THREE.Vector3(1.55, 0.68, 0.1),
+      new THREE.Vector3(0, 1.08, 0.615),
+      materials.body,
+      0.055,
+      "ServiceDeck"
+    );
+
+    addMesh(
+      groups.service,
+      new THREE.PlaneGeometry(1.43, 0.14),
+      new THREE.MeshBasicMaterial({
+        map: serviceStripTexture,
+        toneMapped: false
+      }),
+      new THREE.Vector3(0, 0.78, 0.671),
+      "ServiceDeckLabel"
+    );
+
+    // Card reader.
+    addRounded(
+      groups.service,
+      new THREE.Vector3(0.67, 0.47, 0.095),
+      new THREE.Vector3(-0.28, 1.09, 0.705),
+      materials.dark,
+      0.05,
+      "CardReaderHousing"
+    );
+
+    addRounded(
+      groups.service,
+      new THREE.Vector3(0.52, 0.055, 0.025),
+      new THREE.Vector3(-0.28, 1.23, 0.762),
+      materials.teal,
+      0.018,
+      "CardReaderSlot"
+    );
+
+    addRounded(
+      groups.service,
+      new THREE.Vector3(0.38, 0.025, 0.018),
+      new THREE.Vector3(-0.28, 1.12, 0.763),
+      materials.cyan,
+      0.008,
+      "CardReaderIndicator"
+    );
+
+    // Contactless payment arcs.
+    for (let i = 0; i < 3; i++) {
+      const arc = addMesh(
+        groups.service,
+        new THREE.TorusGeometry(0.055 + i * 0.028, 0.009, 4, 12, Math.PI * 0.72),
+        materials.cyan,
+        new THREE.Vector3(-0.28, 1.01 - i * 0.014, 0.774),
+        `ContactlessArc_${i + 1}`
+      );
+      arc.rotation.z = -Math.PI * 0.36;
+    }
+
+    // Payment keypad.
+    const keyColumns = [0.31, 0.41, 0.51];
+    const keyRows = [0.86, 0.98, 1.10, 1.22];
+
+    keyRows.forEach((y, rowIndex) => {
+      keyColumns.forEach((x, columnIndex) => {
+        addRounded(
+          groups.service,
+          new THREE.Vector3(0.09, 0.075, 0.035),
+          new THREE.Vector3(x, y, 0.738),
+          rowIndex === 3 && columnIndex === 2
+            ? materials.teal
+            : materials.bodyInset,
+          0.012,
+          `KeypadKey_${rowIndex + 1}_${columnIndex + 1}`
+        );
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // Static map board
+    // -------------------------------------------------------------------------
+
+    addRounded(
+      groups.map,
+      new THREE.Vector3(0.62, 1.18, 0.11),
+      new THREE.Vector3(0.92, 1.74, 0.625),
+      materials.dark,
+      0.055,
+      "MapBoardFrame"
+    );
+
+    addMesh(
+      groups.map,
+      new THREE.PlaneGeometry(0.52, 1.06),
+      new THREE.MeshBasicMaterial({
+        map: mapTexture,
+        toneMapped: false
+      }),
+      new THREE.Vector3(0.92, 1.74, 0.686),
+      "MapBoardDisplay"
+    );
+
+    addRounded(
+      groups.map,
+      new THREE.Vector3(0.48, 0.055, 0.025),
+      new THREE.Vector3(0.92, 2.32, 0.69),
+      materials.teal,
+      0.015,
+      "MapBoardAccent"
+    );
+
+    // -------------------------------------------------------------------------
+    // Additional small service details
+    // -------------------------------------------------------------------------
+
+    // Small service cards inserted into the lower body side.
+    for (let i = 0; i < 3; i++) {
+      addRounded(
+        groups.details,
+        new THREE.Vector3(0.035, 0.11, 0.25),
+        new THREE.Vector3(-0.878, 0.78 + i * 0.13, 0.08),
+        materials.bodyInset,
+        0.01,
+        `SideServiceCard_${i + 1}`
+      );
+    }
+
+    // Tiny yellow orientation marks on the roof.
+    for (let i = 0; i < 4; i++) {
+      const mark = addBox(
+        groups.details,
+        new THREE.Vector3(0.07, 0.012, 0.13),
+        new THREE.Vector3(-0.48 + i * 0.32, 3.752, -0.08),
+        materials.amber,
+        `RoofMarker_${i + 1}`
+      );
+      mark.rotation.y = Math.PI / 4;
+    }
+
+    // Make sure the exported model has finalized material references.
+    model.traverse((object) => {
+      if (object.isMesh) {
+        object.updateMatrix();
+        if (object.material) {
+          object.material.needsUpdate = true;
+        }
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // Export GLB
+    // -------------------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    function showStatus(message, duration = 2800) {
+      status.textContent = message;
+      status.classList.add("visible");
+
+      window.clearTimeout(showStatus.timeout);
+      showStatus.timeout = window.setTimeout(() => {
+        status.classList.remove("visible");
+      }, duration);
+    }
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.lastChild.textContent = " Exporting...";
+      showStatus("Preparing binary GLB...", 8000);
+
+      // Yield once so the interface can update before the export begins.
+      requestAnimationFrame(() => {
+        exporter.parse(
+          model,
+          (result) => {
+            const blob = new Blob([result], {
+              type: "model/gltf-binary"
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "city-service-kiosk.glb";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+            exportButton.disabled = false;
+            exportButton.lastChild.textContent = " Export GLB";
+            showStatus("city-service-kiosk.glb downloaded successfully.");
+          },
+          (error) => {
+            console.error(error);
+            exportButton.disabled = false;
+            exportButton.lastChild.textContent = " Export GLB";
+            showStatus("Export failed. Check the browser console for details.");
+          },
+          {
+            binary: true,
+            onlyVisible: true,
+            truncateDrawRange: true
+          }
+        );
+      });
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

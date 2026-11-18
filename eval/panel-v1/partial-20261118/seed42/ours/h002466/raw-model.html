@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Industrial Conveyor</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #111820;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      top: 20px;
+      left: 20px;
+      width: min(330px, calc(100vw - 40px));
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(15, 21, 28, 0.88);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(14px);
+      color: #edf3f7;
+    }
+
+    h1 {
+      margin: 0 0 7px;
+      font-size: 20px;
+      letter-spacing: 0.01em;
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: #aebbc6;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 0 15px;
+      border: 0;
+      border-radius: 9px;
+      background: #f2b51d;
+      color: #171b20;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      background: #ffd055;
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    button.secondary {
+      background: #2e3944;
+      color: #e8eef4;
+    }
+
+    button.secondary:hover:not(:disabled) {
+      background: #3b4954;
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 11px;
+      color: #94a3b3;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: fixed;
+      z-index: 10;
+      right: 18px;
+      bottom: 16px;
+      padding: 8px 11px;
+      border-radius: 8px;
+      background: rgba(15, 21, 28, 0.7);
+      color: #9eabb8;
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 560px) {
+      .panel {
+        top: 10px;
+        left: 10px;
+        width: calc(100vw - 20px);
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <h1>Industrial Conveyor</h1>
+    <p>
+      Static low-poly conveyor with a steel support frame, visible rollers,
+      rubber belt, cardboard parcels, and an operator control station.
+    </p>
+
+    <div class="actions">
+      <button id="exportButton" disabled>Export GLB</button>
+      <button id="resetButton" class="secondary">Reset View</button>
+    </div>
+
+    <div id="status">Preparing model…</div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const resetButton = document.getElementById("resetButton");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111820);
+    scene.fog = new THREE.Fog(0x111820, 15, 30);
+
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      window.innerWidth / window.innerHeight,
+      0.05,
+      100
+    );
+
+    const defaultCameraPosition = new THREE.Vector3(7.8, 4.8, 7.4);
+    const defaultTarget = new THREE.Vector3(0, 1.05, 0);
+
+    camera.position.copy(defaultCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(defaultTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 4;
+    controls.maxDistance = 18;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // -------------------------------------------------------------------------
+    // Lighting and presentation-only ground
+    // -------------------------------------------------------------------------
+
+    scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x30343a, 2.0));
+
+    const keyLight = new THREE.DirectionalLight(0xfff2d6, 4.2);
+    keyLight.position.set(5, 9, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -7;
+    keyLight.shadow.camera.right = 7;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -7;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x73bfff, 1.8);
+    rimLight.position.set(-6, 5, -5);
+    scene.add(rimLight);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({
+        color: 0x202a33,
+        roughness: 0.94,
+        metalness: 0.02
+      })
+    );
+
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(30, 30, 0x40505d, 0x2c3943);
+    grid.position.y = 0.002;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.25;
+    scene.add(grid);
+
+    // Only this group is exported.
+    const asset = new THREE.Group();
+    asset.name = "Industrial_Conveyor";
+    scene.add(asset);
+
+    // -------------------------------------------------------------------------
+    // Materials
+    // -------------------------------------------------------------------------
+
+    const yellow = new THREE.MeshStandardMaterial({
+      color: 0xf2b51d,
+      roughness: 0.48,
+      metalness: 0.28,
+      flatShading: true
+    });
+
+    const yellowDark = new THREE.MeshStandardMaterial({
+      color: 0xc88a0b,
+      roughness: 0.55,
+      metalness: 0.3,
+      flatShading: true
+    });
+
+    const steel = new THREE.MeshStandardMaterial({
+      color: 0x71808d,
+      roughness: 0.42,
+      metalness: 0.72,
+      flatShading: true
+    });
+
+    const darkSteel = new THREE.MeshStandardMaterial({
+      color: 0x303a42,
+      roughness: 0.5,
+      metalness: 0.62,
+      flatShading: true
+    });
+
+    const rubber = new THREE.MeshStandardMaterial({
+      color: 0x171b1e,
+      roughness: 0.9,
+      metalness: 0.02
+    });
+
+    const beltSlats = new THREE.MeshStandardMaterial({
+      color: 0x20262a,
+      roughness: 0.86,
+      metalness: 0.03
+    });
+
+    const beltRaised = new THREE.MeshStandardMaterial({
+      color: 0x2a3034,
+      roughness: 0.82,
+      metalness: 0.03
+    });
+
+    const black = new THREE.MeshStandardMaterial({
+      color: 0x101418,
+      roughness: 0.7,
+      metalness: 0.35,
+      flatShading: true
+    });
+
+    const cardboardTan = new THREE.MeshStandardMaterial({
+      color: 0xb88952,
+      roughness: 0.92,
+      metalness: 0,
+      flatShading: true
+    });
+
+    const cardboardCream = new THREE.MeshStandardMaterial({
+      color: 0xe0c995,
+      roughness: 0.94,
+      metalness: 0,
+      flatShading: true
+    });
+
+    const cardboardBlue = new THREE.MeshStandardMaterial({
+      color: 0x386b85,
+      roughness: 0.88,
+      metalness: 0,
+      flatShading: true
+    });
+
+    const cardboardRed = new THREE.MeshStandardMaterial({
+      color: 0xa9463e,
+      roughness: 0.86,
+      metalness: 0,
+      flatShading: true
+    });
+
+    const tape = new THREE.MeshStandardMaterial({
+      color: 0xf0dfb4,
+      roughness: 0.85,
+      metalness: 0
+    });
+
+    const blueScreen = new THREE.MeshStandardMaterial({
+      color: 0x164e62,
+      emissive: 0x0b3c50,
+      emissiveIntensity: 0.65,
+      roughness: 0.28,
+      metalness: 0.18
+    });
+
+    const redLightMaterial = new THREE.MeshStandardMaterial({
+      color: 0xb91820,
+      emissive: 0x5c0709,
+      emissiveIntensity: 0.65,
+      roughness: 0.4
+    });
+
+    const greenLightMaterial = new THREE.MeshStandardMaterial({
+      color: 0x37bd66,
+      emissive: 0x0d4d1a,
+      emissiveIntensity: 0.65,
+      roughness: 0.4
+    });
+
+    // -------------------------------------------------------------------------
+    // Geometry helpers
+    // -------------------------------------------------------------------------
+
+    function addMesh(geometry, material, position, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(position);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function roundedBox(width, height, depth, radius, material, position, parent = asset) {
+      const safeRadius = Math.min(
+        radius,
+        width * 0.45,
+        height * 0.45,
+        depth * 0.45
+      );
+
+      return addMesh(
+        new RoundedBoxGeometry(width, height, depth, 1, safeRadius),
+        material,
+        position,
+        parent
+      );
+    }
+
+    function cylinder(
+      radius,
+      length,
+      material,
+      position,
+      axis = "y",
+      parent = asset,
+      radialSegments = 12
+    ) {
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radius,
+          radius,
+          length,
+          radialSegments,
+          1,
+          false
+        ),
+        material,
+        position,
+        parent
+      );
+
+      if (axis === "x") {
+        mesh.rotation.z = Math.PI / 2;
+      } else if (axis === "z") {
+        mesh.rotation.x = Math.PI / 2;
+      }
+
+      return mesh;
+    }
+
+    function beamBetween(start, end, width, depth, material, parent = asset) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const length = direction.length();
+      const midpoint = new THREE.Vector3()
+        .addVectors(start, end)
+        .multiplyScalar(0.5);
+
+      const beam = addMesh(
+        new THREE.BoxGeometry(width, length, depth),
+        material,
+        midpoint,
+        parent
+      );
+
+      beam.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return beam;
+    }
+
+    // -------------------------------------------------------------------------
+    // Main frame
+    // -------------------------------------------------------------------------
+
+    const frame = new THREE.Group();
+    frame.name = "Support_Frame";
+    asset.add(frame);
+
+    // Upper longitudinal rails.
+    for (const side of [-1, 1]) {
+      roundedBox(
+        6.75,
+        0.20,
+        0.16,
+        0.035,
+        yellow,
+        new THREE.Vector3(0, 1.18, side * 0.78),
+        frame
+      );
+
+      // Lower longitudinal rails.
+      roundedBox(
+        6.45,
+        0.14,
+        0.14,
+        0.025,
+        yellowDark,
+        new THREE.Vector3(0, 0.68, side * 0.69),
+        frame
+      );
+    }
+
+    // Cross members.
+    for (const x of [-2.35, 0, 2.35]) {
+      roundedBox(
+        0.16,
+        0.14,
+        1.42,
+        0.025,
+        yellow,
+        new THREE.Vector3(x, 0.68, 0),
+        frame
+      );
+    }
+
+    // Four vertical legs, foot plates, and anchor bolts.
+    for (const x of [-2.35, 2.35]) {
+      for (const z of [-0.69, 0.69]) {
+        roundedBox(
+          0.18,
+          0.68,
+          0.18,
+          0.025,
+          yellow,
+          new THREE.Vector3(x, 0.44, z),
+          frame
+        );
+
+        roundedBox(
+          0.36,
+          0.10,
+          0.36,
+          0.025,
+          yellowDark,
+          new THREE.Vector3(x, 0.79, z),
+          frame
+        );
+
+        roundedBox(
+          0.46,
+          0.14,
+          0.42,
+          0.035,
+          black,
+          new THREE.Vector3(x, 0.07, z),
+          frame
+        );
+
+        for (const dx of [-0.13, 0.13]) {
+          for (const dz of [-0.13, 0.13]) {
+            cylinder(
+              0.038,
+              0.028,
+              steel,
+              new THREE.Vector3(x + dx, 0.153, z + dz),
+              "y",
+              frame,
+              8
+            );
+          }
+        }
+      }
+
+      // Diagonal side braces.
+      beamBetween(
+        new THREE.Vector3(-2.35, 0.19, -0.69),
+        new THREE.Vector3(2.35, 0.75, -0.69),
+        0.11,
+        0.10,
+        yellowDark,
+        frame
+      );
+
+      beamBetween(
+        new THREE.Vector3(2.35, 0.19, 0.69),
+        new THREE.Vector3(-2.35, 0.75, 0.69),
+        0.11,
+        0.10,
+        yellowDark,
+        frame
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Conveyor belt, slats, rollers, and edge rails
+    // -------------------------------------------------------------------------
+
+    const beltGroup = new THREE.Group();
+    beltGroup.name = "Conveyor_Belt";
+    asset.add(beltGroup);
+
+    // Central belt body.
+    roundedBox(
+      6.35,
+      0.11,
+      1.25,
+      0.025,
+      rubber,
+      new THREE.Vector3(0, 1.54, 0),
+      beltGroup
+    );
+
+    // Raised rubber belt slats.
+    const slatCount = 18;
+    for (let i = 0; i < slatCount; i++) {
+      const x = -3.0 + i * 0.35;
+      const slatMaterial = i % 2 === 0 ? beltSlats : beltRaised;
+
+      addMesh(
+        new THREE.BoxGeometry(0.335, 0.05, 1.20),
+        slatMaterial,
+        new THREE.Vector3(x, 1.605, 0),
+        beltGroup
+      );
+    }
+
+    // Dark belt edge rails.
+    for (const side of [-1, 1]) {
+      roundedBox(
+        6.42,
+        0.10,
+        0.075,
+        0.018,
+        black,
+        new THREE.Vector3(0, 1.575, side * 0.69),
+        beltGroup
+      );
+    }
+
+    // End hubs.
+    for (const x of [-3.04, 3.04]) {
+      for (const z of [-0.84, 0.84]) {
+        cylinder(
+          0.115,
+          0.075,
+          steel,
+          new THREE.Vector3(x, 1.43, z),
+          "z",
+          beltGroup,
+          12
+        );
+
+        cylinder(
+          0.055,
+          0.086,
+          darkSteel,
+          new THREE.Vector3(x, 1.43, z),
+          "z",
+          beltGroup,
+          10
+        );
+      }
+    }
+
+    // Visible drive rollers under the belt.
+    for (const x of [-2.7, -1.8, -0.9, 0, 0.9, 1.8, 2.7]) {
+      cylinder(
+        0.095,
+        1.34,
+        darkSteel,
+        new THREE.Vector3(x, 1.425, 0),
+        "x",
+        beltGroup,
+        12
+      );
+
+      for (const z of [-0.715, 0.715]) {
+        cylinder(
+          0.055,
+          0.035,
+          steel,
+          new THREE.Vector3(x, 1.425, z),
+          "z",
+          beltGroup,
+          10
+        );
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Operator control station
+    // -------------------------------------------------------------------------
+
+    const controlsGroup = new THREE.Group();
+    controlsGroup.name = "Control_Station";
+    asset.add(controlsGroup);
+
+    // Mounting brackets connecting the control box to the upper rail.
+    for (const x of [0.34, 1.16]) {
+      roundedBox(
+        0.08,
+        0.34,
+        0.23,
+        0.015,
+        darkSteel,
+        new THREE.Vector3(x, 1.05, 0.91),
+        controlsGroup
+      );
+    }
+
+    // Main control enclosure.
+    roundedBox(
+      1.05,
+      0.78,
+      0.34,
+      0.045,
+      yellow,
+      new THREE.Vector3(0.75, 1.02, 1.18),
+      controlsGroup
+    );
+
+    // Front face inset.
+    roundedBox(
+      0.91,
+      0.64,
+      0.025,
+      0.025,
+      yellowDark,
+      new THREE.Vector3(0.75, 1.02, 1.357),
+      controlsGroup
+    );
+
+    // Display.
+    roundedBox(
+      0.57,
+      0.28,
+      0.035,
+      0.025,
+      black,
+      new THREE.Vector3(0.86, 1.22, 1.38),
+      controlsGroup
+    );
+
+    roundedBox(
+      0.48,
+      0.19,
+      0.018,
+      0.018,
+      blueScreen,
+      new THREE.Vector3(0.86, 1.22, 1.405),
+      controlsGroup
+    );
+
+    // Indicator lights.
+    cylinder(
+      0.047,
+      0.035,
+      greenLightMaterial,
+      new THREE.Vector3(0.47, 0.91, 1.39),
+      "z",
+      controlsGroup,
+      12
+    );
+
+    cylinder(
+      0.047,
+      0.035,
+      redLightMaterial,
+      new THREE.Vector3(0.63, 0.91, 1.39),
+      "z",
+      controlsGroup,
+      12
+    );
+
+    // Emergency stop button.
+    cylinder(
+      0.075,
+      0.07,
+      redLightMaterial,
+      new THREE.Vector3(0.75, 0.91, 1.40),
+      "z",
+      controlsGroup,
+      12
+    );
+
+    // Control conduit.
+    cylinder(
+      0.035,
+      0.38,
+      darkSteel,
+      new THREE.Vector3(1.03, 0.73, 1.13),
+      "y",
+      controlsGroup,
+      8
+    );
+
+    // -------------------------------------------------------------------------
+    // Parcels
+    // -------------------------------------------------------------------------
+
+    const parcelGroup = new THREE.Group();
+    parcelGroup.name = "Parcels";
+    asset.add(parcelGroup);
+
+    function addParcel({
+      x,
+      z,
+      width,
+      height,
+      depth,
+      material,
+      labelColor = 0xe8ddc3,
+      rotation = 0
+    }) {
+      const group = new THREE.Group();
+      group.position.set(x, 1.63 + height / 2, z);
+      group.rotation.y = rotation;
+      parcelGroup.add(group);
+
+      // Box body.
+      roundedBox(
+        width,
+        height,
+        depth,
+        Math.min(0.035, width * 0.05, height * 0.05, depth * 0.05),
+        material,
+        new THREE.Vector3(0, 0, 0),
+        group
+      );
+
+      // Top tape.
+      addMesh(
+        new THREE.BoxGeometry(width * 0.28, 0.018, 0.045),
+        tape,
+        new THREE.Vector3(0, height / 2 + 0.009, 0),
+        group
+      );
+
+      // Vertical front tape.
+      addMesh(
+        new THREE.BoxGeometry(width * 0.13, height, 0.018),
+        tape,
+        new THREE.Vector3(0, 0, depth / 2 + 0.012),
+        group
+      );
+
+      // White shipping label.
+      addMesh(
+        new THREE.BoxGeometry(width * 0.43, height * 0.35, 0.018),
+        tape,
+        new THREE.Vector3(0, -height * 0.10, depth / 2 + 0.021),
+        group
+      );
+
+      // Small label stripe.
+      addMesh(
+        new THREE.BoxGeometry(width * 0.12, height * 0.05, 0.019),
+        labelColor,
+        new THREE.Vector3(-width * 0.08, height * 0.12, depth / 2 + 0.024),
+        group
+      );
+    }
+
+    addParcel({
+      x: -1.92,
+      z: 0.03,
+      width: 1.22,
+      height: 0.92,
+      depth: 1.02,
+      material: cardboardTan,
+      labelColor: 0xe7d6aa
+    });
+
+    addParcel({
+      x: -0.58,
+      z: -0.06,
+      width: 1.22,
+      height: 0.72,
+      depth: 1.00,
+      material: cardboardBlue,
+      labelColor: 0xe9dfc8
+    });
+
+    addParcel({
+      x: 0.73,
+      z: 0.06,
+      width: 0.96,
+      height: 0.83,
+      depth: 1.01,
+      material: cardboardRed,
+      labelColor: 0xe9d8bc
+    });
+
+    addParcel({
+      x: 2.08,
+      z: -0.04,
+      width: 0.88,
+      height: 0.62,
+      depth: 0.91,
+      material: cardboardCream,
+      labelColor: 0xe4d3b1,
+      rotation: -0.025
+    });
+
+    // -------------------------------------------------------------------------
+    // Small frame fasteners
+    // -------------------------------------------------------------------------
+
+    const boltGroup = new THREE.Group();
+    boltGroup.name = "Frame_Bolts";
+    asset.add(boltGroup);
+
+    for (const x of [-2.85, -1.85, -0.85, 0.15, 1.15, 2.15, 2.85]) {
+      for (const side of [-1, 1]) {
+        cylinder(
+          0.036,
+          0.035,
+          steel,
+          new THREE.Vector3(x, 1.19, side * 0.87),
+          "z",
+          boltGroup,
+          8
+        );
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Export GLB
+    // -------------------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building binary GLB…";
+
+      asset.updateMatrixWorld(true);
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "industrial-conveyor.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          URL.revokeObjectURL(url);
+
+          exportButton.disabled = false;
+          status.textContent = "Exported industrial-conveyor.glb";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          includeCustomExtensions: true
+        }
+      );
+    });
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.copy(defaultTarget);
+      controls.update();
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", onResize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    exportButton.disabled = false;
+    status.textContent = "Ready · Static model · GLB export available";
+  </script>
+</body>
+</html>

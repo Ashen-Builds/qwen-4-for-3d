@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Adventurer — GLB Asset Creator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #dfe5e8;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    #info {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      max-width: 300px;
+      padding: 15px 17px;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: 14px;
+      color: #f7f1e7;
+      background: rgba(39, 32, 25, 0.78);
+      box-shadow: 0 12px 32px rgba(30, 24, 18, 0.18);
+      backdrop-filter: blur(10px);
+      pointer-events: none;
+    }
+
+    #info h1 {
+      margin: 0 0 5px;
+      font-size: 18px;
+      letter-spacing: 0.02em;
+    }
+
+    #info p {
+      margin: 0;
+      color: #d7c9b6;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    #export-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+      padding: 12px 18px;
+      border: 0;
+      border-radius: 11px;
+      color: #3c2a1b;
+      background: #e7bf75;
+      box-shadow: 0 8px 24px rgba(67, 43, 18, 0.24);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.025em;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
+    }
+
+    #export-button:hover {
+      transform: translateY(-2px);
+      background: #f2cd8b;
+    }
+
+    #export-button:active {
+      transform: translateY(0);
+    }
+
+    #export-button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+      transform: none;
+    }
+
+    #status {
+      position: fixed;
+      right: 20px;
+      bottom: 18px;
+      z-index: 10;
+      padding: 9px 12px;
+      border-radius: 9px;
+      color: #f6efe2;
+      background: rgba(39, 32, 25, 0.74);
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity 180ms ease;
+      pointer-events: none;
+    }
+
+    #status.visible {
+      opacity: 1;
+    }
+
+    @media (max-width: 600px) {
+      #info {
+        top: 12px;
+        left: 12px;
+        max-width: 220px;
+      }
+
+      #export-button {
+        top: 12px;
+        right: 12px;
+      }
+
+      #status {
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="info">
+    <h1>Low-Poly Adventurer</h1>
+    <p>Static game-ready character with layered clothing, satchel, compass, and key. Drag to orbit; scroll to zoom.</p>
+  </div>
+
+  <button id="export-button" type="button">Export GLB</button>
+  <div id="status"></div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // ------------------------------------------------------------
+    // Renderer, camera, and preview lighting
+    // ------------------------------------------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdfe5e8);
+    scene.fog = new THREE.Fog(0xdfe5e8, 10, 24);
+
+    const camera = new THREE.PerspectiveCamera(
+      34,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(4.7, 3.35, 6.5);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.82, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 3.5;
+    controls.maxDistance = 11;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.minPolarAngle = Math.PI * 0.12;
+    controls.update();
+
+    const hemisphere = new THREE.HemisphereLight(
+      0xfffbef,
+      0x765237,
+      2.0
+    );
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffe4b5, 3.1);
+    keyLight.position.set(-3.5, 6.5, 5.0);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 5;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 15;
+    keyLight.shadow.normalBias = 0.025;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x9ec9d8, 1.35);
+    rimLight.position.set(4, 3.5, -4);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.PointLight(0xffc985, 12, 8, 2);
+    fillLight.position.set(-2.5, 2.5, 3.5);
+    scene.add(fillLight);
+
+    // Preview-only pedestal and shadow catcher.
+    const pedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.55, 1.7, 0.12, 32),
+      new THREE.MeshStandardMaterial({
+        color: 0xcbd3d6,
+        roughness: 0.94,
+        metalness: 0
+      })
+    );
+    pedestal.position.y = -0.075;
+    pedestal.receiveShadow = true;
+    scene.add(pedestal);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(80, 80),
+      new THREE.ShadowMaterial({
+        color: 0x4a382a,
+        opacity: 0.18
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.14;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // ------------------------------------------------------------
+    // Materials
+    // ------------------------------------------------------------
+
+    function makeMaterial(color, roughness = 0.82, metalness = 0) {
+      return new THREE.MeshStandardMaterial({
+        color,
+        roughness,
+        metalness,
+        flatShading: true
+      });
+    }
+
+    const M = {
+      skin: makeMaterial(0xc98258),
+      skinLight: makeMaterial(0xd99a69),
+      hood: makeMaterial(0xe7d6ad),
+      cream: makeMaterial(0xd9bc83),
+      robe: makeMaterial(0xc2ad78),
+      rust: makeMaterial(0x9d4936),
+      rustDark: makeMaterial(0x713426),
+      teal: makeMaterial(0x397b7a),
+      tealDark: makeMaterial(0x285a59),
+      leather: makeMaterial(0x65402b),
+      leatherLight: makeMaterial(0x875638),
+      brass: makeMaterial(0xc9963e, 0.38, 0.58),
+      dark: makeMaterial(0x30251f),
+      beard: makeMaterial(0x4a2c20),
+      parchment: makeMaterial(0xe7d29d),
+      eye: makeMaterial(0x171411),
+      red: makeMaterial(0xba4435)
+    };
+
+    // ------------------------------------------------------------
+    // Geometry helpers
+    // ------------------------------------------------------------
+
+    const UP = new THREE.Vector3(0, 1, 0);
+
+    function addMesh(parent, geometry, material, name) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(parent, size, position, material, name, rotation = [0, 0, 0]) {
+      const mesh = addMesh(
+        parent,
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        material,
+        name
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      return mesh;
+    }
+
+    function addIco(parent, radius, position, scale, material, name, detail = 1) {
+      const mesh = addMesh(
+        parent,
+        new THREE.IcosahedronGeometry(radius, detail),
+        material,
+        name
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.scale.set(scale[0], scale[1], scale[2]);
+      return mesh;
+    }
+
+    function addCylinder(
+      parent,
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      name,
+      radialSegments = 8,
+      rotation = [0, 0, 0]
+    ) {
+      const mesh = addMesh(
+        parent,
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          radialSegments,
+          1,
+          false
+        ),
+        material,
+        name
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      return mesh;
+    }
+
+    function addTorus(
+      parent,
+      radius,
+      tube,
+      position,
+      material,
+      name,
+      rotation = [0, 0, 0]
+    ) {
+      const mesh = addMesh(
+        parent,
+        new THREE.TorusGeometry(radius, tube, 6, 12),
+        material,
+        name
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      return mesh;
+    }
+
+    function addSegment(
+      parent,
+      start,
+      end,
+      radiusTop,
+      radiusBottom,
+      material,
+      name,
+      radialSegments = 7
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        parent,
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          length,
+          radialSegments,
+          1,
+          false
+        ),
+        material,
+        name
+      );
+
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(UP, direction.normalize());
+      return mesh;
+    }
+
+    function addBarBetween(
+      parent,
+      start,
+      end,
+      width,
+      depth,
+      material,
+      name
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        parent,
+        new THREE.BoxGeometry(width, length, depth),
+        material,
+        name
+      );
+
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(UP, direction.normalize());
+      return mesh;
+    }
+
+    function addTriangle(parent, points, material, name) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(points.flat(), 3)
+      );
+      geometry.computeVertexNormals();
+
+      const mesh = addMesh(parent, geometry, material, name);
+      mesh.material.side = THREE.DoubleSide;
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Character asset
+    // ------------------------------------------------------------
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "LowPoly_Adventurer";
+    scene.add(assetRoot);
+
+    // Legs and boots.
+    for (const side of [-1, 1]) {
+      addSegment(
+        assetRoot,
+        [side * 0.25, 0.42, 0],
+        [side * 0.24, 1.38, 0],
+        0.17,
+        0.15,
+        M.leather,
+        side < 0 ? "Left_Leg" : "Right_Leg"
+      );
+
+      addBox(
+        assetRoot,
+        [0.34, 0.34, 0.55],
+        [side * 0.25, 0.19, 0.10],
+        M.leather,
+        side < 0 ? "Left_Boot" : "Right_Boot",
+        [0, side * 0.08, 0]
+      );
+
+      addBox(
+        assetRoot,
+        [0.36, 0.08, 0.57],
+        [side * 0.25, 0.065, 0.10],
+        M.dark,
+        side < 0 ? "Left_Boot_Sole" : "Right_Boot_Sole",
+        [0, side * 0.08, 0]
+      );
+    }
+
+    // Main robe.
+    addCylinder(
+      assetRoot,
+      0.47,
+      0.62,
+      1.15,
+      [0, 1.93, 0],
+      M.robe,
+      "Robe",
+      8,
+      [0, 0, 0]
+    ).scale.z = 0.72;
+
+    // Faceted rust vest.
+    const vestShape = new THREE.Shape();
+    vestShape.moveTo(-0.29, 0.45);
+    vestShape.lineTo(0.29, 0.45);
+    vestShape.lineTo(0.38, -0.43);
+    vestShape.lineTo(-0.38, -0.43);
+    vestShape.closePath();
+
+    const vest = addMesh(
+      assetRoot,
+      new THREE.ExtrudeGeometry(vestShape, {
+        depth: 0.055,
+        bevelEnabled: false,
+        steps: 1
+      }),
+      M.rust,
+      "Rust_Vest"
+    );
+    vest.position.set(0, 2.02, 0.365);
+
+    // Cream lapels.
+    addTriangle(
+      assetRoot,
+      [
+        [-0.29, 0.36, 0],
+        [-0.035, 0.29, 0],
+        [-0.18, -0.31, 0]
+      ],
+      M.cream,
+      "Left_Lapel"
+    ).position.set(0, 2.02, 0.426);
+
+    addTriangle(
+      assetRoot,
+      [
+        [0.29, 0.36, 0],
+        [0.035, 0.29, 0],
+        [0.18, -0.31, 0]
+      ],
+      M.cream,
+      "Right_Lapel"
+    ).position.set(0, 2.02, 0.426);
+
+    // Belt and buckle.
+    addCylinder(
+      assetRoot,
+      0.555,
+      0.555,
+      0.14,
+      [0, 1.57, 0],
+      M.leather,
+      "Belt",
+      8
+    ).scale.z = 0.75;
+
+    addBox(
+      assetRoot,
+      [0.18, 0.15, 0.065],
+      [0, 1.57, 0.425],
+      M.brass,
+      "Belt_Buckle"
+    );
+
+    addBox(
+      assetRoot,
+      [0.07, 0.07, 0.025],
+      [0, 1.57, 0.465],
+      M.dark,
+      "Belt_Buckle_Inset"
+    );
+
+    // Neck scarf.
+    addTorus(
+      assetRoot,
+      0.235,
+      0.085,
+      [0, 2.58, 0],
+      M.teal,
+      "Neck_Scarf",
+      [Math.PI / 2, 0, 0]
+    );
+
+    addIco(
+      assetRoot,
+      0.13,
+      [-0.13, 2.52, 0.31],
+      [1.0, 0.85, 0.75],
+      M.teal,
+      "Scarf_Knot"
+    );
+
+    addBox(
+      assetRoot,
+      [0.13, 0.40, 0.045],
+      [-0.21, 2.30, 0.34],
+      M.teal,
+      "Scarf_Tail_A",
+      [0.05, 0, -0.18]
+    );
+
+    addBox(
+      assetRoot,
+      [0.10, 0.31, 0.04],
+      [-0.30, 2.27, 0.32],
+      M.tealDark,
+      "Scarf_Tail_B",
+      [0.03, 0, -0.34]
+    );
+
+    // Shoulder caps.
+    addIco(
+      assetRoot,
+      0.22,
+      [-0.45, 2.38, 0],
+      [1.0, 0.85, 0.95],
+      M.cream,
+      "Left_Shoulder"
+    );
+
+    addIco(
+      assetRoot,
+      0.22,
+      [0.45, 2.38, 0],
+      [1.0, 0.85, 0.95],
+      M.cream,
+      "Right_Shoulder"
+    );
+
+    // Left arm, lowered to hold the key.
+    addSegment(
+      assetRoot,
+      [-0.45, 2.38, 0],
+      [-0.76, 1.94, 0.02],
+      0.18,
+      0.145,
+      M.cream,
+      "Left_Upper_Sleeve"
+    );
+
+    addSegment(
+      assetRoot,
+      [-0.76, 1.94, 0.02],
+      [-0.73, 1.48, 0.25],
+      0.145,
+      0.115,
+      M.cream,
+      "Left_Forearm_Sleeve"
+    );
+
+    addSegment(
+      assetRoot,
+      [-0.73, 1.43, 0.245],
+      [-0.73, 1.35, 0.27],
+      0.135,
+      0.13,
+      M.rust,
+      "Left_Cuff"
+    );
+
+    addIco(
+      assetRoot,
+      0.14,
+      [-0.73, 1.30, 0.28],
+      [0.95, 1.05, 0.85],
+      M.skin,
+      "Left_Hand"
+    );
+
+    // Right arm, bent upward to hold the compass.
+    addSegment(
+      assetRoot,
+      [0.45, 2.38, 0],
+      [0.76, 1.98, 0.04],
+      0.18,
+      0.145,
+      M.cream,
+      "Right_Upper_Sleeve"
+    );
+
+    addSegment(
+      assetRoot,
+      [0.76, 1.98, 0.04],
+      [0.62, 2.32, 0.39],
+      0.145,
+      0.115,
+      M.cream,
+      "Right_Forearm_Sleeve"
+    );
+
+    addSegment(
+      assetRoot,
+      [0.63, 2.29, 0.38],
+      [0.61, 2.35, 0.41],
+      0.13,
+      0.13,
+      M.rust,
+      "Right_Cuff"
+    );
+
+    addIco(
+      assetRoot,
+      0.14,
+      [0.61, 2.35, 0.43],
+      [0.95, 1.0, 0.85],
+      M.skin,
+      "Right_Hand"
+    );
+
+    // Rolled parchment map.
+    addCylinder(
+      assetRoot,
+      0.105,
+      0.105,
+      0.43,
+      [0.48, 2.05, 0.48],
+      M.parchment,
+      "Rolled_Map",
+      8,
+      [0, 0, Math.PI / 2]
+    );
+
+    addTorus(
+      assetRoot,
+      0.108,
+      0.018,
+      [0.48, 2.05, 0.505],
+      M.tealDark,
+      "Map_Tie",
+      [0, Math.PI / 2, 0]
+    );
+
+    // Cross-body leather strap.
+    addBarBetween(
+      assetRoot,
+      [0.35, 2.43, 0.415],
+      [-0.43, 1.43, 0.37],
+      0.09,
+      0.045,
+      M.leather,
+      "Crossbody_Strap"
+    );
+
+    // Satchel.
+    addIco(
+      assetRoot,
+      0.23,
+      [0.48, 1.28, 0.22],
+      [0.95, 0.88, 0.58],
+      M.leather,
+      "Satchel"
+    );
+
+    addBox(
+      assetRoot,
+      [0.38, 0.18, 0.075],
+      [0.48, 1.38, 0.34],
+      M.leatherLight,
+      "Satchel_Flap",
+      [0, 0, -0.10]
+    );
+
+    addBox(
+      assetRoot,
+      [0.07, 0.07, 0.03],
+      [0.48, 1.36, 0.39],
+      M.brass,
+      "Satchel_Clasp"
+    );
+
+    // ------------------------------------------------------------
+    // Head and wrapped hood
+    // ------------------------------------------------------------
+
+    addCylinder(
+      assetRoot,
+      0.16,
+      0.18,
+      0.22,
+      [0, 2.67, 0.01],
+      M.skin,
+      "Neck",
+      7
+    );
+
+    addIco(
+      assetRoot,
+      1,
+      [0, 3.02, -0.13],
+      [0.42, 0.47, 0.27],
+      M.hood,
+      "Hood_Back"
+    );
+
+    addIco(
+      assetRoot,
+      1,
+      [0, 3.02, 0.035],
+      [0.34, 0.40, 0.31],
+      M.skin,
+      "Head"
+    );
+
+    // Ears.
+    addIco(
+      assetRoot,
+      0.11,
+      [-0.33, 3.02, 0.01],
+      [0.65, 1.0, 0.75],
+      M.skin,
+      "Left_Ear"
+    );
+
+    addIco(
+      assetRoot,
+      0.11,
+      [0.33, 3.02, 0.01],
+      [0.65, 1.0, 0.75],
+      M.skin,
+      "Right_Ear"
+    );
+
+    // Hood rim around the face.
+    addTorus(
+      assetRoot,
+      0.33,
+      0.11,
+      [0, 3.13, 0.035],
+      M.hood,
+      "Hood_Rim"
+    );
+
+    // Turban crown and wrap.
+    addCylinder(
+      assetRoot,
+      0.27,
+      0.37,
+      0.22,
+      [0, 3.43, 0.005],
+      M.hood,
+      "Turban_Crown",
+      8
+    );
+
+    addTorus(
+      assetRoot,
+      0.30,
+      0.10,
+      [0, 3.38, 0.01],
+      M.hood,
+      "Turban_Wrap",
+      [Math.PI / 2, 0, 0]
+    );
+
+    addIco(
+      assetRoot,
+      0.14,
+      [0, 3.59, -0.015],
+      [1.0, 0.72, 0.90],
+      M.hood,
+      "Turban_Knot"
+    );
+
+    // Sideburns.
+    addBox(
+      assetRoot,
+      [0.075, 0.20, 0.09],
+      [-0.29, 3.02, 0.16],
+      M.beard,
+      "Left_Sideburn",
+      [0, 0, 0.08]
+    );
+
+    addBox(
+      assetRoot,
+      [0.075, 0.20, 0.09],
+      [0.29, 3.02, 0.16],
+      M.beard,
+      "Right_Sideburn",
+      [0, 0, -0.08]
+    );
+
+    // Eyes.
+    addBox(
+      assetRoot,
+      [0.058, 0.035, 0.028],
+      [-0.105, 3.075, 0.337],
+      M.eye,
+      "Left_Eye",
+      [0, 0, -0.08]
+    );
+
+    addBox(
+      assetRoot,
+      [0.058, 0.035, 0.028],
+      [0.105, 3.075, 0.337],
+      M.eye,
+      "Right_Eye",
+      [0, 0, 0.08]
+    );
+
+    // Nose.
+    const nose = addMesh(
+      assetRoot,
+      new THREE.ConeGeometry(0.055, 0.15, 4),
+      M.skinLight,
+      "Nose"
+    );
+    nose.position.set(0, 3.005, 0.35);
+    nose.rotation.x = Math.PI / 2;
+
+    // Tapered beard.
+    const beard = addMesh(
+      assetRoot,
+      new THREE.ConeGeometry(0.25, 0.37, 5),
+      M.beard,
+      "Beard"
+    );
+    beard.position.set(0, 2.785, 0.16);
+    beard.rotation.z = Math.PI;
+
+    addBox(
+      assetRoot,
+      [0.20, 0.055, 0.06],
+      [0, 2.925, 0.335],
+      M.beard,
+      "Moustache",
+      [0, 0, -0.03]
+    );
+
+    // ------------------------------------------------------------
+    // Key
+    // ------------------------------------------------------------
+
+    addTorus(
+      assetRoot,
+      0.095,
+      0.023,
+      [-0.73, 1.18, 0.29],
+      M.brass,
+      "Key_Ring"
+    );
+
+    addSegment(
+      assetRoot,
+      [-0.73, 1.09, 0.29],
+      [-0.73, 0.64, 0.29],
+      0.019,
+      0.019,
+      M.brass,
+      "Key_Shaft"
+    );
+
+    addBox(
+      assetRoot,
+      [0.075, 0.045, 0.028],
+      [-0.675, 0.69, 0.29],
+      M.brass,
+      "Key_Tooth_A"
+    );
+
+    addBox(
+      assetRoot,
+      [0.065, 0.04, 0.028],
+      [-0.66, 0.615, 0.29],
+      M.brass,
+      "Key_Tooth_B"
+    );
+
+    addBox(
+      assetRoot,
+      [0.055, 0.035, 0.028],
+      [-0.645, 0.545, 0.29],
+      M.brass,
+      "Key_Tooth_C"
+    );
+
+    // ------------------------------------------------------------
+    // Compass
+    // ------------------------------------------------------------
+
+    addCylinder(
+      assetRoot,
+      0.15,
+      0.15,
+      0.08,
+      [0.62, 2.34, 0.49],
+      M.brass,
+      "Compass_Case",
+      12,
+      [Math.PI / 2, 0, 0]
+    );
+
+    addCylinder(
+      assetRoot,
+      0.113,
+      0.113,
+      0.012,
+      [0.62, 2.34, 0.535],
+      M.tealDark,
+      "Compass_Face",
+      12,
+      [Math.PI / 2, 0, 0]
+    );
+
+    addTorus(
+      assetRoot,
+      0.116,
+      0.016,
+      [0.62, 2.34, 0.545],
+      M.brass,
+      "Compass_Rim"
+    );
+
+    addBox(
+      assetRoot,
+      [0.025, 0.13, 0.018],
+      [0.62, 2.34, 0.55],
+      M.red,
+      "Compass_Needle",
+      [0, 0, -0.55]
+    );
+
+    // ------------------------------------------------------------
+    // Export controls
+    // ------------------------------------------------------------
+
+    const exportButton = document.getElementById("export-button");
+    const status = document.getElementById("status");
+
+    let statusTimer;
+
+    function showStatus(message, duration = 2600) {
+      clearTimeout(statusTimer);
+      status.textContent = message;
+      status.classList.add("visible");
+
+      statusTimer = setTimeout(() => {
+        status.classList.remove("visible");
+      }, duration);
+    }
+
+    exportButton.addEventListener("click", async () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting...";
+      showStatus("Preparing GLB...");
+
+      try {
+        assetRoot.updateMatrixWorld(true);
+
+        const exporter = new GLTFExporter();
+
+        const result = await new Promise((resolve, reject) => {
+          exporter.parse(
+            assetRoot,
+            resolve,
+            reject,
+            {
+              binary: true,
+              onlyVisible: true,
+              trs: false,
+              embedImages: true
+            }
+          );
+        });
+
+        const blob = new Blob([result], {
+          type: "model/gltf-binary"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "low-poly-adventurer.glb";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        showStatus("GLB downloaded — ready for Godot.");
+      } catch (error) {
+        console.error(error);
+        showStatus("Export failed. See the browser console for details.", 5000);
+      } finally {
+        exportButton.disabled = false;
+        exportButton.textContent = "Export GLB";
+      }
+    });
+
+    // ------------------------------------------------------------
+    // Resize and render loop
+    // ------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

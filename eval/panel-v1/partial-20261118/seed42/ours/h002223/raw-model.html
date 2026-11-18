@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Satellite Dish</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #071019;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .ui {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 22px;
+      gap: 18px;
+    }
+
+    .panel {
+      pointer-events: auto;
+      padding: 16px 18px;
+      border: 1px solid rgba(159, 205, 224, 0.18);
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(10, 23, 34, 0.92), rgba(8, 16, 25, 0.76));
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(12px);
+    }
+
+    .eyebrow {
+      margin-bottom: 5px;
+      color: #70c6df;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #e9f6fb;
+      font-size: clamp(20px, 3vw, 29px);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    .subtitle {
+      margin-top: 7px;
+      color: #8fa6b3;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 13px 17px;
+      background: linear-gradient(135deg, #39b9d6, #1e789c);
+      color: white;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      box-shadow: 0 8px 24px rgba(22, 108, 147, 0.3);
+      transition: transform 150ms ease, filter 150ms ease, opacity 150ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.55;
+    }
+
+    #status {
+      min-height: 18px;
+      color: #9eb4c1;
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .hint {
+      position: absolute;
+      left: 24px;
+      bottom: 20px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      color: rgba(193, 213, 222, 0.72);
+      background: rgba(5, 12, 18, 0.55);
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 620px) {
+      .ui {
+        padding: 14px;
+      }
+
+      .hint {
+        left: 14px;
+        bottom: 14px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="ui">
+      <div class="panel">
+        <div class="eyebrow">Godot / GLB Asset</div>
+        <h1>Low-Poly Satellite Dish</h1>
+        <div class="subtitle">
+          Reinforced parabolic dish, structural cage, antenna mast, and pedestal.
+          Drag to orbit; scroll to zoom.
+        </div>
+      </div>
+
+      <div class="panel" style="text-align: right">
+        <button id="exportButton" type="button">Export GLB</button>
+        <div id="status">Static asset · Ready to export</div>
+      </div>
+    </div>
+
+    <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const app = document.getElementById("app");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x071019);
+    scene.fog = new THREE.FogExp2(0x071019, 0.028);
+
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(8.2, 5.8, 9.5);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    app.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.0, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 6;
+    controls.maxDistance = 20;
+    controls.maxPolarAngle = Math.PI * 0.86;
+
+    // ------------------------------------------------------------
+    // Materials
+    // ------------------------------------------------------------
+
+    const dishFaceMaterial = new THREE.MeshStandardMaterial({
+      color: 0xc7d2d7,
+      metalness: 0.62,
+      roughness: 0.34,
+      side: THREE.DoubleSide
+    });
+
+    const dishBackMaterial = new THREE.MeshStandardMaterial({
+      color: 0x69777f,
+      metalness: 0.78,
+      roughness: 0.42,
+      side: THREE.BackSide
+    });
+
+    const cageMaterial = new THREE.MeshStandardMaterial({
+      color: 0x354650,
+      metalness: 0.88,
+      roughness: 0.3,
+      flatShading: true
+    });
+
+    const darkCageMaterial = new THREE.MeshStandardMaterial({
+      color: 0x1c2930,
+      metalness: 0.82,
+      roughness: 0.36,
+      flatShading: true
+    });
+
+    const accentMaterial = new THREE.MeshStandardMaterial({
+      color: 0xe7a23b,
+      metalness: 0.65,
+      roughness: 0.34,
+      flatShading: true
+    });
+
+    const rubberMaterial = new THREE.MeshStandardMaterial({
+      color: 0x10171c,
+      metalness: 0.18,
+      roughness: 0.82
+    });
+
+    // ------------------------------------------------------------
+    // Exportable asset root
+    // ------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "LowPoly_Satellite_Dish";
+    scene.add(asset);
+
+    function addMesh(geometry, material, name) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      asset.add(mesh);
+      return mesh;
+    }
+
+    function cylinderBetween(start, end, radius, material, name, radialSegments = 6) {
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radius,
+        radius,
+        length,
+        radialSegments
+      );
+
+      const mesh = addMesh(geometry, material, name);
+      mesh.position.copy(start).add(end).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Parabolic dish
+    // ------------------------------------------------------------
+
+    const dishCenterY = 2.05;
+    const dishRadius = 2.35;
+    const frontZ = 0.55;
+    const dishDepth = 0.35;
+    const backZ = -0.05;
+
+    function createDishGeometry(
+      radius,
+      depth,
+      frontZ,
+      backZ,
+      radialSegments = 48,
+      ringSegments = 10
+    ) {
+      const positions = [];
+      const uvs = [];
+      const indices = [];
+
+      for (let ring = 0; ring <= ringSegments; ring++) {
+        const t = ring / ringSegments;
+        const r = radius * t;
+        const z = frontZ - depth * t * t;
+        const backZz = backZ - depth * t * t;
+
+        for (let segment = 0; segment <= radialSegments; segment++) {
+          const angle = (segment / radialSegments) * Math.PI * 2;
+          positions.push(
+            Math.cos(angle) * r,
+            Math.sin(angle) * r,
+            z
+          );
+          uvs.push(t, 1 - t);
+        }
+      }
+
+      const stride = radialSegments + 1;
+
+      for (let ring = 0; ring < ringSegments; ring++) {
+        for (let segment = 0; segment < radialSegments; segment++) {
+          const a = ring * stride + segment;
+          const b = (ring + 1) * stride + segment;
+          const c = (ring + 1) * stride + segment + 1;
+          const d = ring * stride + segment + 1;
+
+          if (side === "front") {
+            indices.push(a, b, d, b, c, d);
+          } else {
+            indices.push(a, d, b, a, c, d);
+          }
+        }
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      return geometry;
+    }
+
+    addMesh(
+      createDishGeometry(
+        dishRadius,
+        dishDepth,
+        frontZ,
+        backZ
+      ),
+      dishFaceMaterial,
+      "Parabolic_Dish_Face"
+    );
+
+    addMesh(
+      createDishGeometry(
+        dishRadius,
+        dishDepth,
+        frontZ,
+        backZ,
+        radialSegments,
+        ringSegments
+      ),
+      dishBackMaterial,
+      "Parabolic_Dish_Back"
+    );
+
+    // Reinforced front and rear rim.
+    const frontRim = addMesh(
+      new THREE.TorusGeometry(dishRadius, 0.115, 8, 64),
+      darkCageMaterial,
+      "Reinforced_Front_Rim"
+    );
+    frontRim.position.z = frontZ;
+
+    const rearRim = addMesh(
+      new THREE.TorusGeometry(dishRadius, 0.105, 8, 64),
+      cageMaterial,
+      "Reinforced_Rear_Rim"
+    );
+    rearRim.position.z = backZ;
+
+    // Intermediate structural ring.
+    const midRadius = 1.55;
+    const midZ = frontZ - dishDepth * Math.pow(midRadius / dishRadius, 2);
+
+    const middleRing = addMesh(
+      new THREE.TorusGeometry(midRadius, 0.055, 6, 64),
+      darkCageMaterial,
+      "Intermediate_Cage_Ring"
+    );
+    middleRing.position.z = midZ;
+
+    // Accent panel ring.
+    const accentRing = addMesh(
+      new THREE.TorusGeometry(1.92, 0.025, 6, 64),
+      accentMaterial,
+      "Dish_Accent_Ring"
+    );
+    accentRing.position.z = frontZ - dishDepth * Math.pow(1.92 / dishRadius, 2);
+
+    // ------------------------------------------------------------
+    // Reinforced cage ribs
+    // ------------------------------------------------------------
+
+    const ribCount = 12;
+
+    for (let i = 0; i < ribCount; i++) {
+      const angle = (i / ribCount) * Math.PI * 2;
+      const start = new THREE.Vector3(
+        0,
+        dishCenterY,
+        frontZ
+      );
+      const end = new THREE.Vector3(
+        Math.cos(angle) * (dishRadius - 0.12),
+        dishCenterY + Math.sin(angle) * (dishRadius - 0.12),
+        frontZ
+      );
+
+      cylinderBetween(
+        start,
+        end,
+        0.075,
+        cageMaterial,
+        `Cage_Rib_${String(i + 1).padStart(2, "0")}`,
+        6
+      );
+    }
+
+    // Rim clamps.
+    for (let i = 0; i < ribCount; i++) {
+      const angle = (i / ribCount) * Math.PI * 2;
+
+      const clamp = addMesh(
+        new THREE.BoxGeometry(0.23, 0.17, 0.19),
+        cageMaterial,
+        `Rim_Clamp_${String(i + 1).padStart(2, "0")}`
+      );
+
+      clamp.position.set(
+        Math.cos(angle) * dishRadius,
+        dishCenterY + Math.sin(angle) * dishRadius,
+        frontZ
+      );
+      clamp.rotation.z = angle;
+    }
+
+    // ------------------------------------------------------------
+    // Central hub and antenna mast
+    // ------------------------------------------------------------
+
+    const hub = addMesh(
+      new THREE.SphereGeometry(0.29, 12, 8),
+      cageMaterial,
+      "Central_Hub"
+    );
+    hub.position.set(0, dishCenterY, frontZ - 0.2);
+
+    cylinderBetween(
+      new THREE.Vector3(0, dishCenterY, 0.1),
+      new THREE.Vector3(0, dishCenterY, frontZ),
+      0.22,
+      darkCageMaterial,
+      "Central_Mast_Collar",
+      10
+    );
+
+    cylinderBetween(
+      new THREE.Vector3(0, -1.75, 0.12),
+      new THREE.Vector3(0, 4.65, 0.12),
+      0.13,
+      cageMaterial,
+      "Antenna_Mast",
+      8
+    );
+
+    // Mast base and pedestal.
+    const pedestal = addMesh(
+      new THREE.CylinderGeometry(0.72, 0.84, 0.24, 12),
+      darkCageMaterial,
+      "Pedestal_Base"
+    );
+    pedestal.position.y = -1.72;
+
+    const pedestalRing = addMesh(
+      new THREE.TorusGeometry(0.73, 0.07, 6, 24),
+      accentMaterial,
+      "Pedestal_Accent_Ring"
+    );
+    pedestalRing.rotation.x = Math.PI / 2;
+    pedestalRing.position.y = -1.58;
+
+    // Mast crossbars.
+    const lowerCrossbarY = 3.25;
+    const upperCrossbarY = 4.15;
+
+    cylinderBetween(
+      new THREE.Vector3(-1.25, lowerCrossbarY, 0.12),
+      new THREE.Vector3(1.25, lowerCrossbarY, 0.12),
+      0.07,
+      accentMaterial,
+      "Lower_Antenna_Crossbar",
+      6
+    );
+
+    cylinderBetween(
+      new THREE.Vector3(-1.25, upperCrossbarY, 0.12),
+      new THREE.Vector3(1.25, upperCrossbarY, 0.12),
+      0.065,
+      cageMaterial,
+      "Upper_Antenna_Crossbar",
+      6
+    );
+
+    // Small antenna elements.
+    cylinderBetween(
+      new THREE.Vector3(-1.12, lowerCrossbarY, 0.12),
+      new THREE.Vector3(-1.12, lowerCrossbarY + 0.42, 0.12),
+      0.032,
+      accentMaterial,
+      "Lower_Antenna_Element",
+      6
+    );
+
+    cylinderBetween(
+      new THREE.Vector3(1.12, lowerCrossbarY, 0.12),
+      new THREE.Vector3(1.12, lowerCrossbarY + 0.42, 0.12),
+      0.032,
+      accentMaterial,
+      "Upper_Antenna_Element",
+      6
+    );
+
+    cylinderBetween(
+      new THREE.Vector3(-1.12, upperCrossbarY, 0.12),
+      new THREE.Vector3(-1.12, upperCrossbarY + 0.48, 0.12),
+      0.03,
+      cageMaterial,
+      "Upper_Left_Antenna_Element",
+      6
+    );
+
+    cylinderBetween(
+      new THREE.Vector3(1.12, upperCrossbarY, 0.12),
+      new THREE.Vector3(1.12, upperCrossbarY + 0.48, 0.12),
+      0.03,
+      cageMaterial,
+      "Upper_Right_Antenna_Element",
+      6
+    );
+
+    // Small top cap.
+    const topCap = addMesh(
+      new THREE.SphereGeometry(0.12, 8, 6),
+      accentMaterial,
+      "Mast_Top_Cap"
+    );
+    topCap.position.set(0, 4.68, 0.12);
+
+    // ------------------------------------------------------------
+    // Rear electronics enclosure and support struts
+    // ------------------------------------------------------------
+
+    const electronics = addMesh(
+      new THREE.BoxGeometry(0.52, 0.34, 0.18),
+      rubberMaterial,
+      "Rear_Electronics_Enclosure"
+    );
+    electronics.position.set(0, dishCenterY, -0.1);
+
+    cylinderBetween(
+      new THREE.Vector3(0, -1.1, 0.12),
+      new THREE.Vector3(-1.28, 1.05, -0.1),
+      0.075,
+      darkCageMaterial,
+      "Left_Support_Strut",
+      6
+    );
+
+    cylinderBetween(
+      new THREE.Vector3(0, -1.1, 0.12),
+      new THREE.Vector3(1.28, 1.05, -0.1),
+      0.075,
+      darkCageMaterial,
+      "Right_Support_Strut",
+      6
+    );
+
+    // ------------------------------------------------------------
+    // Presentation-only scene
+    // ------------------------------------------------------------
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.ShadowMaterial({
+        color: 0x000000,
+        opacity: 0.34
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -2.12;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const hemisphere = new THREE.HemisphereLight(0x8fcbd3, 0x08101a, 1.65);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xd9edff, 3.1);
+    keyLight.position.set(5.5, 8.5, 7.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -5;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x247ca8, 2.2);
+    rimLight.position.set(-6, 3, -5);
+    scene.add(rimLight);
+
+    const warmLight = new THREE.PointLight(0xffb44e, 20, 12, 2);
+    warmLight.position.set(3, 1.5, 4);
+    scene.add(warmLight);
+
+    // ------------------------------------------------------------
+    // GLB export
+    // ------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Exporting GLB…";
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "low-poly-satellite-dish.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          window.setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1500);
+
+          exportButton.disabled = false;
+          status.textContent = "GLB exported successfully";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed — see console";
+        },
+        {
+          binary: true,
+          trs: true,
+          onlyVisible: true
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Render loop and resize handling
+    // ------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

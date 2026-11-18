@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Crystal Mage</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #090711;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .title-card {
+      position: absolute;
+      top: 22px;
+      left: 24px;
+      padding: 15px 18px;
+      border: 1px solid rgba(173, 132, 255, 0.25);
+      border-radius: 12px;
+      background: rgba(15, 10, 28, 0.68);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+    }
+
+    .title-card h1 {
+      margin: 0 0 5px;
+      color: #f3e8ff;
+      font-size: 17px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .title-card p {
+      margin: 0;
+      color: #a99ccc;
+      font-size: 12px;
+    }
+
+    .export-panel {
+      position: absolute;
+      top: 22px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 9px;
+      padding: 11px 16px;
+      color: #fff;
+      background: linear-gradient(135deg, #7449bd, #3dbbda);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      box-shadow:
+        0 8px 20px rgba(70, 45, 150, 0.32),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18);
+      transition: transform 150ms ease, filter 150ms ease, opacity 150ms ease;
+    }
+
+    button:hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.55;
+      transform: none;
+    }
+
+    #status {
+      min-height: 16px;
+      color: #b8a9d1;
+      font-size: 11px;
+    }
+
+    .hint {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: rgba(221, 211, 239, 0.68);
+      background: rgba(10, 7, 19, 0.48);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 640px) {
+      .title-card {
+        top: 14px;
+        left: 14px;
+      }
+
+      .export-panel {
+        top: 14px;
+        right: 14px;
+      }
+
+      .hint {
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="title-card">
+      <h1>Crystal Mage</h1>
+      <p>Low-poly static character asset</p>
+    </div>
+
+    <div class="export-panel">
+      <button id="exportButton">Export GLB</button>
+      <div id="status"></div>
+    </div>
+
+    <div class="hint">Drag to orbit · Scroll to zoom</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // ------------------------------------------------------------
+    // Renderer and scene
+    // ------------------------------------------------------------
+
+    const app = document.getElementById("app");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x090711);
+    scene.fog = new THREE.Fog(0x090711, 8, 18);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(4.7, 3.5, 6.8);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    app.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.05, 0);
+    controls.enableDamping = true;
+    controls.minDistance = 4;
+    controls.maxDistance = 10;
+    controls.maxPolarAngle = Math.PI * 0.52;
+
+    // ------------------------------------------------------------
+    // Lighting
+    // ------------------------------------------------------------
+
+    scene.add(new THREE.HemisphereLight(0x9ebbff, 0x170a24, 1.5));
+
+    const keyLight = new THREE.DirectionalLight(0xfff1dc, 3.1);
+    keyLight.position.set(4, 7, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const cyanRim = new THREE.PointLight(0x4b8dff, 24, 10, 2);
+    cyanRim.position.set(-3.8, 4.3, -2.4);
+    scene.add(cyanRim);
+
+    const violetRim = new THREE.PointLight(0xb14bff, 18, 9, 2);
+    violetRim.position.set(3.5, 2.8, -2.8);
+    scene.add(violetRim);
+
+    const warmFill = new THREE.PointLight(0xffb45f, 10, 8, 2);
+    warmFill.position.set(3, 1.2, 3);
+    scene.add(warmFill);
+
+    // ------------------------------------------------------------
+    // Materials
+    // ------------------------------------------------------------
+
+    const materials = {
+      cloth: new THREE.MeshStandardMaterial({
+        color: 0x24153e,
+        roughness: 0.88,
+        metalness: 0.04,
+        flatShading: true
+      }),
+      clothAccent: new THREE.MeshStandardMaterial({
+        color: 0x392061,
+        roughness: 0.8,
+        metalness: 0.06,
+        flatShading: true
+      }),
+      cloak: new THREE.MeshStandardMaterial({
+        color: 0x171027,
+        roughness: 0.92,
+        metalness: 0.03,
+        flatShading: true
+      }),
+      leather: new THREE.MeshStandardMaterial({
+        color: 0x21172f,
+        roughness: 0.78,
+        metalness: 0.08,
+        flatShading: true
+      }),
+      bone: new THREE.MeshStandardMaterial({
+        color: 0xd9d0b5,
+        roughness: 0.72,
+        metalness: 0.02,
+        flatShading: true
+      }),
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xb78a37,
+        roughness: 0.32,
+        metalness: 0.78,
+        flatShading: true
+      }),
+      darkMetal: new THREE.MeshStandardMaterial({
+        color: 0x282339,
+        roughness: 0.4,
+        metalness: 0.7,
+        flatShading: true
+      }),
+      void: new THREE.MeshStandardMaterial({
+        color: 0x05030a,
+        roughness: 1,
+        metalness: 0,
+        flatShading: true
+      }),
+      cyanCrystal: new THREE.MeshStandardMaterial({
+        color: 0x65eaff,
+        emissive: 0x168cca,
+        emissiveIntensity: 1.8,
+        roughness: 0.18,
+        metalness: 0.18,
+        flatShading: true
+      }),
+      violetCrystal: new THREE.MeshStandardMaterial({
+        color: 0xbf64ff,
+        emissive: 0x7b20c7,
+        emissiveIntensity: 1.7,
+        roughness: 0.2,
+        metalness: 0.16,
+        flatShading: true
+      }),
+      wood: new THREE.MeshStandardMaterial({
+        color: 0x332335,
+        roughness: 0.9,
+        metalness: 0.02,
+        flatShading: true
+      })
+    };
+
+    // ------------------------------------------------------------
+    // Asset root
+    // ------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "LowPolyCrystalMage";
+    scene.add(asset);
+
+    function addMesh(
+      geometry,
+      material,
+      position = [0, 0, 0],
+      rotation = [0, 0, 0],
+      scale = [1, 1, 1],
+      parent = asset
+    ) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...position);
+      mesh.rotation.set(...rotation);
+      mesh.scale.set(...scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(
+      size,
+      material,
+      position,
+      rotation = [0, 0, 0],
+      parent = asset
+    ) {
+      return addMesh(
+        new THREE.BoxGeometry(...size),
+        material,
+        position,
+        rotation,
+        [1, 1, 1],
+        parent
+      );
+    }
+
+    function addConeTip(
+      center,
+      height,
+      radius,
+      material,
+      rotation = [0, 0, 0],
+      parent = asset
+    ) {
+      return addMesh(
+        new THREE.ConeGeometry(radius, height, 5, 1, false),
+        material,
+        center,
+        rotation,
+        [1, 1, 1],
+        parent
+      );
+    }
+
+    function addLimb(
+      start,
+      end,
+      topRadius,
+      bottomRadius,
+      material,
+      parent = asset
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = new THREE.Vector3().subVectors(b, a);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          topRadius,
+          bottomRadius,
+          length,
+          6,
+          1,
+          false
+        ),
+        material,
+        [0, 0, 0],
+        [0, 0, 0],
+        [1, 1, 1],
+        parent
+      );
+
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Boots and robe
+    // ------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      addBox(
+        [0.44, 0.42, 0.76],
+        materials.leather,
+        [side * 0.36, 0.22, 0.14],
+        [0, side * 0.08, side * 0.04]
+      );
+
+      addBox(
+        [0.46, 0.12, 0.78],
+        materials.darkMetal,
+        [side * 0.36, 0.08, 0.14],
+        [0, side * 0.08, side * 0.04]
+      );
+
+      addConeTip(
+        [side * 0.36, 0.18, 0.55],
+        0.25,
+        0.11,
+        materials.violetCrystal,
+        [Math.PI / 2, 0, 0]
+      );
+    }
+
+    addMesh(
+      new THREE.CylinderGeometry(0.55, 0.92, 1.55, 8, 1, false),
+      materials.cloth,
+      [0, 1.15, 0]
+    );
+
+    addMesh(
+      new THREE.CylinderGeometry(0.52, 0.76, 1.35, 7, 1, false),
+      materials.clothAccent,
+      [0, 1.12, -0.035]
+    );
+
+    // Angular robe panels.
+    addBox(
+      [0.25, 0.96, 0.07],
+      materials.clothAccent,
+      [-0.25, 1.18, 0.53],
+      [0, 0, -0.1]
+    );
+
+    addBox(
+      [0.25, 0.96, 0.07],
+      materials.clothAccent,
+      [0.25, 1.18, 0.53],
+      [0, 0, 0.1]
+    );
+
+    // Gold belt and hem trim.
+    addMesh(
+      new THREE.TorusGeometry(0.58, 0.065, 4, 12),
+      materials.gold,
+      [0, 1.82, 0],
+      [Math.PI / 2, 0, 0]
+    );
+
+    addBox(
+      [0.22, 0.19, 0.1],
+      materials.gold,
+      [0, 1.82, 0.57]
+    );
+
+    addMesh(
+      new THREE.TorusGeometry(0.86, 0.05, 4, 12),
+      materials.gold,
+      [0, 0.39, 0],
+      [Math.PI / 2, 0, 0]
+    );
+
+    // Small glowing runic details.
+    for (const [x, y] of [
+      [-0.32, 1.48],
+      [0.32, 1.48],
+      [-0.32, 0.88],
+      [0.32, 0.88]
+    ]) {
+      addMesh(
+        new THREE.OctahedronGeometry(0.075, 0),
+        materials.cyanCrystal,
+        [x, y, 0.575],
+        [0, 0, Math.PI / 4],
+        [0.7, 1.25, 0.45]
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Hood, face, and skull
+    // ------------------------------------------------------------
+
+    const hood = addMesh(
+      new THREE.ConeGeometry(0.76, 1.35, 7, 1, false),
+      materials.cloth,
+      [0, 2.75, -0.18]
+    );
+    hood.scale.z = 0.78;
+
+    const hoodBack = addMesh(
+      new THREE.ConeGeometry(0.58, 0.95, 6),
+      materials.cloak,
+      [0, 2.55, -0.42]
+    );
+    hoodBack.scale.z = 0.65;
+
+    const faceVoid = addMesh(
+      new THREE.IcosahedronGeometry(0.47, 1),
+      materials.void,
+      [0, 2.65, 0.27],
+      [0, 0, 0],
+      [1, 1.12, 0.38]
+    );
+    faceVoid.castShadow = false;
+
+    const skull = addMesh(
+      new THREE.IcosahedronGeometry(0.43, 1),
+      materials.bone,
+      [0, 2.66, 0.49],
+      [0.03, 0, 0],
+      [1, 1.06, 0.68]
+    );
+
+    // Hood framing around the face.
+    const hoodRim = addMesh(
+      new THREE.TorusGeometry(0.54, 0.085, 4, 10),
+      materials.clothAccent,
+      [0, 2.43, 0.35]
+    );
+    hoodRim.scale.y = 1.13;
+
+    // Jaw.
+    addBox(
+      [0.46, 0.19, 0.27],
+      materials.bone,
+      [0, 2.43, 0.57]
+    );
+
+    // Teeth.
+    for (let i = 0; i < 5; i++) {
+      addBox(
+        [0.055, 0.11, 0.045],
+        materials.bone,
+        [-0.16 + i * 0.08, 2.52, 0.74]
+      );
+    }
+
+    // Eye sockets and glowing eyes.
+    for (const side of [-1, 1]) {
+      addMesh(
+        new THREE.IcosahedronGeometry(0.12, 0),
+        materials.void,
+        [side * 0.145, 2.76, 0.785],
+        [0, 0, 0],
+        [1, 0.72, 0.42]
+      );
+
+      addMesh(
+        new THREE.IcosahedronGeometry(0.052, 0),
+        materials.cyanCrystal,
+        [side * 0.145, 2.76, 0.82],
+        [0, 0, 0],
+        [1, 0.8, 0.45]
+      );
+    }
+
+    // Nose.
+    addConeTip(
+      [0, 2.61, 0.82],
+      0.18,
+      0.065,
+      materials.bone,
+      [Math.PI / 2, 0, 0]
+    );
+
+    // ------------------------------------------------------------
+    // Crystal crown
+    // ------------------------------------------------------------
+
+    addConeTip(
+      [0, 3.78, -0.02],
+      0.92,
+      0.2,
+      materials.cyanCrystal
+    );
+
+    addConeTip(
+      [-0.4, 3.39, -0.08],
+      0.74,
+      0.17,
+      materials.violetCrystal,
+      [0, 0, -0.18]
+    );
+
+    addConeTip(
+      [0.4, 3.39, -0.08],
+      0.74,
+      0.17,
+      materials.violetCrystal,
+      [0, 0, 0.18]
+    );
+
+    addConeTip(
+      [-0.52, 3.13, -0.35],
+      0.58,
+      0.14,
+      materials.cyanCrystal,
+      [0, 0, -0.25]
+    );
+
+    addConeTip(
+      [0.52, 3.13, -0.35],
+      0.58,
+      0.14,
+      materials.cyanCrystal,
+      [0, 0, 0.25]
+    );
+
+    // ------------------------------------------------------------
+    // Arms, hands, and shoulder armor
+    // ------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      const shoulder = [side * 0.58, 2.04, 0];
+      const elbow = [side * 0.82, 1.58, 0.02];
+      const wrist = [side * 0.96, 1.13, 0.1];
+
+      addLimb(shoulder, elbow, 0.19, 0.16, materials.cloth);
+      addLimb(elbow, wrist, 0.15, 0.11, materials.clothAccent);
+
+      // Pauldron.
+      addMesh(
+        new THREE.IcosahedronGeometry(0.39, 0),
+        materials.darkMetal,
+        [side * 0.68, 2.15, 0.02],
+        [0, 0, side * 0.12],
+        [1.18, 0.76, 1]
+      );
+
+      addMesh(
+        new THREE.TorusGeometry(0.29, 0.035, 4, 8),
+        materials.gold,
+        [side * 0.69, 2.13, 0.12],
+        [0, Math.PI / 2, 0],
+        [1.1, 0.8, 1]
+      );
+
+      // Hand.
+      addMesh(
+        new THREE.IcosahedronGeometry(0.17, 0),
+        materials.leather,
+        [side * 0.98, 1.04, 0.14],
+        [0, 0, 0],
+        [0.9, 1.1, 0.72]
+      );
+
+      // Three stylized fingers.
+      for (let finger = -1; finger <= 1; finger++) {
+        addConeTip(
+          [
+            side * 0.98 + finger * 0.075,
+            0.83,
+            0.18
+          ],
+          0.28,
+          0.045,
+          materials.bone,
+          [0, 0, Math.PI]
+        );
+      }
+
+      // Small shoulder crystal.
+      addConeTip(
+        [side * 0.78, 2.43, -0.02],
+        0.43,
+        0.12,
+        side < 0 ? materials.violetCrystal : materials.cyanCrystal,
+        [0, 0, side * 0.18]
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Necklace and chest crystal
+    // ------------------------------------------------------------
+
+    addMesh(
+      new THREE.TorusGeometry(0.35, 0.035, 4, 10),
+      materials.gold,
+      [0, 1.91, 0.38],
+      [Math.PI / 2, 0, 0],
+      [1, 1.15, 1]
+    );
+
+    const chestCrystal = addMesh(
+      new THREE.OctahedronGeometry(0.25, 0),
+      materials.cyanCrystal,
+      [0, 1.63, 0.63],
+      [0, 0, Math.PI / 4],
+      [0.82, 1.35, 0.55]
+    );
+    chestCrystal.castShadow = false;
+
+    addMesh(
+      new THREE.TorusGeometry(0.28, 0.04, 4, 8),
+      materials.gold,
+      [0, 1.63, 0.62],
+      [0, 0, 0],
+      [0.84, 1.32, 1]
+    );
+
+    // ------------------------------------------------------------
+    // Staff
+    // ------------------------------------------------------------
+
+    addMesh(
+      new THREE.CylinderGeometry(0.08, 0.11, 4.25, 6),
+      materials.wood,
+      [1.38, 2.15, 0]
+    );
+
+    // Staff bindings.
+    for (const y of [0.62, 1.94, 3.94]) {
+      addMesh(
+        new THREE.TorusGeometry(0.115, 0.035, 4, 8),
+        materials.gold,
+        [1.38, y, 0],
+        [Math.PI / 2, 0, 0]
+      );
+    }
+
+    // Crown crystal and halo.
+    const staffCrystal = addMesh(
+      new THREE.OctahedronGeometry(0.4, 0),
+      materials.cyanCrystal,
+      [1.38, 4.48, 0],
+      [0, 0, 0],
+      [0.82, 1.38, 0.82]
+    );
+    staffCrystal.castShadow = false;
+
+    addMesh(
+      new THREE.TorusGeometry(0.55, 0.035, 4, 14),
+      materials.gold,
+      [1.38, 4.46, 0],
+      [0, 0, 0]
+    );
+
+    addMesh(
+      new THREE.TorusGeometry(0.55, 0.035, 4, 14),
+      materials.gold,
+      [1.38, 4.46, 0],
+      [0, Math.PI / 2, 0]
+    );
+
+    // ------------------------------------------------------------
+    // Floating crystal shards
+    // ------------------------------------------------------------
+
+    const shards = [
+      { position: [-1.55, 2.85, 0.15], scale: [0.8, 1.45, 0.8], material: materials.violetCrystal },
+      { position: [1.72, 2.45, -0.18], scale: [0.7, 1.25, 0.7], material: materials.cyanCrystal },
+      { position: [-1.43, 1.4, 0.42], scale: [0.65, 1.1, 0.65], material: materials.cyanCrystal },
+      { position: [1.76, 3.62, 0.18], scale: [0.6, 1.15, 0.6], material: materials.violetCrystal },
+      { position: [-1.25, 3.95, -0.3], scale: [0.55, 0.95, 0.55], material: materials.cyanCrystal }
+    ];
+
+    for (const shard of shards) {
+      const crystal = addMesh(
+        new THREE.OctahedronGeometry(0.2, 0),
+        shard.material,
+        shard.position,
+        [0.15, 0.3, 0.1],
+        shard.scale
+      );
+      crystal.castShadow = false;
+    }
+
+    // ------------------------------------------------------------
+    // Preview-only ground and halo
+    // ------------------------------------------------------------
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0x100b1c,
+        roughness: 1,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const previewHalo = new THREE.Mesh(
+      new THREE.TorusGeometry(2.05, 0.014, 4, 64),
+      new THREE.MeshBasicMaterial({
+        color: 0x6f489b,
+        transparent: true,
+        opacity: 0.55
+      })
+    );
+    previewHalo.rotation.x = Math.PI / 2;
+    previewHalo.position.y = 0.005;
+    scene.add(previewHalo);
+
+    // ------------------------------------------------------------
+    // Export GLB
+    // ------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB...";
+
+      // Make sure all asset transforms are current.
+      asset.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low-poly-crystal-mage.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          exportButton.disabled = false;
+          status.textContent = "GLB downloaded successfully.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: true
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Resize and render loop
+    // ------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

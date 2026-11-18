@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Archery Scene</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #101923;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: min(340px, calc(100vw - 40px));
+      padding: 18px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      color: #edf4ff;
+      background: rgba(15, 24, 34, 0.82);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+      user-select: none;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: #b8c9d7;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px 15px;
+      border: 0;
+      border-radius: 9px;
+      color: #15202a;
+      background: #e7b95a;
+      font-size: 14px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    button:hover {
+      background: #f1c972;
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.65;
+      cursor: wait;
+      transform: none;
+    }
+
+    #status {
+      min-height: 17px;
+      margin-top: 9px;
+      color: #91a6ba;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: absolute;
+      right: 18px;
+      bottom: 16px;
+      padding: 7px 10px;
+      border-radius: 7px;
+      color: rgba(238, 244, 255, 0.72);
+      background: rgba(12, 20, 28, 0.55);
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 14px 16px;
+      }
+
+      .hint {
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <div class="panel">
+      <h1>Low-Poly Archery Scene</h1>
+      <p>
+        A stylized woodland archery display with a timber arch, recurve bow,
+        arrow, hanging banners, rope, pumpkins, and a low-poly stone base.
+      </p>
+      <button id="exportBtn">Export GLB</button>
+      <div id="status">Drag to orbit · Scroll to zoom</div>
+    </div>
+
+    <div class="hint">Procedural Three.js asset · Static export</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const container = document.getElementById("app");
+    const exportButton = document.getElementById("exportBtn");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x101923);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(6.4, 4.8, 8.5);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.1, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 13;
+    controls.maxPolarAngle = Math.PI * 0.48;
+
+    // Lighting
+    scene.add(new THREE.HemisphereLight(0xb9d7ff, 0x332017, 1.65));
+
+    const keyLight = new THREE.DirectionalLight(0xffe0b2, 3.1);
+    keyLight.position.set(-4, 8, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -7;
+    keyLight.shadow.camera.right = 7;
+    keyLight.shadow.camera.top = 8;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.camera.near = 0.1;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x83bfff, 1.4);
+    rimLight.position.set(5, 5, -5);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.PointLight(0xffb566, 12, 12, 2);
+    fillLight.position.set(0, 4, 4);
+    scene.add(fillLight);
+
+    // Materials
+    const materials = {
+      wood: new THREE.MeshStandardMaterial({
+        color: 0x6a3824,
+        roughness: 0.88,
+        metalness: 0.02
+      }),
+      woodDark: new THREE.MeshStandardMaterial({
+        color: 0x3b241c,
+        roughness: 0.95
+      }),
+      woodLight: new THREE.MeshStandardMaterial({
+        color: 0x9b5c31,
+        roughness: 0.8
+      }),
+      rope: new THREE.MeshStandardMaterial({
+        color: 0xd2aa63,
+        roughness: 1
+      }),
+      ropeDark: new THREE.MeshStandardMaterial({
+        color: 0x775738,
+        roughness: 1
+      }),
+      banner: new THREE.MeshStandardMaterial({
+        color: 0x7d2435,
+        roughness: 0.9,
+        side: THREE.DoubleSide
+      }),
+      bannerTrim: new THREE.MeshStandardMaterial({
+        color: 0xe0b65b,
+        roughness: 0.55,
+        metalness: 0.25
+      }),
+      stone: new THREE.MeshStandardMaterial({
+        color: 0x4a5661,
+        roughness: 0.96,
+        flatShading: true
+      }),
+      stoneDark: new THREE.MeshStandardMaterial({
+        color: 0x293744,
+        roughness: 1,
+        flatShading: true
+      }),
+      ground: new THREE.MeshStandardMaterial({
+        color: 0x8e7859,
+        roughness: 1,
+        flatShading: true
+      }),
+      grass: new THREE.MeshStandardMaterial({
+        color: 0x416c3d,
+        roughness: 1,
+        flatShading: true
+      }),
+      grassLight: new THREE.MeshStandardMaterial({
+        color: 0x61824c,
+        roughness: 1,
+        flatShading: true
+      }),
+      pumpkin: new THREE.MeshStandardMaterial({
+        color: 0xe88928,
+        roughness: 0.72,
+        flatShading: true
+      }),
+      pumpkinDark: new THREE.MeshStandardMaterial({
+        color: 0xc9641e,
+        roughness: 0.8,
+        flatShading: true
+      }),
+      stem: new THREE.MeshStandardMaterial({
+        color: 0x5a6832,
+        roughness: 1,
+        flatShading: true
+      }),
+      leaf: new THREE.MeshStandardMaterial({
+        color: 0x3d6f37,
+        roughness: 0.9,
+        flatShading: true
+      })
+    };
+
+    function addMesh(geometry, material, position = null) {
+      const mesh = new THREE.Mesh(geometry, material);
+      if (position) mesh.position.copy(position);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      return mesh;
+    }
+
+    function cylinderBetween(a, b, radius, material, segments = 8) {
+      const direction = new THREE.Vector3().subVectors(b, a);
+      const length = direction.length();
+      const geometry = new THREE.CylinderGeometry(
+        radius,
+        radius,
+        length,
+        segments
+      );
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      return mesh;
+    }
+
+    function makeLeaf(position, scale = 1, rotation = 0) {
+      const leaf = addMesh(
+        new THREE.IcosahedronGeometry(0.13, 0),
+        materials.leaf,
+        position
+      );
+      leaf.scale.set(0.65 * scale, 1.35 * scale, 0.38 * scale);
+      leaf.rotation.z = rotation;
+      return leaf;
+    }
+
+    // Stone display base
+    const base = addMesh(
+      new THREE.CylinderGeometry(5.8, 6.0, 0.22, 32),
+      materials.stone,
+      new THREE.Vector3(0, -0.11, 0)
+    );
+    base.name = "StoneDisplayBase";
+
+    const baseInset = addMesh(
+      new THREE.CylinderGeometry(5.35, 5.55, 0.07, 32),
+      materials.stoneDark,
+      new THREE.Vector3(0, 0.025, 0)
+    );
+    baseInset.name = "BaseInset";
+
+    // Main timber arch
+    const archRadius = 2.3;
+    const archCenterY = 2.8;
+
+    const leftPost = addMesh(
+      new THREE.CylinderGeometry(0.18, 0.25, 2.8, 6),
+      materials.wood,
+      new THREE.Vector3(-archRadius, 1.4, 0)
+    );
+    leftPost.name = "LeftArchPost";
+
+    const rightPost = addMesh(
+      new THREE.CylinderGeometry(0.18, 0.25, 2.8, 6),
+      materials.wood,
+      new THREE.Vector3(archRadius, 1.4, 0)
+    );
+    rightPost.name = "RightArchPost";
+
+    for (const x of [-archRadius, archRadius]) {
+      const cap = addMesh(
+        new THREE.CylinderGeometry(0.25, 0.25, 0.18, 6),
+        materials.woodLight,
+        new THREE.Vector3(x, 2.88, 0)
+      );
+      cap.name = "PostCap";
+
+      for (const y of [0.58, 2.18]) {
+        const band = addMesh(
+          new THREE.TorusGeometry(0.215, 0.035, 5, 10),
+          materials.woodDark,
+          new THREE.Vector3(x, y, 0)
+        );
+        band.rotation.x = Math.PI / 2;
+      }
+    }
+
+    const arch = addMesh(
+      new THREE.TorusGeometry(archRadius, 0.14, 6, 32, Math.PI),
+      materials.woodLight,
+      new THREE.Vector3(0, archCenterY, 0)
+    );
+    arch.name = "MainArch";
+
+    // Small inner trim
+    const innerTrim = addMesh(
+      new THREE.TorusGeometry(2.13, 0.055, 5, 32, Math.PI),
+      materials.woodDark,
+      new THREE.Vector3(0, archCenterY, 0.11)
+    );
+    innerTrim.name = "InnerArchTrim";
+
+    // Rope garland wrapped around the outside of the arch
+    const ropePoints = [];
+    for (let i = 0; i <= 14; i++) {
+      const t = i / 14;
+      const x = (archRadius + 0.13) * Math.cos(t);
+      const y = archCenterY + (archRadius + 0.13) * Math.sin(t);
+      ropePoints.push(new THREE.Vector3(x, y, 0));
+    }
+    const ropeCurve = new THREE.CatmullRomCurve3(ropePoints);
+    const rope = addMesh(
+      new THREE.TubeGeometry(ropeCurve, 40, 0.027, 5, false),
+      materials.rope
+    );
+    rope.name = "RopeGarland";
+
+    for (let i = 1; i < 9; i++) {
+      const t = i / 9;
+      const x = (archRadius + 0.13) * Math.cos(t);
+      const y = archCenterY + (archRadius + 0.13) * Math.sin(t);
+
+      const bead = addMesh(
+        new THREE.SphereGeometry(0.055, 6, 4),
+        materials.bannerTrim,
+        new THREE.Vector3(x, y, 0.035)
+      );
+      bead.scale.set(1, 1, 0.5);
+    }
+
+    // Leaves along the garland
+    for (let i = 0; i < 11; i++) {
+      const t = 0.09 + i * 0.083;
+      const x = (archRadius + 0.13) * Math.cos(t);
+      const y = archCenterY + (archRadius + 0.13) * Math.sin(t);
+
+      makeLeaf(
+        new THREE.Vector3(x, y + 0.12, 0.02),
+        0.72,
+        Math.sin(t * Math.PI) * 0.65
+      );
+    }
+
+    // Bow: a faceted recurve bow
+    const bowCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.86, 2.12, 0.48),
+      new THREE.Vector3(-0.58, 3.12, 0.48),
+      new THREE.Vector3(0, 3.47, 0.48),
+      new THREE.Vector3(0.58, 3.12, 0.48),
+      new THREE.Vector3(0.86, 2.12, 0.48)
+    ]);
+
+    const bow = addMesh(
+      new THREE.TubeGeometry(bowCurve, 32, 0.06, 6, false),
+      materials.woodLight
+    );
+    bow.name = "RecurveBow";
+
+    const bowGrip = addMesh(
+      new THREE.TorusGeometry(0.10, 0.045, 6, 12),
+      materials.ropeDark,
+      new THREE.Vector3(0, 3.47, 0.48)
+    );
+    bowGrip.name = "BowGrip";
+
+    cylinderBetween(
+      new THREE.Vector3(-0.86, 2.12, 0.48),
+      new THREE.Vector3(0.86, 2.12, 0.48),
+      0.014,
+      materials.ropeDark,
+      5
+    );
+
+    // Arrow resting in front of the bow
+    const arrow = new THREE.Group();
+    arrow.name = "Arrow";
+    scene.add(arrow);
+
+    const shaft = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.032, 0.032, 2.72, 6),
+      materials.woodLight
+    );
+    shaft.rotation.x = Math.PI / 2;
+    shaft.position.set(0, 3.36, 0.12);
+    shaft.castShadow = true;
+    arrow.add(shaft);
+
+    const arrowHead = new THREE.Mesh(
+      new THREE.ConeGeometry(0.15, 0.38, 4),
+      materials.stoneDark
+    );
+    arrowHead.rotation.x = Math.PI / 2;
+    arrowHead.position.set(0, 3.36, 1.48);
+    arrowHead.castShadow = true;
+    arrow.add(arrowHead);
+
+    const fletching = new THREE.Mesh(
+      new THREE.ConeGeometry(0.17, 0.42, 3),
+      materials.banner
+    );
+    fletching.rotation.x = Math.PI / 2;
+    fletching.position.set(0, 3.36, -1.34);
+    fletching.castShadow = true;
+    arrow.add(fletching);
+
+    // Two hanging banners
+    function createBanner(x, flip = false) {
+      const shape = new THREE.Shape();
+      shape.moveTo(-0.25, 0);
+      shape.lineTo(0.25, 0);
+      shape.lineTo(0.25, -0.82);
+      shape.lineTo(-0.14, -0.64);
+      shape.lineTo(-0.25, -0.82);
+      shape.closePath();
+
+      const banner = new THREE.Mesh(
+        new THREE.ShapeGeometry(shape),
+        materials.banner
+      );
+      banner.position.set(x, 4.58, 0.13);
+      banner.rotation.z = flip ? 0.035 : -0.035;
+      banner.castShadow = true;
+      scene.add(banner);
+
+      const trim = new THREE.Mesh(
+        new THREE.BoxGeometry(0.045, 0.72, 0.025),
+        materials.bannerTrim
+      );
+      trim.position.set(x, 4.15, 0.155);
+      trim.rotation.z = flip ? 0.035 : -0.035;
+      scene.add(trim);
+
+      cylinderBetween(
+        new THREE.Vector3(x, 4.72, 0.13),
+        new THREE.Vector3(x, 4.58, 0.13),
+        0.022,
+        materials.ropeDark,
+        6
+      );
+    }
+
+    createBanner(-1.92, false);
+    createBanner(1.92, true);
+
+    // Pumpkins at the front of the posts
+    function createPumpkin(x, z, scale, dark = false) {
+      const pumpkin = addMesh(
+        new THREE.SphereGeometry(0.28, 8, 6),
+        dark ? materials.pumpkinDark : materials.pumpkin,
+        new THREE.Vector3(x, 0.31 * scale, z)
+      );
+      pumpkin.scale.set(scale, scale * 0.78, scale);
+
+      const stem = addMesh(
+        new THREE.CylinderGeometry(0.035, 0.05, 0.17, 5),
+        materials.stem,
+        new THREE.Vector3(x, 0.57 * scale, z)
+      );
+      stem.rotation.z = x < 0 ? -0.2 : 0.15;
+    }
+
+    createPumpkin(-2.42, 0.38, 1.0);
+    createPumpkin(-2.42, 0.12, 0.72);
+    createPumpkin(2.42, 0.38, 0.86);
+
+    // Small grass clumps around the platform
+    const grassPositions = [
+      [-4.25, -0.2, 0.35],
+      [-4.55, -0.55, 0.42],
+      [-3.95, -1.35, 0.38],
+      [3.95, -1.35, 0.38],
+      [4.55, -0.55, 0.42],
+      [4.25, -0.2, 0.35],
+      [-3.35, 2.8, 0.34],
+      [3.35, 2.8, 0.34],
+      [-4.85, 0.7, 0.32],
+      [4.85, 0.7, 0.32],
+      [0.1, 4.35, 0.3]
+    ];
+
+    for (let i = 0; i < grassPositions.length; i++) {
+      const [x, z, scale] = grassPositions[i];
+      const tuft = addMesh(
+        new THREE.ConeGeometry(0.09, 0.28, 3),
+        i % 2 === 0 ? materials.grass : materials.grassLight,
+        new THREE.Vector3(x, 0.13 * scale, z)
+      );
+      tuft.scale.y = scale;
+      tuft.rotation.y = i * 0.83;
+    }
+
+    // Presentation-only ground shadow catcher
+    const shadowCatcher = new THREE.Mesh(
+      new THREE.CircleGeometry(12, 64),
+      new THREE.MeshBasicMaterial({
+        color: 0x121b25,
+        transparent: true,
+        opacity: 0.3,
+        depthWrite: false
+      })
+    );
+    shadowCatcher.rotation.x = -Math.PI / 2;
+    shadowCatcher.position.y = -0.235;
+    scene.add(shadowCatcher);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Export the complete asset as a binary GLB.
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB...";
+
+      const exporter = new GLTFExporter();
+      exporter.parse(
+        scene,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low_poly_archery.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          exportButton.disabled = false;
+          status.textContent = "GLB exported successfully.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: false,
+          truncateDrawRange: false
+        }
+      );
+    });
+  </script>
+</body>
+</html>

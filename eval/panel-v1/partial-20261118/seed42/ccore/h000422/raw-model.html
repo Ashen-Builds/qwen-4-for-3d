@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Hamster — Three.js GLB Creator</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #3b302c;
+      --muted: #81746c;
+      --panel: rgba(255, 253, 248, 0.88);
+      --border: rgba(91, 71, 58, 0.13);
+      --accent: #b86f45;
+      --accent-dark: #8e4f31;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e8e0d6;
+      color: var(--ink);
+      font-family: Inter, ui-rounded, "SF Pro Rounded", system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #scene {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .ui {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .panel {
+      position: absolute;
+      top: 22px;
+      left: 22px;
+      width: min(340px, calc(100vw - 44px));
+      padding: 18px 20px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--panel);
+      box-shadow:
+        0 18px 50px rgba(76, 56, 39, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(14px);
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: var(--accent-dark);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .description {
+      margin: 9px 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .badge {
+      padding: 5px 8px;
+      border: 1px solid rgba(124, 95, 69, 0.13);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.58);
+      color: #6d5b50;
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .export-wrap {
+      position: absolute;
+      top: 22px;
+      right: 22px;
+      pointer-events: auto;
+    }
+
+    #export-button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 15px;
+      background: linear-gradient(145deg, #ca7a4d, #a95c39);
+      color: white;
+      box-shadow:
+        0 10px 24px rgba(132, 67, 38, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      cursor: pointer;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      transition:
+        transform 150ms ease,
+        filter 150ms ease,
+        box-shadow 150ms ease;
+    }
+
+    #export-button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.05);
+      box-shadow:
+        0 13px 28px rgba(132, 67, 38, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    #export-button:active {
+      transform: translateY(0);
+    }
+
+    #export-button:disabled {
+      cursor: wait;
+      filter: grayscale(0.25);
+      opacity: 0.75;
+    }
+
+    #export-button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .hint {
+      position: absolute;
+      bottom: 22px;
+      left: 22px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 13px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(255, 253, 248, 0.72);
+      color: #776a62;
+      font-size: 11px;
+      font-weight: 650;
+      backdrop-filter: blur(10px);
+    }
+
+    .hint-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #719b78;
+      box-shadow: 0 0 0 4px rgba(113, 155, 120, 0.12);
+    }
+
+    #status {
+      position: absolute;
+      right: 22px;
+      bottom: 22px;
+      max-width: min(360px, calc(100vw - 44px));
+      padding: 10px 13px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(255, 253, 248, 0.82);
+      color: #6f625a;
+      font-size: 11px;
+      font-weight: 650;
+      text-align: right;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 680px) {
+      .panel {
+        top: 14px;
+        left: 14px;
+        width: calc(100vw - 28px);
+        padding: 14px 16px;
+      }
+
+      .panel h1 {
+        font-size: 20px;
+      }
+
+      .description {
+        margin-bottom: 10px;
+      }
+
+      .export-wrap {
+        top: auto;
+        right: 14px;
+        bottom: 58px;
+      }
+
+      .hint {
+        bottom: 14px;
+      }
+
+      #status {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <canvas id="scene" aria-label="Interactive 3D preview of the hamster"></canvas>
+
+  <div class="ui">
+    <section class="panel">
+      <div class="eyebrow">Game-ready character asset</div>
+      <h1>Mochi the Hamster</h1>
+      <p class="description">
+        A friendly, low-poly hamster with a warm coat, teal collar,
+        expressive face, and a curled tail.
+      </p>
+      <div class="badges">
+        <span class="badge">GLB</span>
+        <span class="badge">PBR Materials</span>
+        <span class="badge">Static</span>
+        <span class="badge" id="mesh-count">Low Poly</span>
+      </div>
+    </section>
+
+    <div class="export-wrap">
+      <button id="export-button" type="button">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path
+            d="M12 3v11m0 0 4-4m-4 4-4-4M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+        <span>Export GLB</span>
+      </button>
+    </div>
+
+    <div class="hint">
+      <span class="hint-dot"></span>
+      Drag to orbit · Scroll to zoom
+    </div>
+
+    <div id="status">Ready to export</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const canvas = document.querySelector("#scene");
+    const exportButton = document.querySelector("#export-button");
+    const status = document.querySelector("#status");
+    const meshCount = document.querySelector("#mesh-count");
+
+    // -------------------------------------------------------------------------
+    // Preview scene
+    // -------------------------------------------------------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe8e0d6);
+
+    const camera = new THREE.PerspectiveCamera(
+      34,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(3.25, 2.65, 4.8);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.08, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.enablePan = false;
+    controls.minDistance = 3.1;
+    controls.maxDistance = 7.5;
+    controls.minPolarAngle = 0.45;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // -------------------------------------------------------------------------
+    // Lighting
+    // -------------------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(
+      0xffffff,
+      0x78675d,
+      2.15
+    );
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffefd8, 3.1);
+    keyLight.position.set(3.5, 6, 4.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -3.2;
+    keyLight.shadow.camera.right = 3.2;
+    keyLight.shadow.camera.top = 3.5;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 13;
+    keyLight.shadow.bias = -0.0003;
+    keyLight.shadow.normalBias = 0.025;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xb9d6ff, 1.15);
+    fillLight.position.set(-4, 3, -2.5);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.PointLight(0xffc995, 1.4, 8);
+    rimLight.position.set(-2.5, 3.2, 2.8);
+    scene.add(rimLight);
+
+    // -------------------------------------------------------------------------
+    // Preview pedestal — deliberately excluded from the exported asset
+    // -------------------------------------------------------------------------
+
+    const pedestalMaterial = new THREE.MeshStandardMaterial({
+      color: 0xd8cbb8,
+      roughness: 0.95,
+      metalness: 0
+    });
+
+    const pedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.62, 1.78, 0.18, 32),
+      pedestalMaterial
+    );
+    pedestal.position.y = -0.11;
+    pedestal.receiveShadow = true;
+    scene.add(pedestal);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0xe8e0d6,
+        roughness: 1
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.205;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // -------------------------------------------------------------------------
+    // Exportable hamster
+    // -------------------------------------------------------------------------
+
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "Mochi_LowPoly_Hamster";
+    assetRoot.userData = {
+      assetName: "Mochi the Hamster",
+      style: "Low-poly stylized game character",
+      staticPose: true,
+      intendedEngine: "Godot / GLB"
+    };
+    scene.add(assetRoot);
+
+    const materials = {
+      fur: new THREE.MeshStandardMaterial({
+        name: "Hamster_Fur",
+        color: 0xc98d58,
+        roughness: 0.88,
+        metalness: 0,
+        flatShading: true
+      }),
+      furLight: new THREE.MeshStandardMaterial({
+        name: "Hamster_Fur_Light",
+        color: 0xdda36b,
+        roughness: 0.88,
+        metalness: 0,
+        flatShading: true
+      }),
+      cream: new THREE.MeshStandardMaterial({
+        name: "Hamster_Cream_Bib",
+        color: 0xf0d9b7,
+        roughness: 0.92,
+        metalness: 0,
+        flatShading: true
+      }),
+      pink: new THREE.MeshStandardMaterial({
+        name: "Hamster_Pink",
+        color: 0xd98c91,
+        roughness: 0.78,
+        metalness: 0,
+        flatShading: true
+      }),
+      blush: new THREE.MeshStandardMaterial({
+        name: "Hamster_Blush",
+        color: 0xeaa0a0,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+      eye: new THREE.MeshStandardMaterial({
+        name: "Hamster_Eyes",
+        color: 0x241d1b,
+        roughness: 0.25,
+        metalness: 0.02,
+        flatShading: true
+      }),
+      highlight: new THREE.MeshStandardMaterial({
+        name: "Hamster_Eye_Highlight",
+        color: 0xffffff,
+        roughness: 0.2,
+        metalness: 0,
+        flatShading: true
+      }),
+      nose: new THREE.MeshStandardMaterial({
+        name: "Hamster_Nose",
+        color: 0xa84f59,
+        roughness: 0.62,
+        metalness: 0,
+        flatShading: true
+      }),
+      mouth: new THREE.MeshStandardMaterial({
+        name: "Hamster_Mouth",
+        color: 0x59372f,
+        roughness: 0.85,
+        metalness: 0,
+        flatShading: true
+      }),
+      whisker: new THREE.MeshStandardMaterial({
+        name: "Hamster_Whisker",
+        color: 0x594138,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+      scarf: new THREE.MeshStandardMaterial({
+        name: "Teal_Collar",
+        color: 0x3c9d96,
+        roughness: 0.64,
+        metalness: 0.02,
+        flatShading: true
+      }),
+      scarfDark: new THREE.MeshStandardMaterial({
+        name: "Collar_Shadow",
+        color: 0x28746f,
+        roughness: 0.7,
+        metalness: 0,
+        flatShading: true
+      }),
+      gold: new THREE.MeshStandardMaterial({
+        name: "Golden_Bell",
+        color: 0xe2ad43,
+        roughness: 0.36,
+        metalness: 0.58,
+        flatShading: true
+      }),
+      innerEar: new THREE.MeshStandardMaterial({
+        name: "Hamster_Inner_Ear",
+        color: 0xe6a0a0,
+        roughness: 0.88,
+        metalness: 0,
+        flatShading: true
+      })
+    };
+
+    function addMesh(
+      geometry,
+      material,
+      position = [0, 0, 0],
+      scale = [1, 1, 1],
+      rotation = [0, 0, 0],
+      parent = assetRoot
+    ) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...position);
+      mesh.scale.set(...scale);
+      mesh.rotation.set(...rotation);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addSegmentBetween(
+      startArray,
+      endArray,
+      radiusStart,
+      radiusEnd,
+      material,
+      parent = assetRoot,
+      radialSegments = 7
+    ) {
+      const start = new THREE.Vector3(...startArray);
+      const end = new THREE.Vector3(...endArray);
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radiusEnd,
+        radiusStart,
+        length,
+        radialSegments,
+        1,
+        false
+      );
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(start).add(end).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    // Main body and head
+    addMesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      materials.fur,
+      [0, 0.86, 0],
+      [0.74, 0.63, 0.62]
+    );
+
+    addMesh(
+      new THREE.IcosahedronGeometry(1, 2),
+      materials.furLight,
+      [0, 1.66, 0.06],
+      [0.79, 0.66, 0.7]
+    );
+
+    // Cream belly bib
+    addMesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      materials.cream,
+      [0, 0.78, 0.54],
+      [0.51, 0.45, 0.13]
+    );
+
+    // Haunches
+    for (const side of [-1, 1]) {
+      addMesh(
+        new THREE.SphereGeometry(1, 10, 7),
+        materials.fur,
+        [side * 0.53, 0.43, 0.12],
+        [0.31, 0.31, 0.35]
+      );
+    }
+
+    // Small chest tuft
+    addMesh(
+      new THREE.SphereGeometry(1, 9, 6),
+      materials.cream,
+      [0, 1.16, 0.49],
+      [0.38, 0.28, 0.13]
+    );
+
+    // -------------------------------------------------------------------------
+    // Face
+    // -------------------------------------------------------------------------
+
+    // Muzzle
+    addMesh(
+      new THREE.SphereGeometry(1, 12, 8),
+      materials.cream,
+      [0, 1.49, 0.68],
+      [0.49, 0.28, 0.25]
+    );
+
+    // Nose
+    addMesh(
+      new THREE.SphereGeometry(1, 10, 7),
+      materials.nose,
+      [0, 1.58, 0.91],
+      [0.135, 0.09, 0.075]
+    );
+
+    // Nose highlight
+    addMesh(
+      new THREE.SphereGeometry(1, 8, 6),
+      materials.highlight,
+      [-0.035, 1.615, 0.977],
+      [0.035, 0.023, 0.014]
+    );
+
+    // Eyes
+    for (const side of [-1, 1]) {
+      addMesh(
+        new THREE.SphereGeometry(1, 12, 8),
+        materials.eye,
+        [side * 0.285, 1.77, 0.675],
+        [0.11, 0.145, 0.072]
+      );
+
+      addMesh(
+        new THREE.SphereGeometry(1, 8, 6),
+        materials.highlight,
+        [side * 0.285 - 0.032, 1.812, 0.741],
+        [0.029, 0.034, 0.018]
+      );
+
+      // Soft cheek
+      addMesh(
+        new THREE.SphereGeometry(1, 10, 7),
+        materials.blush,
+        [side * 0.405, 1.53, 0.66],
+        [0.115, 0.065, 0.035]
+      );
+    }
+
+    // Brows
+    for (const side of [-1, 1]) {
+      addMesh(
+        new THREE.BoxGeometry(0.205, 0.038, 0.045),
+        materials.fur,
+        [side * 0.29, 1.965, 0.67],
+        [1, 1, 1],
+        [0, 0, side * -0.12]
+      );
+    }
+
+    // Mouth
+    addSegmentBetween(
+      [-0.105, 1.435, 0.912],
+      [0, 1.385, 0.925],
+      0.009,
+      0.009,
+      materials.mouth,
+      assetRoot,
+      5
+    );
+    addSegmentBetween(
+      [0, 1.385, 0.925],
+      [0.105, 1.435, 0.912],
+      0.009,
+      0.009,
+      materials.mouth,
+      assetRoot,
+      5
+    );
+
+    // Whiskers
+    const whiskerData = [
+      [[-0.25, 1.48, 0.84], [-0.7, 1.54, 0.82]],
+      [[-0.25, 1.45, 0.85], [-0.66, 1.39, 0.8]],
+      [[-0.24, 1.42, 0.84], [-0.61, 1.32, 0.76]],
+      [[0.25, 1.48, 0.84], [0.7, 1.54, 0.82]],
+      [[0.25, 1.45, 0.85], [0.66, 1.39, 0.8]],
+      [[0.24, 1.42, 0.84], [0.61, 1.32, 0.76]]
+    ];
+
+    for (const [start, end] of whiskerData) {
+      addSegmentBetween(
+        start,
+        end,
+        0.008,
+        0.006,
+        materials.whisker,
+        assetRoot,
+        5
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Ears
+    // -------------------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      const ear = addMesh(
+        new THREE.SphereGeometry(1, 12, 8),
+        materials.fur,
+        [side * 0.605, 2.12, 0.015],
+        [0.255, 0.295, 0.14],
+        [0, 0, side < 0 ? 0.22 : -0.22]
+      );
+      ear.name = side < 0 ? "Ear_Left" : "Ear_Right";
+
+      addMesh(
+        new THREE.SphereGeometry(1, 10, 7),
+        materials.innerEar,
+        [side * 0.605, 2.13, 0.135],
+        [0.145, 0.185, 0.065],
+        [0, 0, side < 0 ? 0.22 : -0.22]
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Arms and feet
+    // -------------------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      const shoulder = [side * 0.56, 1.16, 0.19];
+      const elbow = [side * 0.78, 0.89, 0.31];
+      const paw = [side * 0.85, 0.66, 0.39];
+
+      addSegmentBetween(
+        shoulder,
+        elbow,
+        0.155,
+        0.125,
+        materials.fur,
+        assetRoot,
+        7
+      );
+
+      addSegmentBetween(
+        elbow,
+        paw,
+        0.13,
+        0.105,
+        materials.furLight,
+        assetRoot,
+        7
+      );
+
+      addMesh(
+        new THREE.SphereGeometry(1, 10, 7),
+        materials.furLight,
+        paw,
+        [0.13, 0.11, 0.14]
+      );
+
+      // Three small toes
+      for (let toe = -1; toe <= 1; toe++) {
+        addMesh(
+          new THREE.SphereGeometry(1, 8, 6),
+          materials.cream,
+          [
+            side * 0.85 + toe * 0.065,
+            0.625,
+            0.505
+          ],
+          [0.034, 0.025, 0.04]
+        );
+      }
+
+      addMesh(
+        new THREE.SphereGeometry(1, 11, 7),
+        materials.fur,
+        [side * 0.41, 0.17, 0.3],
+        [0.28, 0.165, 0.36],
+        [0, side * 0.1, 0]
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Collar and bell
+    // -------------------------------------------------------------------------
+
+    addMesh(
+      new THREE.TorusGeometry(0.47, 0.066, 6, 18),
+      materials.scarf,
+      [0, 1.37, 0.025],
+      [1, 1, 1],
+      [Math.PI / 2, 0, 0]
+    );
+
+    // Darker rear collar edge
+    addMesh(
+      new THREE.TorusGeometry(0.475, 0.025, 5, 18),
+      materials.scarfDark,
+      [0, 1.32, -0.055],
+      [1, 1, 1],
+      [Math.PI / 2, 0, 0]
+    );
+
+    addMesh(
+      new THREE.BoxGeometry(0.17, 0.44, 0.075),
+      materials.scarf,
+      [0.245, 1.09, 0.445],
+      [1, 1, 1],
+      [0.08, 0, -0.18]
+    );
+
+    addMesh(
+      new THREE.SphereGeometry(1, 10, 7),
+      materials.gold,
+      [0.27, 1.235, 0.515],
+      [0.105, 0.105, 0.085]
+    );
+
+    // -------------------------------------------------------------------------
+    // Curled low-poly tail
+    // -------------------------------------------------------------------------
+
+    const tailPoints = [
+      [0, 0.36, -0.55],
+      [0.24, 0.21, -0.91],
+      [0.57, 0.29, -1.12],
+      [0.84, 0.53, -1.02]
+    ];
+
+    const tailRadii = [0.125, 0.105, 0.085, 0.055];
+
+    for (let i = 0; i < tailPoints.length - 1; i++) {
+      addSegmentBetween(
+        tailPoints[i],
+        tailPoints[i + 1],
+        tailRadii[i],
+        tailRadii[i + 1],
+        materials.fur,
+        assetRoot,
+        7
+      );
+    }
+
+    // Tail joint shapes
+    for (let i = 1; i < tailPoints.length - 1; i++) {
+      addMesh(
+        new THREE.SphereGeometry(1, 9, 6),
+        materials.fur,
+        tailPoints[i],
+        [tailRadii[i], tailRadii[i], tailRadii[i]]
+      );
+    }
+
+    addMesh(
+      new THREE.SphereGeometry(1, 9, 6),
+      materials.fur,
+      tailPoints[tailPoints.length - 1],
+      [0.06, 0.06, 0.06]
+    );
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB…";
+
+      assetRoot.updateMatrixWorld(true);
+
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          let blob;
+
+          if (result instanceof ArrayBuffer) {
+            blob = new Blob([result], {
+              type: "model/gltf-binary"
+            });
+          } else {
+            blob = new Blob([JSON.stringify(result)], {
+              type: "model/gltf+json"
+            });
+          }
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "mochi_low_poly_hamster.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          let meshTotal = 0;
+          assetRoot.traverse((object) => {
+            if (object.isMesh) meshTotal++;
+          });
+
+          status.textContent = `Exported mochi_low_poly_hamster.glb · ${meshTotal} meshes`;
+          exportButton.disabled = false;
+        },
+        (error) => {
+          console.error(error);
+          status.textContent = "Export failed. Check the browser console.";
+          exportButton.disabled = false;
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          includeCustomExtensions: true
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Render loop and responsive resizing
+    // -------------------------------------------------------------------------
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(width, height);
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

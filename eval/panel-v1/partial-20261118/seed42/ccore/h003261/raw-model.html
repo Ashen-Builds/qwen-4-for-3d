@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rowing Exercise Machine — GLB Asset</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #183044;
+      --muted: #64778a;
+      --glass: rgba(255, 255, 255, 0.88);
+      --line: rgba(24, 48, 68, 0.12);
+      --blue: #236f9d;
+      --blue-dark: #174f6c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e9eef3;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+    }
+
+    #app,
+    #app canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      top: 24px;
+      left: 24px;
+      width: min(350px, calc(100vw - 48px));
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--glass);
+      box-shadow:
+        0 18px 50px rgba(35, 58, 78, 0.13),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(18px) saturate(130%);
+      user-select: none;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      color: var(--blue-dark);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #36a4c8;
+      box-shadow: 0 0 0 4px rgba(54, 164, 200, 0.14);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(25px, 4vw, 34px);
+      line-height: 1.04;
+      letter-spacing: -0.045em;
+    }
+
+    .description {
+      margin: 12px 0 18px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .asset-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 18px;
+    }
+
+    .chip {
+      padding: 6px 9px;
+      border: 1px solid rgba(35, 111, 157, 0.14);
+      border-radius: 999px;
+      background: rgba(35, 111, 157, 0.07);
+      color: #38566d;
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      width: 100%;
+      min-height: 48px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--blue);
+      color: white;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(35, 111, 157, 0.22);
+      transition:
+        transform 150ms ease,
+        background 150ms ease,
+        box-shadow 150ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background: var(--blue-dark);
+      box-shadow: 0 11px 25px rgba(35, 111, 157, 0.28);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    button svg {
+      width: 17px;
+      height: 17px;
+      flex: none;
+    }
+
+    #status {
+      min-height: 16px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .hint {
+      position: fixed;
+      z-index: 10;
+      right: 22px;
+      bottom: 20px;
+      padding: 9px 12px;
+      border: 1px solid rgba(24, 48, 68, 0.1);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      color: #617486;
+      font-size: 11px;
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .spec {
+      position: fixed;
+      z-index: 10;
+      right: 22px;
+      top: 22px;
+      padding: 10px 13px;
+      border: 1px solid rgba(24, 48, 68, 0.1);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.68);
+      color: #617486;
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      .panel {
+        top: 14px;
+        left: 14px;
+        width: calc(100vw - 28px);
+        padding: 17px;
+      }
+
+      .spec {
+        display: none;
+      }
+
+      .hint {
+        right: 50%;
+        bottom: 14px;
+        transform: translateX(50%);
+        white-space: nowrap;
+      }
+
+      .description {
+        margin-bottom: 13px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="app"></div>
+
+  <section class="panel" aria-label="Asset controls">
+    <div class="eyebrow">Static Exercise Asset / 01</div>
+    <h1>Rowing Exercise Machine</h1>
+    <p class="description">
+      A long white floor rail with a broad padded sliding seat, supported
+      fan housing, and two independently connected side pull handles.
+    </p>
+
+    <div class="asset-meta">
+      <span class="chip">Low Poly</span>
+      <span class="chip">Static</span>
+      <span class="chip">GLB Ready</span>
+    </div>
+
+    <button id="exportButton" type="button" disabled>
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 3v12m0 0 4-4m-4 4-4-4M5 15v5h14v-5"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+      Export GLB
+    </button>
+
+    <div id="status" role="status" aria-live="polite">
+      Building asset…
+    </div>
+  </section>
+
+  <div class="spec">Three.js Studio Preview</div>
+  <div class="hint">Drag to orbit · Scroll to zoom</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const container = document.getElementById("app");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    // -------------------------------------------------------------------------
+    // Studio scene
+    // -------------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe9eef3);
+    scene.fog = new THREE.Fog(0xe9eef3, 13, 26);
+
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      window.innerWidth / window.innerHeight,
+      0.05,
+      100
+    );
+    camera.position.set(6.4, 4.25, 6.35);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.78, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.enablePan = false;
+    controls.minDistance = 5.2;
+    controls.maxDistance = 11;
+    controls.minPolarAngle = 0.32;
+    controls.maxPolarAngle = Math.PI * 0.48;
+    controls.update();
+
+    const hemisphere = new THREE.HemisphereLight(
+      0xffffff,
+      0x78899a,
+      2.15
+    );
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    keyLight.position.set(4.5, 8, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 5;
+    keyLight.shadow.camera.bottom = -4;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.bias = -0.00015;
+    keyLight.shadow.normalBias = 0.025;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xc9e5ff, 1.15);
+    fillLight.position.set(-5, 3.5, -4);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    rimLight.position.set(1, 4, -6);
+    scene.add(rimLight);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(200, 200),
+      new THREE.ShadowMaterial({
+        color: 0x405466,
+        opacity: 0.19
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(20, 40, 0xaebbc8, 0xd1dbe4);
+    grid.position.y = 0.004;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.17;
+    grid.material.depthWrite = false;
+    scene.add(grid);
+
+    // -------------------------------------------------------------------------
+    // Exportable model
+    // -------------------------------------------------------------------------
+
+    const model = new THREE.Group();
+    model.name = "Rowing_Exercise_Machine";
+    model.userData = {
+      assetType: "Static rowing exercise machine",
+      style: "Low-poly",
+      units: "meters"
+    };
+    scene.add(model);
+
+    function makeMaterial(name, color, roughness, metalness = 0) {
+      return new THREE.MeshStandardMaterial({
+        name,
+        color,
+        roughness,
+        metalness
+      });
+    }
+
+    const materials = {
+      shell: makeMaterial("Warm White Polymer", 0xf4f6f7, 0.36, 0.04),
+      shellBlue: makeMaterial("Blue Polymer", 0x2678a4, 0.48, 0.04),
+      blueDark: makeMaterial("Deep Blue Trim", 0x184f6c, 0.52, 0.05),
+      seat: makeMaterial("Seat Blue", 0x3584b1, 0.72, 0.01),
+      seatTop: makeMaterial("Cushion Blue", 0x4394c4, 0.78, 0.01),
+      navy: makeMaterial("Graphite Rubber", 0x182836, 0.76, 0.03),
+      track: makeMaterial("Non-Slip Track", 0x263847, 0.9, 0.01),
+      metal: makeMaterial("Brushed Metal", 0xa9b7c3, 0.28, 0.72),
+      cable: makeMaterial("Black Cable", 0x111a22, 0.88, 0.02),
+      indicator: makeMaterial(
+        "Status Indicator",
+        0x36c3ef,
+        0.28,
+        0.05
+      )
+    };
+
+    function addMesh(
+      geometry,
+      material,
+      name,
+      position,
+      parent = model
+    ) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addRoundedBox(
+      name,
+      size,
+      position,
+      material,
+      radius = 0.06,
+      segments = 3
+    ) {
+      return addMesh(
+        new RoundedBoxGeometry(
+          size[0],
+          size[1],
+          size[2],
+          segments,
+          radius
+        ),
+        material,
+        name,
+        position
+      );
+    }
+
+    function addCylinderBetween(
+      name,
+      start,
+      end,
+      radius,
+      material,
+      radialSegments = 12
+    ) {
+      const startVector = new THREE.Vector3(...start);
+      const endVector = new THREE.Vector3(...end);
+      const direction = endVector.clone().sub(startVector);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radius,
+          radius,
+          length,
+          radialSegments,
+          1,
+          false
+        ),
+        material,
+        name,
+        [
+          (start[0] + end[0]) * 0.5,
+          (start[1] + end[1]) * 0.5,
+          (start[2] + end[2]) * 0.5
+        ]
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    function addTube(name, points, radius, material, tubularSegments = 28) {
+      const curve = new THREE.CatmullRomCurve3(
+        points.map((point) => new THREE.Vector3(...point)),
+        false,
+        "catmullrom",
+        0.3
+      );
+
+      return addMesh(
+        new THREE.TubeGeometry(
+          curve,
+          tubularSegments,
+          radius,
+          6,
+          false
+        ),
+        material,
+        name,
+        [0, 0, 0]
+      );
+    }
+
+    // Floor skid and long white floor rail.
+    addRoundedBox(
+      "Floor Skid",
+      [4.62, 0.19, 0.70],
+      [0, 0.095, 0],
+      materials.track,
+      0.035
+    );
+
+    addRoundedBox(
+      "Long White Floor Rail",
+      [5.20, 0.26, 0.86],
+      [0, 0.33, 0],
+      materials.shell,
+      0.11,
+      4
+    );
+
+    addRoundedBox(
+      "Rail Top Track",
+      [4.48, 0.055, 0.53],
+      [-0.04, 0.483, 0],
+      materials.track,
+      0.025
+    );
+
+    for (const side of [-1, 1]) {
+      addRoundedBox(
+        `Rail Blue Accent ${side}`,
+        [1.25, 0.055, 0.035],
+        [-0.45, 0.34, side * 0.442],
+        materials.shellBlue,
+        0.012,
+        2
+      );
+    }
+
+    for (const side of [-1, 1]) {
+      addRoundedBox(
+        `Rail End Bumper ${side}`,
+        [0.20, 0.28, 0.88],
+        [side * 2.56, 0.33, 0],
+        materials.shellBlue,
+        0.075
+      );
+    }
+
+    // Rear power inlet.
+    addRoundedBox(
+      "Rear Power Inlet",
+      [0.18, 0.22, 0.42],
+      [-2.47, 0.34, 0],
+      materials.shellBlue,
+      0.04
+    );
+
+    addCylinderBetween(
+      "Power Inlet Connector",
+      [-2.54, 0.34, 0],
+      [-2.68, 0.34, 0],
+      0.065,
+      materials.navy,
+      10
+    );
+
+    // Subtle side trim on the seat base.
+    for (const side of [-1, 1]) {
+      addRoundedBox(
+        `Seat Side Trim ${side}`,
+        [1.78, 0.13, 0.055],
+        [-0.55, 0.69, side * 0.585],
+        materials.shell,
+        0.025,
+        2
+      );
+    }
+
+    // Broad sliding-seat base.
+    addRoundedBox(
+      "Sliding Seat Base",
+      [2.02, 0.25, 1.15],
+      [-0.55, 0.68, 0],
+      materials.shell,
+      0.105
+    );
+
+    // Dark seam beneath the padded cushion.
+    addRoundedBox(
+      "Cushion Release Seam",
+      [1.82, 0.035, 1.00],
+      [-0.55, 0.825, 0],
+      materials.navy,
+      0.014,
+      2
+    );
+
+    // Broad padded seat cushion.
+    addRoundedBox(
+      "Broad Padded Seat Cushion",
+      [1.73, 0.13, 0.96],
+      [-0.55, 0.885, 0],
+      materials.seat,
+      0.075
+    );
+
+    addRoundedBox(
+      "Seat Cushion Top",
+      [1.61, 0.065, 0.82],
+      [-0.55, 0.968, 0],
+      materials.seatTop,
+      0.035
+    );
+
+    // Seat support rails.
+    for (const side of [-1, 1]) {
+      addRoundedBox(
+        `Seat Support Rail ${side}`,
+        [1.55, 0.12, 0.15],
+        [-0.55, 0.565, side * 0.44],
+        materials.shell,
+        0.035
+      );
+    }
+
+    addRoundedBox(
+      "Seat Undertrack",
+      [1.72, 0.07, 0.34],
+      [-0.55, 0.525, 0],
+      materials.track,
+      0.025
+    );
+
+    // Low contoured backrest.
+    addRoundedBox(
+      "Backrest White Frame",
+      [0.60, 0.82, 1.08],
+      [-1.48, 1.18, 0],
+      materials.shell,
+      0.10,
+      3
+    ).rotation.z = 0.10;
+
+    addRoundedBox(
+      "Blue Backrest Cushion",
+      [0.49, 0.69, 1.00],
+      [-1.44, 1.19, 0],
+      materials.seat,
+      0.085,
+      3
+    ).rotation.z = 0.10;
+
+    for (const side of [-1, 1]) {
+      addCylinderBetween(
+        `Backrest Support ${side}`,
+        [-1.48, 0.80, side * 0.38],
+        [-1.33, 0.96, side * 0.38],
+        0.045,
+        materials.shell,
+        10
+      );
+    }
+
+    // Angled support to the fan housing.
+    addRoundedBox(
+      "Fan Housing Mount",
+      [0.55, 0.48, 0.58],
+      [1.45, 0.64, 0],
+      materials.shell,
+      0.075
+    );
+
+    addCylinderBetween(
+      "Fan Housing Pedestal",
+      [1.45, 0.76, 0],
+      [1.70, 0.90, 0],
+      0.11,
+      materials.shell,
+      12
+    );
+
+    // Main housing, oriented along the X axis.
+    const housing = addMesh(
+      new THREE.CylinderGeometry(0.54, 0.54, 0.62, 16, 1, false),
+      materials.shell,
+      "Supported Fan Housing",
+      [1.85, 0.98, 0]
+    );
+    housing.rotation.z = Math.PI / 2;
+
+    addMesh(
+      new THREE.CylinderGeometry(0.47, 0.47, 0.10, 16, 1, false),
+      materials.navy,
+      "Fan Rear Cap",
+      [1.50, 0.98, 0]
+    ).rotation.z = Math.PI / 2;
+
+    // Front grille surround.
+    const frontRing = addMesh(
+      new THREE.TorusGeometry(0.43, 0.038, 8, 24),
+      materials.shellBlue,
+      "Fan Front Blue Ring",
+      [2.185, 0.98, 0]
+    );
+    frontRing.rotation.y = Math.PI / 2;
+
+    addMesh(
+      new THREE.CylinderGeometry(0.445, 0.445, 0.045, 20, 1, false),
+      materials.navy,
+      "Dark Fan Grille Back",
+      [2.19, 0.98, 0]
+    ).rotation.z = Math.PI / 2;
+
+    // Low-poly grille bars.
+    for (const z of [-0.28, 0, 0.28]) {
+      addCylinderBetween(
+        `Grille Vertical Bar ${z}`,
+        [2.235, 0.66, z],
+        [2.235, 1.30, z],
+        0.018,
+        materials.metal,
+        8
+      );
+    }
+
+    for (const y of [-0.25, 0, 0.25]) {
+      addCylinderBetween(
+        `Grille Horizontal Bar ${y}`,
+        [2.238, 0.98, y - 0.42],
+        [2.238, 0.98, y + 0.42],
+        0.018,
+        materials.metal,
+        8
+      );
+    }
+
+    // Side status panels.
+    for (const side of [-1, 1]) {
+      addRoundedBox(
+        `Housing Status Panel ${side}`,
+        [0.24, 0.15, 0.035],
+        [1.82, 1.13, side * 0.545],
+        materials.shellBlue,
+        0.015,
+        2
+      );
+
+      addRoundedBox(
+        `Housing Status Light ${side}`,
+        [0.13, 0.025, 0.018],
+        [1.82, 1.145, side * 0.571],
+        materials.indicator,
+        0.006,
+        2
+      );
+    }
+
+    // Footrest platform.
+    addRoundedBox(
+      "Footrest Platform",
+      [0.62, 0.13, 0.72],
+      [0.10, 0.69, 0],
+      materials.shell,
+      0.055
+    );
+
+    addRoundedBox(
+      "Footrest Non-Slip Pad",
+      [0.48, 0.045, 0.56],
+      [0.10, 0.778, 0],
+      materials.navy,
+      0.025
+    );
+
+    for (const side of [-1, 1]) {
+      addCylinderBetween(
+        `Footrest Support ${side}`,
+        [0.10, 0.47, side * 0.26],
+        [0.10, 0.64, side * 0.26],
+        0.045,
+        materials.metal,
+        10
+      );
+    }
+
+    // Two independently mounted side pull handles.
+    for (const side of [-1, 1]) {
+      const sideName = side < 0 ? "Left" : "Right";
+
+      addRoundedBox(
+        `${sideName} Handle Mount`,
+        [0.34, 0.28, 0.18],
+        [1.00, 0.50, side * 0.44],
+        materials.navy,
+        0.045
+      );
+
+      addCylinderBetween(
+        `${sideName} Handle Support Arm`,
+        [1.00, 0.50, side * 0.46],
+        [1.00, 0.90, side * 0.94],
+        0.055,
+        materials.metal,
+        12
+      );
+
+      addCylinderBetween(
+        `${sideName} Blue Handle Grip`,
+        [1.00, 0.78, side * 1.02],
+        [1.00, 1.35, side * 1.02],
+        0.085,
+        materials.navy,
+        12
+      );
+
+      addCylinderBetween(
+        `${sideName} Lower Handle Cap`,
+        [1.00, 0.71, side * 1.02],
+        [1.00, 0.78, side * 1.02],
+        0.091,
+        materials.metal,
+        12
+      );
+
+      addCylinderBetween(
+        `${sideName} Upper Handle Cap`,
+        [1.00, 1.29, side * 1.02],
+        [1.00, 1.36, side * 1.02],
+        0.091,
+        materials.metal,
+        12
+      );
+
+      addMesh(
+        new THREE.SphereGeometry(0.086, 12, 8),
+        materials.navy,
+        `${sideName} Handle Top Joint`,
+        [1.00, 1.36, side * 1.02]
+      );
+
+      // Separate resistance cable visually connects each handle to the machine.
+      addTube(
+        `${sideName} Independent Pull Cable`,
+        [
+          [1.00, 1.39, side * 1.02],
+          [1.12, 1.47, side * 0.75],
+          [1.36, 1.23, side * 0.50],
+          [1.61, 0.86, side * 0.31],
+          [1.72, 0.73, side * 0.18]
+        ],
+        0.018,
+        materials.cable,
+        30
+      );
+    }
+
+    // Small seat-release levers on both sides.
+    for (const side of [-1, 1]) {
+      addCylinderBetween(
+        `Seat Release Lever ${side}`,
+        [-1.17, 0.65, side * 0.55],
+        [-1.17, 0.76, side * 0.68],
+        0.027,
+        materials.metal,
+        8
+      );
+    }
+
+    // Low-poly fasteners on the visible seat base.
+    for (const x of [-1.32, -0.55, 0.22]) {
+      for (const side of [-1, 1]) {
+        addMesh(
+          new THREE.SphereGeometry(0.026, 8, 6),
+          materials.metal,
+          `Seat Fastener ${x} ${side}`,
+          [x, 0.68, side * 0.612]
+        );
+      }
+    }
+
+    // Shadows and correct model bounds.
+    model.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
+
+    model.updateMatrixWorld(true);
+
+    // -------------------------------------------------------------------------
+    // Export
+    // -------------------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    exportButton.disabled = false;
+    status.textContent = "Ready · static mesh";
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB…";
+
+      model.updateMatrixWorld(true);
+
+      exporter.parse(
+        model,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "rowing-exercise-machine.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+          exportButton.disabled = false;
+          status.textContent = "Downloaded · rowing-exercise-machine.glb";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed — see console";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener("resize", onResize);
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mossbell — Low-Poly 3D Asset</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #173338;
+      --muted: #58737a;
+      --accent: #27bfa7;
+      --accent-dark: #168d82;
+      --panel: rgba(255, 255, 255, 0.82);
+      --border: rgba(255, 255, 255, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Inter, ui-rounded, "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 50% 35%, #f4fff8 0%, #d9f3ed 48%, #cdebf0 100%);
+      color: var(--ink);
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    .hud {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      width: min(360px, calc(100vw - 48px));
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow:
+        0 18px 50px rgba(36, 86, 78, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(14px);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: var(--accent-dark);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(39, 191, 167, 0.18);
+      content: "";
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 38px);
+      line-height: 1;
+      letter-spacing: -0.045em;
+    }
+
+    .description {
+      margin: 12px 0 16px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tag {
+      padding: 6px 9px;
+      border: 1px solid rgba(38, 111, 101, 0.12);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.64);
+      color: #42666b;
+      font-size: 10px;
+      font-weight: 750;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .toolbar {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    button {
+      pointer-events: auto;
+      border: 0;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .secondary {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 46px;
+      padding: 0 17px;
+      border: 1px solid rgba(23, 51, 56, 0.1);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.74);
+      color: #35565b;
+      box-shadow: 0 8px 25px rgba(32, 77, 71, 0.1);
+      font-size: 13px;
+      font-weight: 750;
+      backdrop-filter: blur(10px);
+    }
+
+    .secondary:hover {
+      background: #fff;
+      box-shadow: 0 11px 30px rgba(32, 77, 71, 0.15);
+    }
+
+    .secondary svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .export {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 0 19px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #35cdbd, #229e91);
+      color: white;
+      box-shadow:
+        0 10px 26px rgba(27, 153, 142, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      font-size: 13px;
+      font-weight: 800;
+      transition:
+        transform 150ms ease,
+        box-shadow 150ms ease,
+        filter 150ms ease;
+    }
+
+    .export:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 14px 32px rgba(27, 153, 142, 0.34),
+        inset 0 1px 0 rgba(255, 255, 255, 0.28);
+      filter: saturate(1.08);
+    }
+
+    .export:active {
+      transform: translateY(0);
+    }
+
+    .export:disabled {
+      cursor: wait;
+      filter: grayscale(0.3);
+      opacity: 0.72;
+    }
+
+    .export svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 28px;
+      left: 24px;
+      color: rgba(39, 77, 81, 0.65);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 620px) {
+      .hud {
+        top: 14px;
+        left: 14px;
+        width: calc(100vw - 28px);
+        padding: 16px;
+      }
+
+      .description {
+        margin-bottom: 12px;
+      }
+
+      .toolbar {
+        right: 14px;
+        bottom: 14px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="hud">
+    <div class="eyebrow">Low-poly character asset</div>
+    <h1>Mossbell</h1>
+    <p class="description">
+      A friendly little forest robot with a crystal antenna, expressive eyes,
+      soft mint skin, and a tiny backpack. Static, game-ready, and ready for
+      import into Godot.
+    </p>
+    <div class="tags">
+      <span class="tag">GLB</span>
+      <span class="tag">Static</span>
+      <span class="tag">Low-poly</span>
+      <span class="tag">PBR materials</span>
+    </div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom</div>
+
+  <div class="toolbar">
+    <button class="secondary" id="resetBtn" type="button" title="Reset camera">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+        <path d="M3 3v5h5" />
+      </svg>
+      Reset View
+    </button>
+
+    <button class="export" id="exportBtn" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 3v12" />
+        <path d="m7 10 5 5 5-5" />
+        <path d="M5 21h14" />
+      </svg>
+      Export GLB
+    </button>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportBtn");
+    const resetButton = document.getElementById("resetBtn");
+
+    // ------------------------------------------------------------
+    // Renderer, camera, and lighting
+    // ------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdff7f1);
+    scene.fog = new THREE.Fog(0xdff7f1, 9, 17);
+
+    const camera = new THREE.PerspectiveCamera(
+      34,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const defaultCameraPosition = new THREE.Vector3(4.5, 3.25, 6.7);
+    const defaultTarget = new THREE.Vector3(0, 1.58, 0);
+
+    camera.position.copy(defaultCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(defaultTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 3.6;
+    controls.maxDistance = 10;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    const hemisphere = new THREE.HemisphereLight(0xf3fff8, 0x526c68, 2.25);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xfff7df, 3.2);
+    keyLight.position.set(-3.8, 6.5, 5.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 18;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x8de7ff, 1.45);
+    fillLight.position.set(5, 3, 3);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.PointLight(0x64ffe2, 14, 8, 2);
+    rimLight.position.set(0, 3.6, -3.5);
+    scene.add(rimLight);
+
+    // ------------------------------------------------------------
+    // Preview-only ground
+    // ------------------------------------------------------------
+
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(4.8, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0xd7ebdf,
+        roughness: 0.96,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.025;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const groundRing = new THREE.Mesh(
+      new THREE.RingGeometry(2.25, 2.275, 64),
+      new THREE.MeshBasicMaterial({
+        color: 0x65cdbd,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      })
+    );
+    groundRing.rotation.x = -Math.PI / 2;
+    groundRing.position.y = -0.012;
+    scene.add(groundRing);
+
+    // ------------------------------------------------------------
+    // Asset materials
+    // ------------------------------------------------------------
+
+    function material(color, options = {}) {
+      return new THREE.MeshStandardMaterial({
+        color,
+        roughness: options.roughness ?? 0.78,
+        metalness: options.metalness ?? 0,
+        flatShading: options.flatShading ?? true,
+        side: options.side ?? THREE.FrontSide
+      });
+    }
+
+    const materials = {
+      skin: material(0x67d99b, { roughness: 0.86 }),
+      skinLight: material(0x8ce7b1, { roughness: 0.88 }),
+      belly: material(0xc8f5ad, { roughness: 0.9 }),
+      darkSkin: material(0x287f6d, { roughness: 0.82 }),
+      navy: material(0x26394c, { roughness: 0.58, metalness: 0.12 }),
+      navySoft: material(0x355368, { roughness: 0.66, metalness: 0.08 }),
+      metal: material(0x78909a, { roughness: 0.42, metalness: 0.55 }),
+      turquoise: material(0x35c7b4, { roughness: 0.48, metalness: 0.12 }),
+      turquoiseDark: material(0x168b80, { roughness: 0.56, metalness: 0.15 }),
+      pink: material(0xef91a8, { roughness: 0.85 }),
+      eyeWhite: material(0xf8fff4, { roughness: 0.42 }),
+      black: material(0x102428, { roughness: 0.3 }),
+      glint: new THREE.MeshBasicMaterial({ color: 0xffffff })
+    };
+
+    // ------------------------------------------------------------
+    // Asset root and geometry helpers
+    // ------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "Mossbell";
+    scene.add(asset);
+
+    function addMesh(
+      name,
+      geometry,
+      mat,
+      position = [0, 0, 0],
+      scale = [1, 1, 1],
+      rotation = [0, 0, 0]
+    ) {
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.name = name;
+      mesh.position.set(...position);
+      mesh.scale.set(...scale);
+      mesh.rotation.set(...rotation);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      asset.add(mesh);
+      return mesh;
+    }
+
+    function cylinderBetween(
+      name,
+      start,
+      end,
+      radius,
+      mat,
+      radialSegments = 8
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = new THREE.Vector3().subVectors(b, a);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        name,
+        new THREE.CylinderGeometry(
+          radius,
+          radius,
+          length,
+          radialSegments,
+          1,
+          false
+        ),
+        mat
+      );
+
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Body
+    // ------------------------------------------------------------
+
+    addMesh(
+      "Body",
+      new THREE.IcosahedronGeometry(1, 2),
+      materials.skin,
+      [0, 1.48, 0],
+      [1.04, 1.02, 0.82]
+    );
+
+    addMesh(
+      "BellyPatch",
+      new THREE.IcosahedronGeometry(1, 2),
+      materials.belly,
+      [0, 1.38, 0.74],
+      [0.64, 0.67, 0.12]
+    );
+
+    addMesh(
+      "ChestCrystal",
+      new THREE.OctahedronGeometry(0.21, 0),
+      materials.turquoise,
+      [0, 1.72, 0.88],
+      [0.78, 1.08, 0.5]
+    );
+
+    // Side mechanical modules.
+    for (const side of [-1, 1]) {
+      addMesh(
+        side < 0 ? "LeftSideModule" : "RightSideModule",
+        new THREE.IcosahedronGeometry(1, 1),
+        materials.navySoft,
+        [side * 0.98, 1.82, -0.02],
+        [0.25, 0.3, 0.25]
+      );
+
+      addMesh(
+        side < 0 ? "LeftSideCap" : "RightSideCap",
+        new THREE.IcosahedronGeometry(1, 1),
+        materials.turquoise,
+        [side * 1.22, 1.84, -0.02],
+        [0.11, 0.17, 0.11]
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Head face
+    // ------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      const x = side * 0.39;
+
+      addMesh(
+        side < 0 ? "LeftEye" : "RightEye",
+        new THREE.SphereGeometry(1, 16, 10),
+        materials.black,
+        [x, 2.08, 0.76],
+        [0.205, 0.255, 0.095]
+      );
+
+      addMesh(
+        side < 0 ? "LeftEyeGlint" : "RightEyeGlint",
+        new THREE.SphereGeometry(1, 10, 8),
+        materials.glint,
+        [x - 0.045, 2.155, 0.845],
+        [0.052, 0.052, 0.028]
+      );
+
+      addMesh(
+        side < 0 ? "LeftCheek" : "RightCheek",
+        new THREE.IcosahedronGeometry(1, 1),
+        materials.pink,
+        [side * 0.68, 1.72, 0.68],
+        [0.21, 0.105, 0.055]
+      );
+
+      // Expressive eyebrows.
+      cylinderBetween(
+        side < 0 ? "LeftBrow" : "RightBrow",
+        [side * 0.18, 2.36, 0.73],
+        [side * 0.56, 2.29, 0.71],
+        0.043,
+        materials.darkSkin,
+        6
+      );
+    }
+
+    // Small curved smile.
+    const smileCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.3, 1.69, 0.83),
+      new THREE.Vector3(-0.16, 1.61, 0.885),
+      new THREE.Vector3(0, 1.59, 0.9),
+      new THREE.Vector3(0.16, 1.61, 0.885),
+      new THREE.Vector3(0.3, 1.69, 0.83)
+    ]);
+
+    addMesh(
+      "Smile",
+      new THREE.TubeGeometry(smileCurve, 12, 0.033, 5, false),
+      materials.black
+    );
+
+    // ------------------------------------------------------------
+    // Antenna
+    // ------------------------------------------------------------
+
+    addMesh(
+      "AntennaStem",
+      new THREE.CylinderGeometry(0.065, 0.075, 0.43, 8),
+      materials.navySoft,
+      [0, 2.73, -0.04]
+    );
+
+    addMesh(
+      "AntennaCrystal",
+      new THREE.IcosahedronGeometry(1, 1),
+      materials.turquoise,
+      [0, 3.05, -0.04],
+      [0.23, 0.25, 0.23]
+    );
+
+    // ------------------------------------------------------------
+    // Arms and hands
+    // ------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      const shoulderX = side * 0.91;
+
+      addMesh(
+        side < 0 ? "LeftShoulder" : "RightShoulder",
+        new THREE.IcosahedronGeometry(1, 1),
+        materials.skin,
+        [shoulderX, 1.79, 0],
+        [0.25, 0.25, 0.25]
+      );
+
+      cylinderBetween(
+        side < 0 ? "LeftUpperArm" : "RightUpperArm",
+        [side * 0.94, 1.7, 0],
+        [side * 1.16, 1.36, 0.02],
+        0.145,
+        materials.navySoft,
+        8
+      );
+
+      addMesh(
+        side < 0 ? "LeftElbow" : "RightElbow",
+        new THREE.IcosahedronGeometry(1, 1),
+        materials.navy,
+        [side * 1.16, 1.36, 0.02],
+        [0.18, 0.18, 0.18]
+      );
+
+      cylinderBetween(
+        side < 0 ? "LeftForearm" : "RightForearm",
+        [side * 1.16, 1.35, 0.02],
+        [side * 1.24, 1.01, 0.1],
+        0.125,
+        materials.navySoft,
+        8
+      );
+
+      addMesh(
+        side < 0 ? "LeftHand" : "RightHand",
+        new THREE.IcosahedronGeometry(1, 1),
+        materials.skinLight,
+        [side * 1.25, 0.94, 0.12],
+        [0.21, 0.24, 0.18]
+      );
+
+      // Tiny sleeve accents.
+      addMesh(
+        side < 0 ? "LeftSleeveBand" : "RightSleeveBand",
+        new THREE.TorusGeometry(0.145, 0.025, 6, 12),
+        materials.turquoise,
+        [side * 1.08, 1.51, 0.01],
+        [1, 1, 1],
+        [Math.PI / 2, 0, 0]
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Legs and feet
+    // ------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      const x = side * 0.43;
+
+      cylinderBetween(
+        side < 0 ? "LeftLeg" : "RightLeg",
+        [x, 0.82, 0],
+        [side * 0.47, 0.47, 0.025],
+        0.145,
+        materials.navySoft,
+        8
+      );
+
+      addMesh(
+        side < 0 ? "LeftKnee" : "RightKnee",
+        new THREE.IcosahedronGeometry(1, 1),
+        materials.navy,
+        [side * 0.47, 0.47, 0.025],
+        [0.17, 0.17, 0.17]
+      );
+
+      cylinderBetween(
+        side < 0 ? "LeftShin" : "RightShin",
+        [side * 0.47, 0.46, 0.025],
+        [side * 0.49, 0.18, 0.04],
+        0.13,
+        materials.navySoft,
+        8
+      );
+
+      addMesh(
+        side < 0 ? "LeftFoot" : "RightFoot",
+        new THREE.IcosahedronGeometry(1, 1),
+        materials.navy,
+        [side * 0.49, 0.14, 0.13],
+        [0.33, 0.16, 0.46]
+      );
+
+      // Three rounded toe bumps.
+      for (let toe = -1; toe <= 1; toe++) {
+        addMesh(
+          `${side < 0 ? "Left" : "Right"}Toe${toe + 2}`,
+          new THREE.IcosahedronGeometry(1, 1),
+          materials.navySoft,
+          [
+            side * 0.49 + toe * 0.115,
+            0.115,
+            0.51 + Math.abs(toe) * -0.015
+          ],
+          [0.115, 0.085, 0.13]
+        );
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Backpack
+    // ------------------------------------------------------------
+
+    addMesh(
+      "Backpack",
+      new THREE.DodecahedronGeometry(0.55, 0),
+      materials.navy,
+      [0, 1.67, -0.75],
+      [0.9, 1.02, 0.38]
+    );
+
+    for (const x of [-0.34, 0.34]) {
+      addMesh(
+        x < 0 ? "LeftCanister" : "RightCanister",
+        new THREE.CylinderGeometry(0.15, 0.15, 0.58, 8),
+        materials.navySoft,
+        [x, 1.55, -0.94]
+      );
+
+      for (const y of [1.72, 1.38]) {
+        addMesh(
+          `CanisterBand${x}_${y}`,
+          new THREE.TorusGeometry(0.155, 0.025, 6, 12),
+          materials.turquoise,
+          [x, y, -0.94],
+          [1, 1, 1],
+          [Math.PI / 2, 0, 0]
+        );
+      }
+    }
+
+    addMesh(
+      "BackpackStatusLight",
+      new THREE.SphereGeometry(1, 10, 8),
+      materials.turquoise,
+      [0, 1.92, -1.015],
+      [0.075, 0.075, 0.04]
+    );
+
+    // ------------------------------------------------------------
+    // Export
+    // ------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.lastChild.textContent = " Preparing…";
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "mossbell.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          exportButton.lastChild.textContent = " Export GLB";
+        },
+        (error) => {
+          console.error("GLB export failed:", error);
+          exportButton.disabled = false;
+          exportButton.lastChild.textContent = " Export GLB";
+          alert("The GLB could not be exported. Please check the browser console.");
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 4096
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Camera reset and resize
+    // ------------------------------------------------------------
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.copy(defaultTarget);
+      controls.update();
+    });
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    // Render loop.
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

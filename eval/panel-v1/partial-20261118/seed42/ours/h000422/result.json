@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "status": "ok",
+  "page_errors": [],
+  "console_errors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "external_requests": [],
+  "export_buttons": 1,
+  "glb": {
+    "suggested_name": "friendly-hamper.glb",
+    "bytes": 158324,
+    "sha256": "de6800bb611acd1e1f6fabe172859939a5c49a97ee46fc9e59b911ddd277673b",
+    "validator_errors": 0,
+    "validator_warnings": 0,
+    "meshes": 40,
+    "nodes": 47,
+    "materials": 12,
+    "skins": 0,
+    "textures": 0,
+    "triangles": 3634,
+    "animations": [],
+    "size_xyz": [
+      2.57,
+      3.135,
+      2.5100334911346436
+    ]
+  }
+}

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medieval Burgundy Key</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #15151b;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #f4eadf;
+    }
+
+    #viewport {
+      position: absolute;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .panel {
+      position: absolute;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(340px, calc(100vw - 44px));
+      padding: 18px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(21, 19, 25, 0.78);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0 0 7px;
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      margin: 0 0 16px;
+      color: #b9afc0;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #fff8ee;
+      background: #a7284b;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover {
+      filter: brightness(1.12);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.6;
+      transform: none;
+    }
+
+    #reset {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 12px;
+      color: #9f97a2;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: absolute;
+      right: 20px;
+      bottom: 18px;
+      z-index: 10;
+      padding: 8px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      color: #aa9eaa;
+      background: rgba(21, 19, 25, 0.62);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .hint {
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div class="panel">
+    <h1>Medieval Burgundy Key</h1>
+    <p>
+      A stylized low-poly ceremonial key with an ornate quatrefoil bow,
+      burgundy metal, aged patina, and a three-tooth key bit.
+    </p>
+
+    <div class="buttons">
+      <button id="export" type="button">Export GLB</button>
+      <button id="reset" type="button">Reset View</button>
+    </div>
+
+    <div id="status" aria-live="polite"></div>
+  </div>
+
+  <div class="hint">Drag to orbit · Scroll to zoom</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const viewport = document.getElementById("viewport");
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x15151b);
+    scene.fog = new THREE.Fog(0x15151b, 10, 22);
+
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const defaultCameraPosition = new THREE.Vector3(4.1, 2.25, 6.5);
+    const defaultTarget = new THREE.Vector3(0, -0.05, 0);
+
+    camera.position.copy(defaultCameraPosition);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(defaultTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 3.4;
+    controls.maxDistance = 13;
+    controls.maxPolarAngle = Math.PI * 0.93;
+    controls.update();
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const roomEnvironment = new RoomEnvironment();
+    scene.environment = pmrem.fromScene(roomEnvironment, 0.04).texture;
+    roomEnvironment.dispose();
+    pmrem.dispose();
+
+    // -------------------------------------------------------------------------
+    // Lighting
+    // -------------------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(0xe9d9ff, 0x241118, 1.5);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffe7c2, 3.2);
+    keyLight.position.set(4.5, 6.5, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 5;
+    keyLight.shadow.camera.bottom = -5;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xff315f, 2.5);
+    rimLight.position.set(-5, 2.5, -4);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.PointLight(0x6b48ff, 13, 12, 2);
+    fillLight.position.set(-2.5, -1, 3.5);
+    scene.add(fillLight);
+
+    // -------------------------------------------------------------------------
+    // Display-only pedestal and floor
+    // -------------------------------------------------------------------------
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(100, 100),
+      new THREE.ShadowMaterial({
+        color: 0x000000,
+        opacity: 0.38
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -2.82;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const pedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.2, 1.34, 0.14, 32),
+      new THREE.MeshStandardMaterial({
+        color: 0x25232a,
+        roughness: 0.72,
+        metalness: 0.18
+      })
+    );
+    pedestal.position.y = -2.89;
+    pedestal.receiveShadow = true;
+    pedestal.castShadow = true;
+    scene.add(pedestal);
+
+    // -------------------------------------------------------------------------
+    // Materials
+    // -------------------------------------------------------------------------
+
+    const burgundy = new THREE.MeshStandardMaterial({
+      name: "Aged_Burgundy_Metal",
+      color: 0x741a39,
+      metalness: 0.76,
+      roughness: 0.34
+    });
+
+    const burgundyDark = new THREE.MeshStandardMaterial({
+      name: "Dark_Burgundy_Metal",
+      color: 0x35101f,
+      metalness: 0.72,
+      roughness: 0.43
+    });
+
+    const burgundyLight = new THREE.MeshStandardMaterial({
+      name: "Raised_Burgundy_Metal",
+      color: 0x922448,
+      metalness: 0.7,
+      roughness: 0.31
+    });
+
+    const patina = new THREE.MeshStandardMaterial({
+      name: "Burgundy_Patina",
+      color: 0x42625d,
+      metalness: 0.18,
+      roughness: 0.68
+    });
+
+    const brass = new THREE.MeshStandardMaterial({
+      name: "Antique_Brass",
+      color: 0xa78a57,
+      metalness: 0.72,
+      roughness: 0.38
+    });
+
+    // -------------------------------------------------------------------------
+    // Asset construction helpers
+    // -------------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "Medieval_Burgundy_Key";
+    scene.add(asset);
+
+    function addMesh(geometry, material, name, position, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.copy(position);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addRoundedBox(width, height, depth, position, material, name, radius = 0.025) {
+      const geometry = new RoundedBoxGeometry(
+        width,
+        height,
+        depth,
+        1,
+        radius
+      );
+
+      return addMesh(
+        geometry,
+        material,
+        name,
+        position
+      );
+    }
+
+    function addCylinder(
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      name,
+      radialSegments = 8
+    ) {
+      const geometry = new THREE.CylinderGeometry(
+        radiusTop,
+        radiusBottom,
+        height,
+        radialSegments
+      );
+
+      return addMesh(
+        geometry,
+        material,
+        name,
+        position
+      );
+    }
+
+    function addBeamBetween(start, end, radius, material, name) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radius,
+        radius,
+        length,
+        6
+      );
+
+      const mesh = addMesh(
+        geometry,
+        material,
+        name,
+        new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5)
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    function createLeafGeometry() {
+      const shape = new THREE.Shape();
+
+      shape.moveTo(0, 0);
+      shape.bezierCurveTo(0.085, 0.17, 0.145, 0.33, 0, 0.5);
+      shape.bezierCurveTo(-0.145, 0.33, -0.085, 0.17, 0, 0);
+
+      const hole = new THREE.Path();
+      hole.absellipse(0.075, 0.075, 0.025, 0.018, 0, Math.PI * 2, true);
+      shape.holes.push(hole);
+
+      return new THREE.ExtrudeGeometry(shape, {
+        depth: 0.075,
+        bevelEnabled: true,
+        bevelSegments: 1,
+        steps: 1,
+        bevelSize: 0.012,
+        bevelThickness: 0.012,
+        curveSegments: 4
+      });
+    }
+
+    const leafGeometry = createLeafGeometry();
+
+    // -------------------------------------------------------------------------
+    // Bow, hub, and ornamental spokes
+    // -------------------------------------------------------------------------
+
+    const bowY = 2.05;
+    const bowZ = 0;
+
+    const bowRing = addMesh(
+      new THREE.TorusGeometry(0.43, 0.055, 8, 24),
+      burgundy,
+      "Main_Ornate_Bow_Ring",
+      new THREE.Vector3(0, bowY, bowZ)
+    );
+
+    // Raised central boss.
+    const boss = addMesh(
+      new THREE.SphereGeometry(0.185, 10, 7),
+      burgundyLight,
+      "Central_Boss",
+      new THREE.Vector3(0, bowY, 0.115)
+    );
+    boss.scale.z = 0.55;
+
+    addMesh(
+      new THREE.TorusGeometry(0.18, 0.025, 6, 16),
+      patina,
+      "Boss_Patina_Ring",
+      new THREE.Vector3(0, bowY, 0.205)
+    );
+
+    // Four short structural spokes.
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      const inner = new THREE.Vector3(
+        Math.cos(angle) * 0.14,
+        bowY + Math.sin(angle) * 0.14,
+        0.08
+      );
+
+      const outer = new THREE.Vector3(
+        Math.cos(angle) * 0.44,
+        bowY + Math.sin(angle) * 0.44,
+        0.055
+      );
+
+      addBeamBetween(
+        inner,
+        outer,
+        0.035,
+        burgundyDark,
+        `Bow_Spoke_${i + 1}`
+      );
+    }
+
+    // Four leaf-shaped ornamental loops.
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      const direction = new THREE.Vector3(
+        Math.cos(angle),
+        Math.sin(angle),
+        0
+      );
+
+      const leaf = addMesh(
+        leafGeometry,
+        i % 2 === 0 ? burgundy : burgundyLight,
+        `Ornate_Leaf_${i + 1}`,
+        new THREE.Vector3(
+          direction.x * 0.39,
+          bowY + direction.y * 0.39,
+          0.015
+        )
+      );
+
+      leaf.rotation.z = angle;
+
+      const rivet = addMesh(
+        new THREE.SphereGeometry(0.048, 8, 5),
+        brass,
+        `Bow_Rivet_${i + 1}`,
+        new THREE.Vector3(
+          direction.x * 0.47,
+          bowY + direction.y * 0.47,
+          0.085
+        )
+      );
+      rivet.scale.z = 0.55;
+    }
+
+    // Three small upward fleur points.
+    const fleurPositions = [-0.14, 0, 0.14];
+
+    fleurPositions.forEach((x, index) => {
+      const height = index === 1 ? 0.29 : 0.23;
+
+      const fleur = addMesh(
+        new THREE.ConeGeometry(
+          index === 1 ? 0.075 : 0.06,
+          height,
+          5
+        ),
+        index === 1 ? burgundyLight : burgundy,
+        `Bow_Fleur_${index + 1}`,
+        new THREE.Vector3(x, bowY + height * 0.5 - 0.025, 0.015)
+      );
+
+      fleur.rotation.z = x * 1.2;
+    });
+
+    // -------------------------------------------------------------------------
+    // Shaft and collars
+    // -------------------------------------------------------------------------
+
+    const shaftTop = 1.38;
+    const shaftBottom = -1.82;
+    const shaftLength = shaftTop - shaftBottom;
+
+    addCylinder(
+      0.085,
+      0.105,
+      shaftLength,
+      new THREE.Vector3(0, (shaftTop + shaftBottom) * 0.5, 0),
+      burgundy,
+      "Main_Key_Shaft",
+      8
+    );
+
+    addCylinder(
+      0.17,
+      0.185,
+      0.16,
+      new THREE.Vector3(0, 1.45, 0),
+      burgundyDark,
+      "Upper_Shaft_Collar",
+      8
+    );
+
+    addCylinder(
+      0.13,
+      0.13,
+      0.055,
+      new THREE.Vector3(0, 1.19, 0),
+      patina,
+      "Upper_Burgundy_Inlay",
+      8
+    );
+
+    addCylinder(
+      0.135,
+      0.135,
+      0.055,
+      new THREE.Vector3(0, -1.58, 0),
+      burgundyDark,
+      "Lower_Shaft_Collar",
+      8
+    );
+
+    // -------------------------------------------------------------------------
+    // Key bit and three teeth
+    // -------------------------------------------------------------------------
+
+    addRoundedBox(
+      0.38,
+      0.49,
+      0.18,
+      new THREE.Vector3(0, -2.22, 0),
+      burgundy,
+      "Key_Bit_Head",
+      0.035
+    );
+
+    const toothHeights = [-2.10, -2.31, -2.52];
+
+    toothHeights.forEach((height, index) => {
+      addRoundedBox(
+        0.30,
+        0.075,
+        0.16,
+        new THREE.Vector3(0.16, height, 0),
+        index === 1 ? burgundyLight : burgundy,
+        `Key_Tooth_${index + 1}`,
+        0.018
+      );
+    });
+
+    // Small decorative pins on the shaft.
+    [0.78, -0.72, -1.42].forEach((height, index) => {
+      const pin = addMesh(
+        new THREE.SphereGeometry(0.035, 8, 5),
+        patina,
+        `Shaft_Pin_${index + 1}`,
+        new THREE.Vector3(0.07, height, 0.085)
+      );
+      pin.scale.z = 0.45;
+    });
+
+    // -------------------------------------------------------------------------
+    // Export controls
+    // -------------------------------------------------------------------------
+
+    const exportButton = document.getElementById("export");
+    const resetButton = document.getElementById("reset");
+    const status = document.getElementById("status");
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.copy(defaultTarget);
+      controls.update();
+    });
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB…";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "medieval-burgundy-key.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1500);
+
+          exportButton.disabled = false;
+          status.textContent = "GLB downloaded successfully.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Harvest Arch — Three.js GLB Creator</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e9e1d3;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      border: 1px solid rgba(76, 48, 28, 0.18);
+      background: rgba(255, 252, 246, 0.88);
+      box-shadow: 0 12px 36px rgba(63, 39, 23, 0.12);
+      backdrop-filter: blur(12px);
+    }
+
+    .info {
+      top: 22px;
+      left: 22px;
+      width: min(360px, calc(100vw - 44px));
+      padding: 20px 22px;
+      border-radius: 16px;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 7px;
+      color: #9b5734;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      color: #4c2c1d;
+      font-size: clamp(24px, 4vw, 34px);
+      line-height: 1.05;
+    }
+
+    .description {
+      margin: 0;
+      color: #765e4d;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .controls {
+      right: 22px;
+      bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px;
+      border-radius: 16px;
+    }
+
+    #exportButton {
+      appearance: none;
+      border: 0;
+      border-radius: 11px;
+      padding: 13px 18px;
+      color: #fffaf2;
+      background: linear-gradient(135deg, #a55b31, #713b20);
+      box-shadow: 0 6px 16px rgba(99, 48, 24, 0.28);
+      cursor: pointer;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 750;
+      transition: transform 150ms ease, filter 150ms ease, opacity 150ms ease;
+    }
+
+    #exportButton:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    #exportButton:active {
+      transform: translateY(1px);
+    }
+
+    #exportButton:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    .hint {
+      max-width: 170px;
+      color: #775f4e;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    #status {
+      position: fixed;
+      z-index: 20;
+      top: 22px;
+      right: 22px;
+      max-width: 300px;
+      padding: 11px 15px;
+      border-radius: 10px;
+      color: #5b3b29;
+      background: rgba(255, 252, 246, 0.9);
+      box-shadow: 0 8px 24px rgba(63, 39, 23, 0.12);
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-6px);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    #status.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 620px) {
+      .info {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 15px 17px;
+      }
+
+      .description {
+        max-width: 260px;
+      }
+
+      .controls {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        justify-content: space-between;
+      }
+
+      .hint {
+        max-width: 120px;
+      }
+
+      #status {
+        top: auto;
+        right: 12px;
+        bottom: 78px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel info">
+    <div class="eyebrow">Low-poly Game Asset</div>
+    <h1>Harvest Arch</h1>
+    <p class="description">
+      A rustic timber arch decorated with vines, autumn banners, pumpkins,
+      wheat, and warm hanging lanterns. Static and ready for Godot.
+    </p>
+  </section>
+
+  <div id="status"></div>
+
+  <section class="panel controls">
+    <button id="exportButton" type="button">Export GLB</button>
+    <div class="hint">Drag to orbit · Scroll to zoom</div>
+  </section>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const statusElement = document.getElementById("status");
+
+    // ------------------------------------------------------------
+    // Renderer and presentation
+    // ------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe9e1d3);
+    scene.fog = new THREE.Fog(0xe9e1d3, 10, 22);
+
+    const camera = new THREE.OrthographicCamera(-3, 3, 3, -3, 0.1, 100);
+    camera.position.set(4.8, 3.35, 6.8);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.55, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.065;
+    controls.minDistance = 4;
+    controls.maxDistance = 11;
+    controls.maxPolarAngle = Math.PI * 0.495;
+    controls.update();
+
+    const hemisphere = new THREE.HemisphereLight(0xfff4dc, 0x76523d, 2.25);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xfff0cf, 4.1);
+    keyLight.position.set(4.5, 7.5, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 5;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 18;
+    keyLight.shadow.bias = -0.0003;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xb9d5ff, 1.2);
+    fillLight.position.set(-5, 3.5, 2);
+    scene.add(fillLight);
+
+    // Studio floor is intentionally outside the exported asset.
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0xd8cbb8,
+        roughness: 1,
+        metalness: 0
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.015;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // ------------------------------------------------------------
+    // Asset root
+    // ------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "HarvestArch";
+    scene.add(asset);
+
+    // ------------------------------------------------------------
+    // Materials
+    // ------------------------------------------------------------
+
+    const materials = {
+      wood: new THREE.MeshStandardMaterial({
+        color: 0x704126,
+        roughness: 0.82,
+        metalness: 0,
+        flatShading: true
+      }),
+      darkWood: new THREE.MeshStandardMaterial({
+        color: 0x432719,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+      lightWood: new THREE.MeshStandardMaterial({
+        color: 0x93603a,
+        roughness: 0.78,
+        metalness: 0,
+        flatShading: true
+      }),
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xd5a34a,
+        roughness: 0.32,
+        metalness: 0.68,
+        flatShading: true
+      }),
+      darkGold: new THREE.MeshStandardMaterial({
+        color: 0x8d6127,
+        roughness: 0.4,
+        metalness: 0.58,
+        flatShading: true
+      }),
+      banner: new THREE.MeshStandardMaterial({
+        color: 0x8f2637,
+        roughness: 0.87,
+        metalness: 0,
+        side: THREE.DoubleSide,
+        flatShading: true
+      }),
+      bannerDark: new THREE.MeshStandardMaterial({
+        color: 0x64192a,
+        roughness: 0.9,
+        metalness: 0,
+        side: THREE.DoubleSide,
+        flatShading: true
+      }),
+      vine: new THREE.MeshStandardMaterial({
+        color: 0x3e6332,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+      vineLight: new THREE.MeshStandardMaterial({
+        color: 0x638044,
+        roughness: 0.88,
+        metalness: 0,
+        flatShading: true
+      }),
+      leaf: new THREE.MeshStandardMaterial({
+        color: 0x4e7738,
+        roughness: 0.86,
+        metalness: 0,
+        flatShading: true
+      }),
+      grape: new THREE.MeshStandardMaterial({
+        color: 0x714080,
+        roughness: 0.67,
+        metalness: 0,
+        flatShading: true
+      }),
+      grapeLight: new THREE.MeshStandardMaterial({
+        color: 0x8c5291,
+        roughness: 0.67,
+        metalness: 0,
+        flatShading: true
+      }),
+      pumpkin: new THREE.MeshStandardMaterial({
+        color: 0xe8892f,
+        roughness: 0.75,
+        metalness: 0,
+        flatShading: true
+      }),
+      pumpkinLight: new THREE.MeshStandardMaterial({
+        color: 0xf09a37,
+        roughness: 0.75,
+        metalness: 0,
+        flatShading: true
+      }),
+      stem: new THREE.MeshStandardMaterial({
+        color: 0x526b35,
+        roughness: 0.9,
+        metalness: 0,
+        flatShading: true
+      }),
+      lantern: new THREE.MeshStandardMaterial({
+        color: 0xffd16a,
+        emissive: 0xff9a2a,
+        emissiveIntensity: 1.35,
+        roughness: 0.38,
+        metalness: 0.05,
+        flatShading: true
+      }),
+      white: new THREE.MeshStandardMaterial({
+        color: 0xfff2ce,
+        roughness: 0.72,
+        metalness: 0,
+        flatShading: true
+      })
+    };
+
+    // ------------------------------------------------------------
+    // Geometry helpers
+    // ------------------------------------------------------------
+
+    function addMesh(geometry, material, position = null, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      if (position) {
+        mesh.position.copy(position);
+      }
+
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(width, height, depth, material, x, y, z, parent = asset) {
+      return addMesh(
+        new THREE.BoxGeometry(width, height, depth),
+        material,
+        new THREE.Vector3(x, y, z),
+        parent
+      );
+    }
+
+    function addCylinderBetween(start, end, radius, material, parent = asset, radialSegments = 6) {
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(radius, radius, length, radialSegments),
+        material,
+        start.clone().add(end).multiplyScalar(0.5),
+        parent
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    function addTorus(radius, tube, material, position, rotation = null, parent = asset) {
+      const mesh = addMesh(
+        new THREE.TorusGeometry(radius, tube, 5, 12),
+        material,
+        position,
+        parent
+      );
+
+      if (rotation) {
+        mesh.rotation.copy(rotation);
+      }
+
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Stone plinths and timber posts
+    // ------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      addBox(0.88, 0.22, 0.82, materials.darkWood, side * 1.65, 0.11, 0);
+      addBox(0.7, 0.18, 0.68, materials.wood, side * 1.65, 0.29, 0);
+      addBox(0.57, 0.09, 0.56, materials.lightWood, side * 1.65, 0.425, 0);
+
+      const post = addMesh(
+        new THREE.CylinderGeometry(0.235, 0.275, 1.04, 8),
+        materials.wood,
+        new THREE.Vector3(side * 1.65, 0.86, 0)
+      );
+      post.name = side < 0 ? "LeftTimberPost" : "RightTimberPost";
+
+      // Decorative metal bands around the posts.
+      addTorus(
+        0.257,
+        0.027,
+        materials.darkGold,
+        new THREE.Vector3(side * 1.65, 0.57, 0),
+        new THREE.Euler(Math.PI / 2, 0, 0)
+      );
+
+      addTorus(
+        0.248,
+        0.025,
+        materials.gold,
+        new THREE.Vector3(side * 1.65, 1.13, 0),
+        new THREE.Euler(Math.PI / 2, 0, 0)
+      );
+
+      // A small gold diamond inset into the front of each post.
+      const diamond = addMesh(
+        new THREE.OctahedronGeometry(0.115, 0),
+        materials.gold,
+        new THREE.Vector3(side * 1.65, 0.86, 0.255)
+      );
+      diamond.scale.set(0.85, 1.2, 0.3);
+
+      // Wooden shadow detail beneath the arch.
+      addBox(0.3, 0.13, 0.34, materials.darkWood, side * 1.65, 0.49, 0.04);
+    }
+
+    // ------------------------------------------------------------
+    // Main semi-circular timber arch
+    // ------------------------------------------------------------
+
+    const archCenterY = 1.35;
+    const archRadius = 1.65;
+
+    const arch = addMesh(
+      new THREE.TorusGeometry(archRadius, 0.19, 6, 28, Math.PI),
+      materials.wood,
+      new THREE.Vector3(0, archCenterY, 0)
+    );
+    arch.name = "MainTimberArch";
+
+    const goldTrim = addMesh(
+      new THREE.TorusGeometry(archRadius, 0.042, 4, 28, Math.PI),
+      materials.gold,
+      new THREE.Vector3(0, archCenterY, 0.055)
+    );
+    goldTrim.name = "GoldArchTrim";
+
+    // Small fasteners around the outside of the arch.
+    for (let i = 1; i < 18; i++) {
+      const angle = (i / 18) * Math.PI;
+      const x = Math.cos(angle) * archRadius;
+      const y = archCenterY + Math.sin(angle) * archRadius;
+
+      addMesh(
+        new THREE.IcosahedronGeometry(0.035, 1),
+        materials.darkGold,
+        new THREE.Vector3(x, y, 0.205)
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Swallowtail autumn banners
+    // ------------------------------------------------------------
+
+    function createBannerShape(scale = 1) {
+      const shape = new THREE.Shape();
+      shape.moveTo(-0.25 * scale, 0);
+      shape.lineTo(0.25 * scale, 0);
+      shape.lineTo(0.25 * scale, -0.82 * scale);
+      shape.lineTo(0, -0.68 * scale);
+      shape.lineTo(-0.25 * scale, -0.82 * scale);
+      shape.closePath();
+      return shape;
+    }
+
+    const bannerGeometry = new THREE.ShapeGeometry(createBannerShape(1));
+
+    for (const side of [-1, 1]) {
+      const bannerGroup = new THREE.Group();
+      bannerGroup.name = side < 0 ? "LeftBanner" : "RightBanner";
+      bannerGroup.position.set(side * 0.75, 2.705, 0.245);
+      asset.add(bannerGroup);
+
+      const backing = addMesh(
+        bannerGeometry,
+        materials.gold,
+        new THREE.Vector3(0, 0, -0.025),
+        bannerGroup
+      );
+      backing.scale.set(1.07, 1.07, 1);
+
+      const cloth = addMesh(
+        bannerGeometry,
+        materials.banner,
+        new THREE.Vector3(0, -0.015, 0.012),
+        bannerGroup
+      );
+      cloth.scale.set(0.93, 0.93, 1);
+
+      addBox(0.61, 0.055, 0.055, materials.gold, 0, 0.04, 0.055, bannerGroup);
+
+      for (const x of [-0.22, 0.22]) {
+        addTorus(
+          0.055,
+          0.014,
+          materials.gold,
+          new THREE.Vector3(x, 0.055, 0.065),
+          null,
+          bannerGroup
+        );
+      }
+
+      const emblem = addMesh(
+        new THREE.OctahedronGeometry(0.125, 0),
+        materials.gold,
+        new THREE.Vector3(0, -0.36, 0.085),
+        bannerGroup
+      );
+      emblem.scale.set(0.85, 1.2, 0.32);
+
+      addMesh(
+        new THREE.IcosahedronGeometry(0.04, 1),
+        materials.leaf,
+        new THREE.Vector3(0, -0.36, 0.115),
+        bannerGroup
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Vines and leaves
+    // ------------------------------------------------------------
+
+    const leafShape = new THREE.Shape();
+    leafShape.moveTo(0, 0);
+    leafShape.quadraticCurveTo(0.065, 0.07, 0, 0.2);
+    leafShape.quadraticCurveTo(-0.065, 0.07, 0, 0);
+    const leafGeometry = new THREE.ShapeGeometry(leafShape);
+
+    function addLeaf(position, rotationZ, scale = 1, material = materials.leaf) {
+      const leaf = addMesh(leafGeometry, material, position);
+      leaf.rotation.z = rotationZ;
+      leaf.scale.setScalar(scale);
+      return leaf;
+    }
+
+    function addVine(path, useLightVine = false) {
+      const curve = new THREE.CatmullRomCurve3(
+        path.map((point) => new THREE.Vector3(...point)),
+        false,
+        "catmullrom",
+        0.35
+      );
+
+      addMesh(
+        new THREE.TubeGeometry(curve, 24, 0.034, 5, false),
+        useLightVine ? materials.vineLight : materials.vine
+      );
+
+      for (let i = 0; i < 9; i++) {
+        const t = (i + 1) / 10;
+        const position = curve.getPointAt(t);
+        const tangent = curve.getTangentAt(t).normalize();
+        const rotation = Math.atan2(-tangent.x, tangent.y);
+        const side = i % 2 === 0 ? 1 : -1;
+
+        addLeaf(
+          position,
+          rotation + side * Math.PI * 0.5,
+          0.82 + (i % 3) * 0.08,
+          useLightVine ? materials.vineLight : materials.leaf
+        );
+      }
+    }
+
+    addVine([
+      [1.84, 1.42, 0.205],
+      [1.91, 1.72, 0.215],
+      [1.85, 2.06, 0.205],
+      [1.66, 2.4, 0.185],
+      [1.3, 2.72, 0.165],
+      [0.78, 2.91, 0.145]
+    ]);
+
+    addVine([
+      [-1.84, 1.42, 0.205],
+      [-1.91, 1.72, 0.215],
+      [-1.85, 2.06, 0.205],
+      [-1.66, 2.4, 0.185],
+      [-1.3, 2.72, 0.165],
+      [-0.78, 2.91, 0.145]
+    ], true);
+
+    addVine([
+      [-0.78, 2.91, 0.145],
+      [-0.4, 3.03, 0.155],
+      [0, 3.065, 0.16],
+      [0.4, 3.03, 0.155],
+      [0.78, 2.91, 0.145]
+    ], true);
+
+    // ------------------------------------------------------------
+    // Grape clusters
+    // ------------------------------------------------------------
+
+    function addGrapeCluster(x, y, material) {
+      const cluster = new THREE.Group();
+      cluster.position.set(x, y, 0.255);
+      asset.add(cluster);
+
+      const offsets = [
+        [0, 0, 0, 1.0],
+        [0.065, 0.015, 0.01, 0.88],
+        [-0.055, -0.025, 0.015, 0.92],
+        [0.015, 0.075, -0.005, 0.85]
+      ];
+
+      for (let i = 0; i < offsets.length; i++) {
+        const [dx, dy, dz, scale] = offsets[i];
+        addMesh(
+          new THREE.IcosahedronGeometry(0.085, 1),
+          material,
+          new THREE.Vector3(dx * 0.08, dy * 0.075, dz),
+          cluster
+        ).scale.set(
+          scale * 1.05,
+          scale * 1.12,
+          scale
+        );
+      }
+
+      addCylinderBetween(
+        new THREE.Vector3(0, 0.07, 0),
+        new THREE.Vector3(0.015, 0.16, -0.01),
+        0.014,
+        materials.stem,
+        cluster,
+        5
+      );
+    }
+
+    const rightOuterClusters = [
+      [1.90, 1.66],
+      [1.84, 2.03],
+      [1.66, 2.39],
+      [1.31, 2.71],
+      [0.88, 2.91]
+    ];
+
+    const topClusters = [
+      [-0.62, 3.01],
+      [-0.3, 3.075],
+      [0.02, 3.085],
+      [0.31, 3.075],
+      [0.62, 3.01]
+    ];
+
+    for (const [x, y] of rightOuterClusters) {
+      addGrapeCluster(x, y, materials.grape);
+    }
+
+    for (const [x, y] of topClusters) {
+      addGrapeCluster(x, y, materials.grapeLight);
+    }
+
+    for (const side of [-1, 1]) {
+      for (const [x, y] of rightOuterClusters) {
+        addGrapeCluster(side * x, y, materials.grape);
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Pumpkins
+    // ------------------------------------------------------------
+
+    function createPumpkin(x, y, z, scale = 1) {
+      const pumpkin = new THREE.Group();
+      pumpkin.name = "Pumpkin";
+      pumpkin.position.set(x, y, z);
+      pumpkin.scale.setScalar(scale);
+      asset.add(pumpkin);
+
+      const profile = [
+        new THREE.Vector2(0, 0.25),
+        new THREE.Vector2(0.14, 0.24),
+        new THREE.Vector2(0.24, 0.14),
+        new THREE.Vector2(0.3, 0.05),
+        new THREE.Vector2(0.31, -0.04),
+        new THREE.Vector2(0.26, -0.14),
+        new THREE.Vector2(0.18, -0.22),
+        new THREE.Vector2(0, -0.23)
+      ];
+
+      const body = addMesh(
+        new THREE.LatheGeometry(profile, 10),
+        materials.pumpkin,
+        new THREE.Vector3(),
+        pumpkin
+      );
+      body.scale.z = 0.82;
+
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const lobe = addMesh(
+          new THREE.IcosahedronGeometry(0.13, 1),
+          i % 2 === 0 ? materials.pumpkinLight : materials.pumpkin,
+          new THREE.Vector3(
+            Math.cos(angle) * 0.225,
+            -0.005,
+            Math.sin(angle) * 0.17
+          ),
+          pumpkin
+        );
+        lobe.scale.set(0.72, 0.58, 0.72);
+      }
+
+      addCylinderBetween(
+        new THREE.Vector3(0, 0.22, 0),
+        new THREE.Vector3(0.015, 0.44, 0),
+        0.043,
+        materials.stem,
+        pumpkin,
+        6
+      );
+
+      return pumpkin;
+    }
+
+    createPumpkin(-1.3, 0.51, 0.42, 1.03);
+    createPumpkin(1.31, 0.51, 0.42, 1.0);
+    createPumpkin(-1.62, 0.46, 0.29, 0.67);
+
+    // ------------------------------------------------------------
+    // Hanging lanterns
+    // ------------------------------------------------------------
+
+    function createLantern(x, z) {
+      const lantern = new THREE.Group();
+      lantern.name = "HangingLantern";
+      lantern.position.set(x, 0, z);
+      asset.add(lantern);
+
+      addCylinderBetween(
+        new THREE.Vector3(x - 0.13, 1.35, z),
+        new THREE.Vector3(x + 0.13, 1.35, z),
+        0.024,
+        materials.darkGold,
+        lantern,
+        6
+      );
+
+      addCylinderBetween(
+        new THREE.Vector3(x, 1.27, z),
+        new THREE.Vector3(x, 1.42, z),
+        0.018,
+        materials.gold,
+        lantern,
+        5
+      );
+
+      const glass = addMesh(
+        new THREE.CylinderGeometry(0.085, 0.105, 0.23, 6),
+        materials.lantern,
+        new THREE.Vector3(x, 1.17, z),
+        lantern
+      );
+      glass.castShadow = false;
+
+      addTorus(
+        0.105,
+        0.015,
+        materials.gold,
+        new THREE.Vector3(x, 1.285, z),
+        new THREE.Euler(Math.PI / 2, 0, 0),
+        lantern
+      );
+
+      addTorus(
+        0.108,
+        0.015,
+        materials.gold,
+        new THREE.Vector3(x, 1.055, z),
+        new THREE.Euler(Math.PI / 2, 0, 0),
+        lantern
+      );
+
+      for (const dx of [-0.082, 0.082]) {
+        for (const dz of [-0.075, 0.075]) {
+          addBox(
+            0.022,
+            0.245,
+            0.022,
+            materials.gold,
+            x + dx,
+            1.17,
+            z + dz,
+            lantern
+          );
+        }
+      }
+
+      addMesh(
+        new THREE.ConeGeometry(0.115, 0.09, 6),
+        materials.gold,
+        new THREE.Vector3(x, 1.34, z),
+        lantern
+      );
+
+      addMesh(
+        new THREE.ConeGeometry(0.095, 0.07, 6),
+        materials.darkGold,
+        new THREE.Vector3(x, 0.995, z),
+        lantern
+      );
+    }
+
+    createLantern(1.73, 0.37);
+    createLantern(-1.73, 0.37);
+
+    // ------------------------------------------------------------
+    // Wheat sheaf
+    // ------------------------------------------------------------
+
+    const wheatStalks = [
+      [[-0.08, 2.99, 0.08], [-0.57, 3.31, 0.08]],
+      [[-0.02, 3.01, 0.09], [-0.3, 3.42, 0.08]],
+      [[0.04, 3.02, 0.09], [0, 3.48, 0.08]],
+      [[0.09, 3.01, 0.08], [0.31, 3.42, 0.08]],
+      [[0.13, 3.0, 0.07], [0.58, 3.31, 0.07]],
+      [[-0.12, 3.0, 0.07], [-0.68, 3.18, 0.07]],
+      [[0.12, 3.0, 0.07], [0.69, 3.18, 0.07]]
+    ];
+
+    const kernelGeometry = new THREE.IcosahedronGeometry(0.055, 1);
+
+    for (const [start, end] of wheatStalks) {
+      const direction = end.clone().sub(start).normalize();
+
+      addCylinderBetween(
+        start,
+        end,
+        0.016,
+        materials.stem,
+        asset,
+        5
+      );
+
+      const ear = addMesh(
+        new THREE.ConeGeometry(0.065, 0.19, 5),
+        materials.gold,
+        end.clone().addScaledVector(direction, 0.055)
+      );
+      ear.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction
+      );
+
+      for (let i = 0; i < 4; i++) {
+        const t = 0.72 + i * 0.15;
+        const kernel = addMesh(
+          kernelGeometry,
+          materials.pumpkinLight,
+          end.clone().addScaledVector(direction, t)
+        );
+        kernel.scale.set(0.62, 1.25, 0.62);
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Top sun medallion
+    // ------------------------------------------------------------
+
+    const medallion = addMesh(
+      new THREE.CircleGeometry(0.16, 8),
+      materials.gold,
+      new THREE.Vector3(0, 3.15, 0.025)
+    );
+    medallion.name = "SunMedallion";
+
+    const medallionCenter = addMesh(
+      new THREE.CylinderGeometry(0.045, 0.045, 0.035, 6),
+      materials.darkGold,
+      new THREE.Vector3(0, 3.15, 0.055)
+    );
+    medallionCenter.rotation.x = Math.PI / 2;
+
+    // Small foliage accents at the crown.
+    for (const side of [-1, 1]) {
+      const accent = addMesh(
+        new THREE.ConeGeometry(0.08, 0.24, 4),
+        materials.leaf,
+        new THREE.Vector3(side * 0.18, 3.04, 0.12)
+      );
+      accent.rotation.z = side * -0.72;
+      accent.scale.z = 0.5;
+    }
+
+    // ------------------------------------------------------------
+    // Scene animation and resize handling
+    // ------------------------------------------------------------
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const aspect = width / height;
+      const viewHeight = 4.15;
+
+      camera.left = (-viewHeight * aspect) / 2;
+      camera.right = (viewHeight * aspect) / 2;
+      camera.top = viewHeight / 2;
+      camera.bottom = -viewHeight / 2;
+      camera.updateProjectionMatrix();
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(width, height);
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // ------------------------------------------------------------
+    // GLB export
+    // ------------------------------------------------------------
+
+    let statusTimer;
+
+    function showStatus(message) {
+      statusElement.textContent = message;
+      statusElement.classList.add("visible");
+
+      clearTimeout(statusTimer);
+      statusTimer = setTimeout(() => {
+        statusElement.classList.remove("visible");
+      }, 3200);
+    }
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Preparing…";
+
+      // Let the button state update before the exporter begins.
+      requestAnimationFrame(() => {
+        const exporter = new GLTFExporter();
+
+        exporter.parse(
+          asset,
+          (result) => {
+            if (!(result instanceof ArrayBuffer)) {
+              showStatus("The exporter did not return a binary GLB.");
+              exportButton.disabled = false;
+              exportButton.textContent = "Export GLB";
+              return;
+            }
+
+            const blob = new Blob([result], {
+              type: "model/gltf-binary"
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "harvest_arch.glb";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+            showStatus("harvest_arch.glb exported successfully.");
+            exportButton.disabled = false;
+            exportButton.textContent = "Export GLB";
+          },
+          (error) => {
+            console.error(error);
+            showStatus("GLB export failed. See the browser console for details.");
+            exportButton.disabled = false;
+            exportButton.textContent = "Export GLB";
+          },
+          {
+            binary: true,
+            onlyVisible: true,
+            truncateDrawRange: true
+          }
+        );
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Pond</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #cbd8d6;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .panel {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 10;
+      width: min(340px, calc(100vw - 48px));
+      padding: 20px;
+      color: #f4f8f6;
+      background: rgba(22, 35, 32, 0.84);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      box-shadow: 0 18px 50px rgba(20, 35, 30, 0.24);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      user-select: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 7px;
+      color: #a9d4ae;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 27px;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+
+    .description {
+      margin: 10px 0 18px;
+      color: rgba(238, 245, 242, 0.72);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+    }
+
+    button {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 11px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #exportButton {
+      flex: 1;
+      color: #183024;
+      background: #b9e5b8;
+    }
+
+    #resetButton {
+      color: #e7eee9;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 13px;
+      color: rgba(235, 244, 240, 0.64);
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .hint {
+      position: fixed;
+      right: 22px;
+      bottom: 18px;
+      z-index: 10;
+      padding: 8px 11px;
+      color: rgba(245, 249, 247, 0.76);
+      background: rgba(22, 35, 32, 0.58);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      font-size: 11px;
+      backdrop-filter: blur(8px);
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 14px;
+        left: 14px;
+        width: calc(100vw - 28px);
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 23px;
+      }
+
+      .description {
+        margin-bottom: 13px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <div class="eyebrow">Static Asset · GLB Ready</div>
+    <h1>Low-Poly Pond</h1>
+    <p class="description">
+      An irregular shallow-pond scene with a muddy shoreline, faceted water,
+      scattered stones, reeds, and lily pads.
+    </p>
+
+    <div class="actions">
+      <button id="exportButton" type="button">Export GLB</button>
+      <button id="resetButton" type="button" title="Reset camera">Reset</button>
+    </div>
+
+    <div id="status" role="status" aria-live="polite">
+      Ready to export.
+    </div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const resetButton = document.getElementById("resetButton");
+    const status = document.getElementById("status");
+
+    // ---------------------------------------------------------------------
+    // Renderer, camera, and lighting
+    // ---------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xcbd8d6);
+    scene.fog = new THREE.Fog(0xcbd8d6, 11, 23);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const initialCameraPosition = new THREE.Vector3(6.8, 5.0, 7.2);
+    const initialTarget = new THREE.Vector3(0, 0.15, 0);
+
+    camera.position.copy(initialCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(initialTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 4.2;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.48;
+    controls.update();
+
+    const hemisphere = new THREE.HemisphereLight(
+      0xe8f5f2,
+      0x614b35,
+      2.0
+    );
+    scene.add(hemisphere);
+
+    const sun = new THREE.DirectionalLight(0xffefd0, 3.1);
+    sun.position.set(4.5, 8.5, 5.2);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -7;
+    sun.shadow.camera.right = 7;
+    sun.shadow.camera.top = 7;
+    sun.shadow.camera.bottom = -7;
+    sun.shadow.camera.near = 1;
+    sun.shadow.camera.far = 22;
+    sun.shadow.bias = -0.00045;
+    scene.add(sun);
+
+    const fill = new THREE.DirectionalLight(0x9bc8d2, 0.9);
+    fill.position.set(-5, 3.5, -4);
+    scene.add(fill);
+
+    // Preview-only shadow catcher. It is not included in the exported GLB.
+    const shadowCatcher = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.ShadowMaterial({
+        color: 0x243b34,
+        opacity: 0.17
+      })
+    );
+    shadowCatcher.rotation.x = -Math.PI / 2;
+    shadowCatcher.position.y = -0.36;
+    shadowCatcher.receiveShadow = true;
+    scene.add(shadowCatcher);
+
+    // ---------------------------------------------------------------------
+    // Asset group: only this hierarchy is exported.
+    // ---------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "LowPoly_Pond";
+    asset.userData.description =
+      "Static low-poly pond with irregular shoreline, shallow water, rocks, reeds, and lily pads.";
+    scene.add(asset);
+
+    // Deterministic randomness keeps the exported asset reproducible.
+    function mulberry32(seed) {
+      return function random() {
+        let value = seed += 0x6D2B79F5;
+        value = Math.imul(value ^ value >>> 15, value | 1);
+        value ^= value + Math.imul(value ^ value >>> 7, value | 61);
+        return ((value ^ value >>> 14) >>> 0) / 4294967296;
+      };
+    }
+
+    const random = mulberry32(28431);
+
+    function randomBetween(min, max) {
+      return min + (max - min) * random();
+    }
+
+    // ---------------------------------------------------------------------
+    // Materials
+    // ---------------------------------------------------------------------
+
+    const bankMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      roughness: 0.98,
+      metalness: 0,
+      flatShading: true
+    });
+
+    const soilMaterial = new THREE.MeshStandardMaterial({
+      color: 0x65482f,
+      roughness: 1,
+      metalness: 0,
+      flatShading: true
+    });
+
+    const waterMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      roughness: 0.3,
+      metalness: 0.08,
+      transparent: true,
+      opacity: 0.94,
+      side: THREE.DoubleSide,
+      flatShading: true
+    });
+
+    const underwaterMaterial = new THREE.MeshStandardMaterial({
+      color: 0x244e50,
+      roughness: 0.42,
+      metalness: 0.05,
+      flatShading: true
+    });
+
+    const rockMaterials = [
+      new THREE.MeshStandardMaterial({
+        color: 0x77766c,
+        roughness: 0.96,
+        flatShading: true
+      }),
+      new THREE.MeshStandardMaterial({
+        color: 0x646860,
+        roughness: 0.98,
+        flatShading: true
+      }),
+      new THREE.MeshStandardMaterial({
+        color: 0x817a6b,
+        roughness: 0.94,
+        flatShading: true
+      })
+    ];
+
+    const reedMaterial = new THREE.MeshStandardMaterial({
+      color: 0x526d32,
+      roughness: 0.88,
+      flatShading: true
+    });
+
+    const leafMaterials = [
+      new THREE.MeshStandardMaterial({
+        color: 0x3d6f35,
+        roughness: 0.82,
+        side: THREE.DoubleSide,
+        flatShading: true
+      }),
+      new THREE.MeshStandardMaterial({
+        color: 0x6c9145,
+        roughness: 0.84,
+        side: THREE.DoubleSide,
+        flatShading: true
+      })
+    ];
+
+    const lilyMaterial = new THREE.MeshStandardMaterial({
+      color: 0x4f8b43,
+      roughness: 0.76,
+      flatShading: true
+    });
+
+    const cattailMaterial = new THREE.MeshStandardMaterial({
+      color: 0x70432d,
+      roughness: 0.95,
+      flatShading: true
+    });
+
+    // ---------------------------------------------------------------------
+    // Geometry helpers
+    // ---------------------------------------------------------------------
+
+    function pushTriangle(positions, colors, a, b, c, color) {
+      positions.push(
+        a.x, a.y, a.z,
+        b.x, b.y, b.z,
+        c.x, c.y, c.z
+      );
+
+      for (let i = 0; i < 3; i++) {
+        colors.push(color.r, color.g, color.b);
+      }
+    }
+
+    /**
+     * Creates an irregular, faceted ring.
+     * Each triangle has its own slightly varied color.
+     */
+    function createFacetedRing(inner, outer, segments, palette) {
+      const positions = [];
+      const colors = [];
+
+      for (let i = 0; i < segments; i++) {
+        const j = (i + 1) % segments;
+        const a = inner[i];
+        const b = inner[j];
+        const c = outer[j];
+        const d = outer[i];
+
+        const color = palette[Math.floor(i / 3) % palette.length];
+
+        pushTriangle(positions, colors, a, b, c, color);
+        pushTriangle(positions, colors, a, c, d, color);
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.setAttribute(
+        "color",
+        new THREE.Float32BufferAttribute(colors, 3)
+      );
+      geometry.computeVertexNormals();
+
+      return geometry;
+    }
+
+    function createIrregularDisk(radius, segments, material, yOffset = 0) {
+      const positions = [];
+      const colors = [];
+
+      const center = new THREE.Vector3(0, yOffset, 0);
+      const points = [];
+
+      for (let i = 0; i < segments; i++) {
+        const angle = (i / segments) * Math.PI * 2;
+        const irregularity =
+          1 +
+          0.055 * Math.sin(angle * 5.0 + 0.7) +
+          0.028 * Math.cos(angle * 9.0 - 0.4);
+
+        const x = Math.cos(angle) * radius * irregularity;
+        const z = Math.sin(angle) * radius * irregularity;
+        const y = yOffset + 0.025 * Math.sin(angle * 4.0 + 1.2);
+
+        points.push(new THREE.Vector3(x, y, z));
+      }
+
+      const color = new THREE.Color(0x527b82);
+
+      for (let i = 0; i < segments; i++) {
+        const j = (i + 1) % segments;
+        pushTriangle(
+          positions,
+          colors,
+          center,
+          points[j],
+          points[i],
+          color
+        );
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.setAttribute(
+        "color",
+        new THREE.Float32BufferAttribute(colors, 3)
+      );
+      geometry.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    function createCylinderBetween(start, end, radiusTop, radiusBottom, material, name) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radiusTop,
+        radiusBottom,
+        length,
+        5,
+        1,
+        false
+      );
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.position.copy(start).add(end).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+
+      return mesh;
+    }
+
+    function createLeafGeometry() {
+      const geometry = new THREE.BufferGeometry();
+
+      const a = new THREE.Vector3(0, 0, 0);
+      const b = new THREE.Vector3(-0.085, 0.22, 0);
+      const c = new THREE.Vector3(0, 0.48, 0);
+      const d = new THREE.Vector3(0.085, 0.22, 0);
+
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute([
+          a.x, a.y, a.z,
+          b.x, b.y, b.z,
+          c.x, c.y, c.z,
+          d.x, d.y, d.z
+        ], 3)
+      );
+
+      geometry.setIndex([0, 1, 2, 0, 2, 3]);
+      geometry.computeVertexNormals();
+
+      return geometry;
+    }
+
+    // ---------------------------------------------------------------------
+    // Irregular pond bank
+    // ---------------------------------------------------------------------
+
+    const bankSegments = 28;
+    const innerRadii = [];
+    const outerRadii = [];
+    const innerHeight = [];
+    const outerHeight = [];
+
+    for (let i = 0; i < bankSegments; i++) {
+      const j = (i + 1) % bankSegments;
+      const angle = (i / bankSegments) * Math.PI * 2;
+
+      const innerRadius = 2.03 * (1 + 0.035 * Math.sin(angle * 4.0 + 0.4));
+      const outerRadius = 2.72 * (1 + 0.075 * Math.sin(angle * 3.0 + 1.1));
+
+      innerRadii.push(innerRadius);
+      outerRadii.push(outerRadius);
+
+      innerHeight.push(
+        0.055 + 0.015 * Math.sin(angle * 3.0 + 0.8)
+      );
+      outerHeight.push(
+        0.19 + 0.115 * Math.cos(angle * 3.0 - 0.5)
+      );
+    }
+
+    const bank = new THREE.Mesh(
+      createFacetedRing(
+        innerRadii,
+        outerRadii,
+        bankSegments,
+        [
+          new THREE.Color(0x80603d),
+          new THREE.Color(0x937047),
+          new THREE.Color(0x6e5035),
+          new THREE.Color(0x9a7449),
+          new THREE.Color(0x76563a)
+        ]
+      ),
+      bankMaterial
+    );
+    bank.name = "Faceted_Muddy_Bank";
+    bank.castShadow = true;
+    bank.receiveShadow = true;
+    asset.add(bank);
+
+    const wetSoil = new THREE.Mesh(
+      createFacetedRing(
+        [],
+        [],
+        bankSegments,
+        [new THREE.Color(0x65472e), new THREE.Color(0x725338)]
+      ),
+      soilMaterial
+    );
+
+    wetSoilSegments = wetSoilSegments;
+    wetSoilSegments = 28;
+    wetSoilSegments = 28;
+
+    function wetSoilSegments4() {
+      return 28;
+    }
+
+    const wetSoilGeometry = createFacetedRing(
+      [],
+      [],
+      wetSoilSegments,
+      [new THREE.Color(0x62452d), new THREE.Color(0x745136)]
+    );
+
+    const wetSoil = new THREE.Mesh(wetSoilGeometry, soilMaterial);
+    wetSoil.name = "Wet_Soil_Shore";
+    wetSoil.castShadow = true;
+    wetSoil.receiveShadow = true;
+    asset.add(wetSoil);
+
+    // ---------------------------------------------------------------------
+    // Shallow water and submerged base
+    // ---------------------------------------------------------------------
+
+    const water = createIrregularDisk(
+      2.13,
+      32,
+      waterMaterial,
+      0.035
+    );
+    water.name = "Shallow_Water_Surface";
+    water.castShadow = true;
+    water.receiveShadow = true;
+    asset.add(water);
+
+    const submergedBase = createIrregularDisk(
+      1.94,
+      28,
+      underwaterMaterial,
+      -0.23
+    );
+    submergedBase.name = "Submerged_Pond_Base";
+    submergedBase.castShadow = true;
+    submergedBase.receiveShadow = true;
+    asset.add(submergedBase);
+
+    // ---------------------------------------------------------------------
+    // Shoreline rocks and pebbles
+    // ---------------------------------------------------------------------
+
+    const rockGeometry = new THREE.DodecahedronGeometry(1, 0);
+    const pebbleGeometry = new THREE.IcosahedronGeometry(1, 0);
+
+    for (let i = 0; i < 17; i++) {
+      const angle =
+        (i / 17) * Math.PI * 2 + randomBetween(-0.07, 0.07);
+      const radius = randomBetween(2.40, 2.57);
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+
+      const height = 0.17 + randomBetween(-0.025, 0.045);
+      const rock = new THREE.Mesh(
+        rockGeometry,
+        rockMaterials[Math.floor(i / 4) % rockMaterials.length]
+      );
+
+      rock.name = `Shoreline_Rock_${String(i + 1).padStart(2, "0")}`;
+      rock.position.set(x, height, z);
+      rock.scale.set(
+        randomBetween(0.14, 0.29),
+        randomBetween(0.10, 0.21),
+        randomBetween(0.13, 0.27)
+      );
+      rock.rotation.set(
+        randomBetween(-0.4, 0.4),
+        randomBetween(0, Math.PI * 2),
+        randomBetween(-0.3, 0.3)
+      );
+      rock.castShadow = true;
+      rock.receiveShadow = true;
+      asset.add(rock);
+    }
+
+    for (let i = 0; i < 8; i++) {
+      const angle = randomBetween(0, Math.PI * 2);
+      const radius = randomBetween(1.65, 2.02);
+      const pebble = new THREE.Mesh(
+        pebbleGeometry,
+        rockMaterials[(i + 1) % rockMaterials.length]
+      );
+
+      pebble.name = `Water_Pebble_${String(i + 1).padStart(2, "0")}`;
+      pebble.position.set(
+        Math.cos(angle) * radius,
+        randomBetween(0.055, 0.085),
+        Math.sin(angle) * radius
+      );
+      pebble.scale.set(
+        randomBetween(0.055, 0.11),
+        randomBetween(0.045, 0.085),
+        randomBetween(0.055, 0.12)
+      );
+      pebble.rotation.set(
+        randomBetween(0, Math.PI),
+        randomBetween(0, Math.PI),
+        randomBetween(0, Math.PI)
+      );
+      pebble.castShadow = true;
+      pebble.receiveShadow = true;
+      asset.add(pebble);
+    }
+
+    // ---------------------------------------------------------------------
+    // Reed clusters
+    // ---------------------------------------------------------------------
+
+    const reedAngles = [0.22, 1.08, 2.03, 3.02, 4.08, 5.22];
+    const leafGeometry = createLeafGeometry();
+
+    reedAngles.forEach((angle, reedIndex) => {
+      const radius = randomBetween(2.30, 2.50);
+      const x = Math.cos(angle) * radius;
+      const z = Math.sin(angle) * radius;
+      const leanAngle = randomBetween(0, Math.PI * 2);
+      const leanX = Math.cos(leanAngle) * randomBetween(0.10, 0.20);
+      const leanZ = Math.sin(leanAngle) * randomBetween(0.10, 0.20);
+
+      const start = new THREE.Vector3(x, 0.18, z);
+      const end = new THREE.Vector3(
+        x + leanX,
+        randomBetween(0.72, 0.92),
+        z + leanZ
+      );
+
+      const stem = createCylinderBetween(
+        start,
+        end,
+        0.011,
+        0.024,
+        reedMaterial,
+        `Reed_${reedIndex + 1}_Stem`
+      );
+      stem.name = stem.name;
+      asset.add(stem);
+
+      const upperLeaf = new THREE.Mesh(
+        leafGeometry,
+        leafMaterials[reedIndex % 2]
+      );
+      upperLeaf.name = `Reed_${reedIndex + 1}_Upper_Leaf`;
+      upperLeaf.position.copy(start).lerp(end, 0.58);
+      upperLeaf.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(Math.cos(angle + 0.8), 0, Math.sin(angle + 0.8)).normalize()
+      );
+      upperLeaf.rotateZ(randomBetween(-0.22, 0.22));
+      upperLeaf.castShadow = true;
+      asset.add(upperLeaf);
+
+      const lowerLeaf = new THREE.Mesh(
+        leafGeometry,
+        leafMaterials[(reedIndex + 1) % 2]
+      );
+      lowerLeaf.name = `Reed_${reedIndex + 1}_Lower_Leaf`;
+      lowerLeaf.position.copy(start).lerp(end, 0.38);
+      lowerLeaf.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 0, 1),
+        new THREE.Vector3(Math.cos(angle - 0.9), 0, Math.sin(angle - 0.9)).normalize()
+      );
+      lowerLeaf.rotateZ(randomBetween(-0.28, 0.28));
+      lowerLeaf.castShadow = true;
+      asset.add(lowerLeaf);
+    });
+
+    // ---------------------------------------------------------------------
+    // Lily pads
+    // ---------------------------------------------------------------------
+
+    const lilyPositions = [
+      [-0.72, 0.70],
+      [0.55, 1.18],
+      [1.18, -0.38],
+      [-1.25, -0.62]
+    ];
+
+    lilyPositions.forEach(([x, z], index) => {
+      const lily = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.17, 0.19, 0.035, 8),
+        lilyMaterial
+      );
+
+      lily.name = `Lily_Pad_${index + 1}`;
+      lily.position.set(x, 0.073, z);
+      lily.rotation.y = randomBetween(0, Math.PI * 2);
+      lily.scale.z = randomBetween(0.85, 1.15);
+      lily.castShadow = true;
+      lily.receiveShadow = true;
+      asset.add(lily);
+    });
+
+    // ---------------------------------------------------------------------
+    // Export GLB
+    // ---------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building GLB…";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low-poly-pond.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "Exported low-poly-pond.glb successfully.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console for details.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false
+        }
+      );
+    });
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(initialCameraPosition);
+      controls.target.copy(initialTarget);
+      controls.update();
+    });
+
+    // ---------------------------------------------------------------------
+    // Resize and render loop
+    // ---------------------------------------------------------------------
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

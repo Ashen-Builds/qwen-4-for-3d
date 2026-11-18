@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Industrial Drill Press — GLB Asset</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #dbe5ea;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(18, 25, 31, 0.84);
+      color: #f7fafc;
+      box-shadow: 0 12px 36px rgba(15, 23, 30, 0.22);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .info {
+      top: 22px;
+      left: 22px;
+      max-width: min(360px, calc(100vw - 44px));
+      padding: 17px 19px;
+      border-radius: 13px;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: #f6b72b;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: #b7c2ca;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.07);
+      color: #d8e0e5;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .badge::before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #59d58a;
+      content: "";
+      box-shadow: 0 0 9px rgba(89, 213, 138, 0.7);
+    }
+
+    .actions {
+      right: 22px;
+      bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      border-radius: 13px;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      min-height: 43px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 8px;
+      background: #f6b72b;
+      color: #1b2329;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 150ms ease, background 150ms ease, opacity 150ms ease;
+    }
+
+    button:hover {
+      background: #ffd04f;
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    button svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .secondary {
+      background: rgba(255, 255, 255, 0.09);
+      color: #eef4f7;
+      transform: none;
+    }
+
+    .secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    #status {
+      min-width: 94px;
+      padding-right: 8px;
+      color: #aebbc3;
+      font-size: 11px;
+      font-weight: 650;
+      text-align: right;
+    }
+
+    .hint {
+      position: fixed;
+      z-index: 9;
+      bottom: 25px;
+      left: 24px;
+      color: rgba(28, 39, 46, 0.67);
+      font-size: 11px;
+      font-weight: 650;
+      pointer-events: none;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+    }
+
+    @media (max-width: 650px) {
+      .info {
+        top: 12px;
+        left: 12px;
+        max-width: calc(100vw - 24px);
+        padding: 13px 15px;
+      }
+
+      .info h1 {
+        font-size: 18px;
+      }
+
+      .subtitle {
+        display: none;
+      }
+
+      .actions {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        justify-content: flex-end;
+      }
+
+      .hint {
+        display: none;
+      }
+
+      #status {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <section class="panel info">
+    <div class="eyebrow">Game-ready industrial asset</div>
+    <h1>Compact Drill Press</h1>
+    <div class="subtitle">
+      Low-poly construction machine with a vertical mast, hydraulic cylinder,
+      moving carriage, drill bit, warning stripes, and four rugged wheels.
+    </div>
+    <div class="badge">Static · GLB ready</div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <section class="panel actions">
+    <div id="status">Ready to export</div>
+    <button id="export" type="button">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 16v3h14v-3"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round"/>
+      </svg>
+      Export GLB
+    </button>
+  </section>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // ------------------------------------------------------------
+    // Renderer and viewer
+    // ------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdbe5ea);
+    scene.fog = new THREE.Fog(0xdbe5ea, 16, 34);
+
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(7.4, 5.5, 8.5);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.prepend(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.15, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 5.5;
+    controls.maxDistance = 19;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // ------------------------------------------------------------
+    // Lighting
+    // ------------------------------------------------------------
+
+    scene.add(new THREE.HemisphereLight(0xeaf5ff, 0x5d666b, 2.1));
+
+    const keyLight = new THREE.DirectionalLight(0xfff2d5, 3.8);
+    keyLight.position.set(5.5, 9, 6.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -7;
+    keyLight.shadow.camera.right = 7;
+    keyLight.shadow.camera.top = 8;
+    keyLight.shadow.camera.bottom = -5;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xbcd9ff, 1.45);
+    fillLight.position.set(-6, 4, -5);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.1);
+    rimLight.position.set(1, 5, -8);
+    scene.add(rimLight);
+
+    // Viewer-only ground
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({
+        color: 0xd4e0e4,
+        roughness: 0.94,
+        metalness: 0.02
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = 0.01;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(24, 24, 0x6f858e, 0x9babb3);
+    grid.position.y = 0.018;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.28;
+    scene.add(grid);
+
+    // ------------------------------------------------------------
+    // Materials
+    // ------------------------------------------------------------
+
+    const materials = {
+      yellow: new THREE.MeshStandardMaterial({
+        color: 0xf2b51d,
+        roughness: 0.5,
+        metalness: 0.24,
+        flatShading: true
+      }),
+      yellowDark: new THREE.MeshStandardMaterial({
+        color: 0xc88a0d,
+        roughness: 0.58,
+        metalness: 0.22,
+        flatShading: true
+      }),
+      yellowLight: new THREE.MeshStandardMaterial({
+        color: 0xffca28,
+        roughness: 0.48,
+        metalness: 0.18,
+        flatShading: true
+      }),
+      black: new THREE.MeshStandardMaterial({
+        color: 0x20272c,
+        roughness: 0.68,
+        metalness: 0.28,
+        flatShading: true
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x101416,
+        roughness: 0.93,
+        metalness: 0.02,
+        flatShading: true
+      }),
+      steel: new THREE.MeshStandardMaterial({
+        color: 0x7d898f,
+        roughness: 0.36,
+        metalness: 0.78,
+        flatShading: true
+      }),
+      steelDark: new THREE.MeshStandardMaterial({
+        color: 0x39464d,
+        roughness: 0.43,
+        metalness: 0.72,
+        flatShading: true
+      }),
+      chrome: new THREE.MeshStandardMaterial({
+        color: 0xd7e0e4,
+        roughness: 0.2,
+        metalness: 0.9,
+        flatShading: true
+      }),
+      orange: new THREE.MeshStandardMaterial({
+        color: 0xff681c,
+        roughness: 0.44,
+        metalness: 0.16,
+        flatShading: true
+      }),
+      red: new THREE.MeshStandardMaterial({
+        color: 0xc9281f,
+        roughness: 0.48,
+        metalness: 0.12,
+        flatShading: true
+      }),
+      lens: new THREE.MeshStandardMaterial({
+        color: 0xff9d25,
+        emissive: 0xff4b00,
+        emissiveIntensity: 0.45,
+        roughness: 0.28,
+        metalness: 0.05,
+        flatShading: true
+      })
+    };
+
+    // ------------------------------------------------------------
+    // Geometry helpers
+    // ------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "Compact_Industrial_Drill_Press";
+    scene.add(asset);
+
+    function addMesh(geometry, material, position, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(size, position, material, parent = asset) {
+      return addMesh(
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        material,
+        position,
+        parent
+      );
+    }
+
+    function addCylinder(
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      segments = 12,
+      parent = asset
+    ) {
+      return addMesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments,
+          1,
+          false
+        ),
+        material,
+        position,
+        parent
+      );
+    }
+
+    function addBeam(start, end, width, depth, material, parent = asset) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const midpoint = a.clone().add(b).multiplyScalar(0.5);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const beam = addBox(
+        [width, length, depth],
+        [midpoint.x, midpoint.y, midpoint.z],
+        material,
+        parent
+      );
+
+      beam.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return beam;
+    }
+
+    // ------------------------------------------------------------
+    // Chassis
+    // ------------------------------------------------------------
+
+    // Lower black skid rails
+    addBox([4.65, 0.18, 0.22], [0, 0.37, -0.88], materials.black);
+    addBox([4.65, 0.18, 0.22], [0, 0.37, 0.88], materials.black);
+
+    // Main yellow frame
+    addBox([4.35, 0.46, 2.15], [0, 0.73, 0], materials.yellow);
+
+    // Deck plate
+    addBox([4.05, 0.18, 1.98], [0, 1.04, 0], materials.yellowDark);
+
+    // Slightly raised deck insert
+    addBox([2.95, 0.035, 1.36], [0, 1.15, 0.05], materials.yellow);
+
+    // Front and rear bumpers
+    addBox([4.5, 0.25, 0.18], [0, 0.66, 1.13], materials.black);
+    addBox([4.45, 0.22, 0.18], [0, 0.65, -1.12], materials.black);
+
+    // Front hazard panel
+    addBox([1.42, 0.23, 0.035], [-0.55, 0.72, 1.125], materials.yellowLight);
+
+    // Black diagonal safety stripes
+    for (let i = 0; i < 6; i++) {
+      const stripe = addBox(
+        [0.095, 0.29, 0.045],
+        [-1.12 + i * 0.235, 0.72, 1.15],
+        materials.black
+      );
+      stripe.rotation.z = -0.55;
+    }
+
+    // Small side hazard panel
+    addBox([0.035, 0.23, 0.72], [2.19, 0.73, -0.18], materials.yellowLight);
+
+    // ------------------------------------------------------------
+    // Wheels
+    // ------------------------------------------------------------
+
+    const wheelPositions = [
+      [-1.78, -0.94],
+      [-1.78, 0.94],
+      [1.78, -0.94],
+      [1.78, 0.94]
+    ];
+
+    for (const [x, z] of wheelPositions) {
+      const tire = addMesh(
+        new THREE.TorusGeometry(0.31, 0.125, 8, 14),
+        materials.rubber,
+        [x, 0.48, z]
+      );
+      tire.rotation.y = Math.PI / 2;
+
+      const hub = addCylinder(
+        0.17,
+        0.17,
+        0.34,
+        [x, 0.48, z],
+        materials.steelDark,
+        12
+      );
+      hub.rotation.z = Math.PI / 2;
+
+      const hubCap = addCylinder(
+        0.085,
+        0.085,
+        0.37,
+        [x, 0.48, z],
+        materials.yellowDark,
+        10
+      );
+      hubCap.rotation.z = Math.PI / 2;
+    }
+
+    // ------------------------------------------------------------
+    // Rear mast
+    // ------------------------------------------------------------
+
+    const mastZ = -0.68;
+
+    // Mast uprights
+    addBox([0.26, 3.18, 0.32], [-1.25, 2.7, mastZ], materials.yellow);
+    addBox([0.26, 3.18, 0.32], [1.25, 2.7, mastZ], materials.yellow);
+
+    // Dark inner rails
+    addBox([0.14, 2.9, 0.35], [-1.25, 2.68, mastZ + 0.19], materials.steelDark);
+    addBox([0.14, 2.9, 0.35], [1.25, 2.68, mastZ + 0.19], materials.steelDark);
+
+    // Top crossbeam and braces
+    addBox([2.95, 0.34, 0.42], [0, 4.34, mastZ], materials.yellow);
+    addBox([2.75, 0.16, 0.32], [0, 4.14, mastZ + 0.12], materials.yellowDark);
+
+    // Rear X-bracing
+    addBeam(
+      [-1.16, 1.18, mastZ - 0.22],
+      [1.16, 4.05, mastZ - 0.22],
+      0.09,
+      0.09,
+      materials.steelDark
+    );
+    addBeam(
+      [1.16, 1.18, mastZ - 0.22],
+      [-1.16, 4.05, mastZ - 0.22],
+      0.09,
+      0.09,
+      materials.steelDark
+    );
+
+    // Mast foot plates
+    for (const x of [-1.25, 1.25]) {
+      addBox([0.52, 0.13, 0.64], [x, 1.19, mastZ], materials.steelDark);
+    }
+
+    // ------------------------------------------------------------
+    // Top motor, beacon, and counterweight
+    // ------------------------------------------------------------
+
+    const motor = addCylinder(
+      0.34,
+      0.34,
+      1.3,
+      [0, 4.22, -0.37],
+      materials.black,
+      12
+    );
+    motor.rotation.z = Math.PI / 2;
+
+    for (const x of [-0.68, 0.68]) {
+      const cap = addCylinder(
+        0.36,
+        0.36,
+        0.12,
+        [x, 4.22, -0.37],
+        materials.yellowDark,
+        12
+      );
+      cap.rotation.z = Math.PI / 2;
+    }
+
+    // Motor cooling bands
+    for (const x of [-0.38, 0, 0.38]) {
+      const band = addCylinder(
+        0.355,
+        0.355,
+        0.065,
+        [x, 4.22, -0.37],
+        materials.steelDark,
+        12
+      );
+      band.rotation.z = Math.PI / 2;
+    }
+
+    // Beacon base and lens
+    addCylinder(
+      0.15,
+      0.15,
+      0.12,
+      [-1.02, 4.57, mastZ],
+      materials.black,
+      10
+    );
+    addCylinder(
+      0.115,
+      0.13,
+      0.2,
+      [-1.02, 4.72, mastZ],
+      materials.lens,
+      10
+    );
+
+    // Counterweight
+    addBox([0.55, 0.5, 0.62], [1.02, 4.18, mastZ], materials.yellowDark);
+    addBox([0.42, 0.12, 0.7], [1.02, 4.48, mastZ], materials.black);
+
+    // ------------------------------------------------------------
+    // Drill carriage
+    // ------------------------------------------------------------
+
+    const drillZ = 0.46;
+
+    // Main carriage body
+    addBox([1.12, 0.68, 0.7], [0, 2.63, drillZ], materials.steelDark);
+    addBox([1.22, 0.17, 0.8], [0, 2.98, drillZ], materials.yellow);
+
+    // Yellow carriage side plates
+    addBox([0.14, 0.92, 0.78], [-0.63, 2.61, drillZ - 0.02], materials.yellow);
+    addBox([0.14, 0.92, 0.78], [0.63, 2.61, drillZ - 0.02], materials.yellow);
+
+    // Upper bearing housing
+    addCylinder(
+      0.24,
+      0.24,
+      0.28,
+      [0, 3.22, drillZ],
+      materials.yellowDark,
+      12
+    );
+    addCylinder(
+      0.14,
+      0.14,
+      0.34,
+      [0, 3.28, drillZ],
+      materials.steelDark,
+      12
+    );
+
+    // Clamp handwheel on the right
+    const handwheel = addMesh(
+      new THREE.TorusGeometry(0.28, 0.055, 6, 12),
+      materials.orange,
+      [0.87, 2.61, drillZ - 0.02]
+    );
+    handwheel.rotation.y = Math.PI / 2;
+
+    const knob = addCylinder(
+      0.085,
+      0.085,
+      0.16,
+      [0.87, 2.61, drillZ - 0.02],
+      materials.black,
+      10
+    );
+    knob.rotation.z = Math.PI / 2;
+
+    // Small red lever
+    addBox([0.08, 0.55, 0.08], [0.68, 2.95, 0.18], materials.red);
+    addCylinder(
+      0.09,
+      0.09,
+      0.12,
+      [0.68, 3.23, 0.18],
+      materials.black,
+      10
+    );
+
+    // ------------------------------------------------------------
+    // Hydraulic cylinder
+    // ------------------------------------------------------------
+
+    const cylinderX = 1.12;
+    const cylinderZ = 0.58;
+
+    addCylinder(
+      0.2,
+      0.2,
+      0.98,
+      [cylinderX, 2.88, cylinderZ],
+      materials.yellow,
+      12
+    );
+
+    addCylinder(
+      0.225,
+      0.225,
+      0.13,
+      [cylinderX, 3.4, cylinderZ],
+      materials.steelDark,
+      12
+    );
+
+    addCylinder(
+      0.225,
+      0.225,
+      0.13,
+      [cylinderX, 2.37, cylinderZ],
+      materials.steelDark,
+      12
+    );
+
+    // Chrome piston rod
+    addCylinder(
+      0.09,
+      0.09,
+      0.65,
+      [cylinderX, 2.08, cylinderZ],
+      materials.chrome,
+      12
+    );
+
+    // Cylinder mounting bracket
+    addBox([0.48, 0.18, 0.48], [cylinderX, 3.52, cylinderZ], materials.steelDark);
+
+    // Link to the carriage
+    addBeam(
+      [cylinderX, 2.3, cylinderZ],
+      [0.79, 2.38, drillZ],
+      0.09,
+      0.09,
+      materials.steel
+    );
+
+    // Hydraulic hoses
+    const hoseCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-0.35, 4.18, -0.55),
+      new THREE.Vector3(-0.88, 3.75, -0.78),
+      new THREE.Vector3(-1.12, 3.05, -0.72),
+      new THREE.Vector3(-1.08, 2.55, -0.35),
+      new THREE.Vector3(-0.85, 2.35, 0.15)
+    ]);
+
+    addMesh(
+      new THREE.TubeGeometry(hoseCurve, 20, 0.035, 6, false),
+      materials.rubber,
+      [0, 0, 0]
+    );
+
+    const secondaryHose = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(0.35, 4.14, -0.58),
+      new THREE.Vector3(0.92, 3.7, -0.75),
+      new THREE.Vector3(1.18, 3.02, -0.68),
+      new THREE.Vector3(1.13, 2.52, -0.25)
+    ]);
+
+    addMesh(
+      new THREE.TubeGeometry(secondaryHose, 18, 0.028, 6, false),
+      materials.black,
+      [0, 0, 0]
+    );
+
+    // ------------------------------------------------------------
+    // Drill shaft and helical flight
+    // ------------------------------------------------------------
+
+    const drillCenterZ = 0.46;
+
+    // Drill shaft
+    addCylinder(
+      0.065,
+      0.065,
+      1.92,
+      [0, 2.25, drillCenterZ],
+      materials.chrome,
+      10
+    );
+
+    // Upper shaft collar
+    addCylinder(
+      0.13,
+      0.13,
+      0.19,
+      [0, 3.05, drillCenterZ],
+      materials.steelDark,
+      10
+    );
+
+    // Tapered bit
+    addCylinder(
+      0.145,
+      0.0,
+      0.56,
+      [0, 0.72, drillCenterZ],
+      materials.steelDark,
+      10
+    );
+
+    // Helical low-poly flight
+    function createScrewFlight() {
+      const radialSegments = 20;
+      const ringCount = 6;
+      const turns = 4.25;
+      const positions = [];
+      const indices = [];
+
+      for (let ring = 0; ring <= ringCount; ring++) {
+        const t = ring / ringCount;
+        const y = 1.04 - t * 0.43;
+        const radius = 0.145 + t * 0.19;
+
+        for (let segment = 0; segment <= radialSegments; segment++) {
+          const angle =
+            (segment / radialSegments) * Math.PI * 2 * turns + t * Math.PI * 2;
+
+          positions.push(
+            Math.cos(angle) * radius,
+            y,
+            Math.sin(angle) * radius
+          );
+        }
+      }
+
+      for (let ring = 0; ring < ringCount; ring++) {
+        for (let segment = 0; segment < radialSegments; segment++) {
+          const a = ring * (radialSegments + 1) + segment;
+          const b = a + radialSegments + 1;
+
+          indices.push(a, b, a + 1);
+          indices.push(b, b + 1, a + 1);
+        }
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      const material = materials.steelDark.clone();
+      material.side = THREE.DoubleSide;
+      return geometry;
+    }
+
+    addMesh(
+      createScrewFlight(),
+      materials.steel,
+      [0, 0, drillCenterZ]
+    );
+
+    // Small cutting tip
+    addBox([0.29, 0.08, 0.12], [0, 0.46, drillCenterZ], materials.chrome);
+
+    // ------------------------------------------------------------
+    // Work lights
+    // ------------------------------------------------------------
+
+    for (const x of [-1.45, 1.45]) {
+      addBox([0.34, 0.23, 0.15], [x, 1.29, 0.98], materials.black);
+      addBox([0.25, 0.14, 0.035], [x, 1.29, 1.07], materials.lens);
+    }
+
+    // ------------------------------------------------------------
+    // Export GLB
+    // ------------------------------------------------------------
+
+    const exportButton = document.getElementById("export");
+    const status = document.getElementById("status");
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Exporting…";
+
+      // Export only the asset group; the floor, grid, camera, and lights
+      // are intentionally excluded.
+      asset.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "compact-industrial-drill-press.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          status.textContent = "GLB downloaded";
+          exportButton.disabled = false;
+
+          setTimeout(() => {
+            status.textContent = "Ready to export";
+          }, 2500);
+        },
+        (error) => {
+          console.error(error);
+          status.textContent = "Export failed";
+          exportButton.disabled = false;
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          includeCustomExtensions: true
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Resize and render loop
+    // ------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

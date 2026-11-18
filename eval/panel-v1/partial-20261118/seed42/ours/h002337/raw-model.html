@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Truck-Mounted Irrigation Unit</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #111820;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 18px;
+      left: 18px;
+      z-index: 10;
+      min-width: 280px;
+      padding: 16px 18px;
+      color: #eef5ff;
+      background: rgba(16, 24, 34, 0.86);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+    }
+
+    .panel h1 {
+      margin: 0 0 5px;
+      font-size: 18px;
+      letter-spacing: 0.02em;
+    }
+
+    .panel p {
+      margin: 0 0 14px;
+      color: #aebdca;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px 15px;
+      border: 0;
+      border-radius: 8px;
+      color: #102018;
+      background: #84d7a6;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    button:hover {
+      background: #a1e8b8;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 9px;
+      color: #91a6bd;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 10;
+      padding: 8px 12px;
+      color: #c6d5e1;
+      background: rgba(16, 24, 34, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 10px;
+        left: 10px;
+        min-width: 0;
+        max-width: calc(100vw - 20px);
+        padding: 12px 14px;
+      }
+
+      .hint {
+        right: 10px;
+        bottom: 10px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div class="panel">
+    <h1>Truck-Mounted Irrigation Unit</h1>
+    <p>
+      Low-poly water tanker, pump assembly, irrigation boom, hydraulic cylinders,
+      tires, lights, and rear towing hardware.
+    </p>
+    <button id="exportBtn">Export GLB</button>
+    <div id="status">Ready to export.</div>
+  </div>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // ------------------------------------------------------------
+    // Scene
+    // ------------------------------------------------------------
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111820);
+    scene.fog = new THREE.Fog(0x111820, 14, 30);
+
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(7.8, 5.3, 8.6);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    document.getElementById("viewport").appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(-0.1, 1.35, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 5;
+    controls.maxDistance = 22;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const hemi = new THREE.HemisphereLight(0xb9d8ff, 0x35404a, 2.1);
+    scene.add(hemi);
+
+    const key = new THREE.DirectionalLight(0xfff2d6, 3.4);
+    key.position.set(6, 10, 7);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.camera.left = -9;
+    key.shadow.camera.right = 9;
+    key.shadow.camera.top = 9;
+    key.shadow.camera.bottom = -9;
+    key.shadow.camera.near = 1;
+    key.shadow.camera.far = 30;
+    key.shadow.bias = -0.0004;
+    scene.add(key);
+
+    const fill = new THREE.DirectionalLight(0x87bfff, 1.2);
+    fill.position.set(-7, 5, -6);
+    scene.add(fill);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0x26323c,
+        roughness: 0.95,
+        metalness: 0.0,
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // Exported model is kept separate from the presentation scene.
+    const asset = new THREE.Group();
+    asset.name = "TruckMountedIrrigationUnit";
+    scene.add(asset);
+
+    // ------------------------------------------------------------
+    // Materials
+    // ------------------------------------------------------------
+    const material = (color, options = {}) =>
+      new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.68,
+        metalness: 0.18,
+        ...options,
+      });
+
+    const M = {
+      yellow: material(0xe8a90b, { roughness: 0.55, metalness: 0.28 }),
+      yellowDark: material(0xb87508, { roughness: 0.62, metalness: 0.25 }),
+      orange: material(0xf17824, { roughness: 0.55, metalness: 0.2 }),
+      blue: material(0x147ca3, { roughness: 0.5, metalness: 0.35 }),
+      teal: material(0x248d83, { roughness: 0.56, metalness: 0.25 }),
+      dark: material(0x252d32, { roughness: 0.72, metalness: 0.38 }),
+      darkLight: material(0x505b61, { roughness: 0.55, metalness: 0.55 }),
+      rubber: material(0x111517, { roughness: 0.9, metalness: 0.02 }),
+      metal: material(0x9ca6aa, { roughness: 0.42, metalness: 0.72 }),
+      steel: material(0x596369, { roughness: 0.48, metalness: 0.62 }),
+      glass: material(0x173c52, {
+        roughness: 0.18,
+        metalness: 0.35,
+        transparent: true,
+        opacity: 0.92,
+      }),
+      white: material(0xfff4d5, {
+        roughness: 0.25,
+        emissive: 0xffd16a,
+        emissiveIntensity: 1.1,
+      }),
+      red: material(0xb62525, {
+        roughness: 0.35,
+        emissive: 0x6d0808,
+        emissiveIntensity: 0.75,
+      }),
+      amber: material(0xff8b12, {
+        roughness: 0.25,
+        emissive: 0xff6200,
+        emissiveIntensity: 1.35,
+      }),
+      water: material(0x2c7186, {
+        roughness: 0.4,
+        metalness: 0.35,
+      }),
+    };
+
+    // ------------------------------------------------------------
+    // Geometry helpers
+    // ------------------------------------------------------------
+    function mesh(geometry, mat, name, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function box(name, size, position, mat, parent = asset) {
+      const mesh = mesh(
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        mat,
+        name,
+        parent
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+      return mesh;
+    }
+
+    function cylinder(
+      name,
+      radius,
+      height,
+      position,
+      mat,
+      segments = 12,
+      axis = "y",
+      parent = asset
+    ) {
+      const geometry = new THREE.CylinderGeometry(
+        radius,
+        radius,
+        height,
+        segments
+      );
+
+      if (axis === "x") geometry.rotateZ(Math.PI / 2);
+      if (axis === "z") geometry.rotateX(Math.PI / 2);
+
+      const mesh = mesh(geometry, mat, name, parent);
+      mesh.position.set(position[0], position[1], position[2]);
+      return mesh;
+    }
+
+    function beamBetween(
+      name,
+      start,
+      end,
+      width,
+      height,
+      mat,
+      parent = asset
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+      const midpoint = a.clone().add(b).multiplyScalar(0.5);
+
+      const mesh = mesh(
+        new THREE.BoxGeometry(width, length, height),
+        mat,
+        name,
+        parent
+      );
+      mesh.position.copy(midpoint);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    function cylinderBetween(
+      name,
+      start,
+      end,
+      radius,
+      mat,
+      segments = 10,
+      parent = asset
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+      const midpoint = a.clone().add(b).multiplyScalar(0.5);
+
+      const mesh = mesh(
+        new THREE.CylinderGeometry(
+          radius,
+          radius,
+          length,
+          segments
+        ),
+        mat,
+        name,
+        parent
+      );
+      mesh.position.copy(midpoint);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    function hydraulicCylinder(name, start, end, radius, parent = asset) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const m = a.clone().lerp(b, 0.62);
+
+      cylinderBetween(
+        `${name}_Barrel`,
+        a.toArray(),
+        m.toArray(),
+        radius,
+        M.dark,
+        10,
+        parent
+      );
+
+      cylinderBetween(
+        `${name}_Rod`,
+        m.toArray(),
+        b.toArray(),
+        radius * 0.46,
+        M.metal,
+        10,
+        parent
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Chassis
+    // ------------------------------------------------------------
+    box(
+      "MainChassis",
+      [6.2, 0.34, 2.45],
+      [0, 0.73, 0],
+      M.dark
+    );
+
+    box(
+      "FrontBumper",
+      [0.26, 0.42, 2.65],
+      [3.12, 0.73, 0],
+      M.orange
+    );
+
+    box(
+      "RearBumper",
+      [0.22, 0.38, 2.55],
+      [-3.12, 0.73, 0],
+      M.dark
+    );
+
+    box(
+      "ChassisSideRail",
+      [5.7, 0.12, 0.12],
+      [0, 0.94, 1.15],
+      M.steel
+    );
+
+    box(
+      "ChassisSideRail",
+      [5.7, 0.12, 0.12],
+      [0, 0.94, -1.15],
+      M.steel
+    );
+
+    // ------------------------------------------------------------
+    // Wheels
+    // ------------------------------------------------------------
+    function createWheel(name, axleX, side) {
+      const group = new THREE.Group();
+      group.name = name;
+      group.position.set(axleX, 0.72, side * 1.43);
+      asset.add(group);
+
+      const tire = cylinder(
+        `${name}_Tire`,
+        0.68,
+        0.43,
+        [0, 0, 0],
+        M.rubber,
+        14,
+        "z",
+        group
+      );
+      tire.rotation.x = Math.PI / 2;
+
+      const hub = cylinder(
+        `${name}_Hub`,
+        0.33,
+        0.47,
+        [0, 0, 0],
+        M.orange,
+        12,
+        "z",
+        group
+      );
+      hub.rotation.x = Math.PI / 2;
+
+      const cap = cylinder(
+        `${name}_HubCap`,
+        0.2,
+        0.08,
+        [0, 0, side * 0.25],
+        M.yellow,
+        12,
+        "z",
+        group
+      );
+      cap.rotation.x = Math.PI / 2;
+
+      for (let i = 0; i < 10; i++) {
+        const angle = (i / 10) * Math.PI * 2 + 0.12;
+        const tread = box(
+          `${name}_Tread_${i}`,
+          [0.1, 0.28, 0.48],
+          [Math.cos(angle) * 0.68, Math.sin(angle) * 0.68, 0],
+          M.rubber,
+          group
+        );
+        tread.rotation.z = angle;
+      }
+    }
+
+    const axlePositions = [-1.85, 0, 1.85];
+
+    axlePositions.forEach((x, axleIndex) => {
+      createWheel(
+        `Wheel_${axleIndex + 1}_Left`,
+        x,
+        1
+      );
+      createWheel(
+        `Wheel_${axleIndex + 1}_Right`,
+        x,
+        -1
+      );
+    });
+
+    axlePositions.forEach((x, axleIndex) => {
+      box(
+        `Fender_${axleIndex + 1}_Left`,
+        [1.72, 0.16, 0.18],
+        [x, 1.43, 1.48],
+        M.yellow
+      );
+      box(
+        `Fender_${axleIndex + 1}_Right`,
+        [1.72, 0.16, 0.18],
+        [x, 1.43, -1.48],
+        M.yellow
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Cab
+    // ------------------------------------------------------------
+    box(
+      "CabLowerBody",
+      [1.68, 0.64, 2.43],
+      [1.45, 1.19, 0],
+      M.yellow
+    );
+
+    box(
+      "CabShell",
+      [1.56, 1.67, 2.35],
+      [1.45, 2.16, 0],
+      M.yellow
+    );
+
+    box(
+      "CabRoof",
+      [1.73, 0.16, 2.52],
+      [1.45, 2.98, 0],
+      M.yellowDark
+    );
+
+    box(
+      "CabFrontWindow",
+      [0.035, 1.18, 1.9],
+      [2.235, 2.23, 0],
+      M.glass
+    );
+
+    for (const side of [-1, 1]) {
+      box(
+        `CabSideWindow_${side}`,
+        [1.28, 1.18, 0.035],
+        [1.45, 2.23, side * 1.19],
+        M.glass
+      );
+
+      box(
+        `CabRearWindow_${side}`,
+        [0.035, 1.08, 1.82],
+        [0.695, 2.25, side * 0.75],
+        M.glass
+      );
+
+      for (const x of [0.72, 2.12]) {
+        box(
+          `CabPillar_${side}_${x}`,
+          [0.075, 1.18, 0.075],
+          [x, 2.23, side * 1.19],
+          M.yellowDark
+        );
+      }
+
+      box(
+        `CabDoorHandle_${side}`,
+        [0.26, 0.07, 0.08],
+        [1.27, 1.78, side * 1.24],
+        M.dark
+      );
+
+      box(
+        `CabOrangeStripe_${side}`,
+        [1.18, 0.18, 0.035],
+        [1.45, 1.34, side * 1.195],
+        M.orange
+      );
+
+      box(
+        `CabFrontFender_${side}`,
+        [1.55, 0.18, 0.52],
+        [1.68, 1.55, side * 1.2],
+        M.yellowDark
+      );
+
+      // Mirror arms and mirrors.
+      beamBetween(
+        `MirrorArm_${side}`,
+        [2.17, 2.45, side * 1.2],
+        [2.35, 2.58, side * 1.56],
+        0.045,
+        0.045,
+        M.dark
+      );
+
+      box(
+        `Mirror_${side}`,
+        [0.08, 0.28, 0.18],
+        [2.35, 2.57, side * 1.56],
+        M.dark
+      );
+
+      // Headlights.
+      box(
+        `FrontLamp_${side}`,
+        [0.07, 0.24, 0.32],
+        [2.34, 1.36, side * 0.83],
+        M.white
+      );
+    }
+
+    box(
+      "CabFrontGrille",
+      [0.055, 0.3, 1.05],
+      [2.34, 1.05, 0],
+      M.dark
+    );
+
+    box(
+      "CabRearLightsLeft",
+      [0.07, 0.22, 0.25],
+      [-3.26, 1.35, 0.91],
+      M.red
+    );
+
+    box(
+      "CabRearLightsRight",
+      [0.07, 0.22, 0.25],
+      [-3.26, 1.35, -0.91],
+      M.red
+    );
+
+    // Exhaust stack.
+    cylinder(
+      "ExhaustStack",
+      0.075,
+      1.1,
+      [1.04, 2.56, -0.83],
+      M.dark,
+      10
+    );
+
+    cylinder(
+      "ExhaustCap",
+      0.11,
+      0.12,
+      [1.04, 3.15, -0.83],
+      M.steel,
+      10
+    );
+
+    // Roof ventilation and warning beacons.
+    for (let i = 0; i < 3; i++) {
+      box(
+        `RoofVent_${i}`,
+        [0.48, 0.12, 0.42],
+        [0.95 + i * 0.45, 3.11, -0.48],
+        M.steel
+      );
+    }
+
+    for (const side of [-1, 1]) {
+      cylinder(
+        `Beacon_${side}`,
+        0.11,
+        0.16,
+        [1.45, 3.15, side * 0.9],
+        M.amber,
+        10
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Water tanker
+    // ------------------------------------------------------------
+    cylinder(
+      "WaterTank",
+      0.74,
+      2.6,
+      [-1.7, 1.45, 0],
+      M.blue,
+      14,
+      "x"
+    );
+
+    cylinder(
+      "TankFrontEndCap",
+      0.74,
+      0.08,
+      [-3.02, 1.45, 0],
+      M.teal,
+      14,
+      "x"
+    );
+
+    cylinder(
+      "TankRearEndCap",
+      0.74,
+      0.08,
+      [-0.38, 1.45, 0],
+      M.teal,
+      14,
+      "x"
+    );
+
+    for (const x of [-2.72, -0.78]) {
+      const band = mesh(
+        new THREE.TorusGeometry(0.755, 0.035, 6, 18),
+        M.steel,
+        `TankBand_${x}`
+      );
+      band.position.set(x, 1.45, 0);
+      band.rotation.y = Math.PI / 2;
+    }
+
+    box(
+      "TankCradleFront",
+      [0.25, 0.18, 1.85],
+      [-2.3, 0.91, 0],
+      M.dark
+    );
+
+    box(
+      "TankCradleRear",
+      [0.25, 0.18, 1.85],
+      [-0.7, 0.91, 0],
+      M.dark
+    );
+
+    cylinder(
+      "TankAccessHatch",
+      0.18,
+      0.13,
+      [-1.75, 2.24, 0.28],
+      M.steel,
+      12
+    );
+
+    cylinder(
+      "TankHatchLid",
+      0.2,
+      0.05,
+      [-1.75, 2.33, 0.28],
+      M.dark,
+      12
+    );
+
+    // Tank filler cap.
+    cylinder(
+      "TankFillerNeck",
+      0.16,
+      0.22,
+      [-0.95, 2.2, -0.28],
+      M.dark,
+      12
+    );
+
+    cylinder(
+      "TankFillerCap",
+      0.2,
+      0.07,
+      [-0.95, 2.34, -0.28],
+      M.orange,
+      12
+    );
+
+    // ------------------------------------------------------------
+    // Pump and manifold
+    // ------------------------------------------------------------
+    cylinder(
+      "PumpMotor",
+      0.36,
+      0.9,
+      [-3.25, 1.45, 0],
+      M.orange,
+      12,
+      "x"
+    );
+
+    cylinder(
+      "PumpMotorEndCap",
+      0.36,
+      0.08,
+      [-3.72, 1.45, 0],
+      M.dark,
+      12,
+      "x"
+    );
+
+    cylinder(
+      "PumpVolute",
+      0.37,
+      0.25,
+      [-3.75, 1.45, 0],
+      M.teal,
+      12,
+      "x"
+    );
+
+    cylinder(
+      "PumpDischarge",
+      0.16,
+      0.75,
+      [-3.25, 2.03, 0],
+      M.blue,
+      12
+    );
+
+    cylinder(
+      "ManifoldVertical",
+      0.12,
+      0.65,
+      [-3.25, 2.03, 0],
+      M.blue,
+      12
+    );
+
+    cylinder(
+      "ManifoldHorizontal",
+      0.12,
+      1.05,
+      [-2.9, 2.47, 0],
+      M.blue,
+      12,
+      "x"
+    );
+
+    cylinder(
+      "ManifoldDownPipe",
+      0.12,
+      0.42,
+      [-3.25, 1.78, 0],
+      M.blue,
+      12
+    );
+
+    cylinder(
+      "ValveStem",
+      0.04,
+      0.25,
+      [-3.25, 2.72, 0],
+      M.steel,
+      10
+    );
+
+    const valveWheel = mesh(
+      new THREE.TorusGeometry(0.16, 0.035, 6, 14),
+      M.orange,
+      "ValveWheel"
+    );
+    valveWheel.position.set(-3.25, 2.9, 0);
+
+    const valveSpoke = box(
+      "ValveSpoke",
+      [0.3, 0.035, 0.035],
+      [-3.25, 2.9, 0],
+      M.orange
+    );
+    valveSpoke.rotation.z = Math.PI / 4;
+
+    box(
+      "PumpControlBox",
+      [0.5, 0.35, 0.36],
+      [-0.25, 1.2, 0.78],
+      M.orange
+    );
+
+    box(
+      "PumpControlDisplay",
+      [0.28, 0.15, 0.025],
+      [-0.25, 1.25, 0.975],
+      M.blue
+    );
+
+    // Pump hoses.
+    const hoseCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-3.25, 1.8, 0.22),
+      new THREE.Vector3(-2.9, 1.7, 0.45),
+      new THREE.Vector3(-2.35, 1.4, 0.58),
+      new THREE.Vector3(-1.85, 1.65, 0.52),
+    ]);
+
+    const hose = mesh(
+      new THREE.TubeGeometry(hoseCurve, 16, 0.035, 6, false),
+      M.black,
+      "PumpHose"
+    );
+    hose.castShadow = true;
+
+    // ------------------------------------------------------------
+    // Irrigation boom
+    // ------------------------------------------------------------
+    box(
+      "BoomPivotHousing",
+      [0.58, 0.48, 0.65],
+      [1.45, 2.05, 0],
+      M.yellow
+    );
+
+    const pivot = cylinder(
+      "BoomPivotPin",
+      0.23,
+      0.75,
+      [1.45, 2.05, 0],
+      M.orange,
+      12,
+      "z"
+    );
+    pivot.rotation.x = Math.PI / 2;
+
+    beamBetween(
+      "BoomLowerArm",
+      [1.45, 2.05, 0],
+      [-0.75, 2.05, 0],
+      0.19,
+      0.25,
+      M.yellow
+    );
+
+    beamBetween(
+      "BoomUpperArm",
+      [-0.75, 2.05, 0],
+      [-3.15, 2.05, 0],
+      0.14,
+      0.2,
+      M.yellowDark
+    );
+
+    box(
+      "BoomSafetyStripe",
+      [0.78, 0.14, 0.26],
+      [-2.17, 2.17, 0],
+      M.orange
+    );
+
+    box(
+      "SprinklerCrossbar",
+      [0.18, 0.18, 1.38],
+      [-3.15, 2.05, 0],
+      M.orange
+    );
+
+    for (const z of [-0.45, 0, 0.45]) {
+      cylinder(
+        `SprinklerRiser_${z}`,
+        0.055,
+        0.3,
+        [-3.15, 2.23, z],
+        M.steel,
+        10
+      );
+
+      cylinder(
+        `SprinklerNozzle_${z}`,
+        0.09,
+        0.13,
+        [-3.15, 2.41, z],
+        M.blue,
+        10
+      );
+
+      const cap = cylinder(
+        `SprinklerCap_${z}`,
+        0.065,
+        0.08,
+        [-3.15, 2.5, z],
+        M.dark,
+        10
+      );
+      cap.rotation.z = Math.PI / 2;
+    }
+
+    // Hydraulic lift cylinders.
+    hydraulicCylinder(
+      "LeftBoomCylinder",
+      [1.55, 1.02, 0.76],
+      [0.5, 2.05, 0.76],
+      0.09
+    );
+
+    hydraulicCylinder(
+      "RightBoomCylinder",
+      [1.55, 1.02, -0.76],
+      [0.5, 2.05, -0.76],
+      0.09
+    );
+
+    // ------------------------------------------------------------
+    // Rear safety rails, lights, and towing hardware
+    // ------------------------------------------------------------
+    for (const side of [-1, 1]) {
+      beamBetween(
+        `RearSafetyRail_${side}`,
+        [-3.12, 0.95, side * 1.05],
+        [-3.12, 2.22, side * 1.05],
+        0.055,
+        0.055,
+        M.orange
+      );
+
+      beamBetween(
+        `RearSafetyRailCross_${side}`,
+        [-3.12, 2.22, side * 1.05],
+        [-2.45, 2.22, side * 1.05],
+        0.055,
+        0.055,
+        M.orange
+      );
+    }
+
+    cylinder(
+      "TowHitchBar",
+      0.1,
+      0.55,
+      [-3.67, 0.72, 0],
+      M.orange,
+      10,
+      "z"
+    );
+
+    cylinder(
+      "TowHitchPin",
+      0.065,
+      0.2,
+      [-3.93, 0.72, 0],
+      M.steel,
+      10,
+      "z"
+    );
+
+    box(
+      "RearRedPanelLeft",
+      [0.05, 0.28, 0.18],
+      [-3.24, 1.65, 0.82],
+      M.red
+    );
+
+    box(
+      "RearRedPanelRight",
+      [0.05, 0.28, 0.18],
+      [-3.24, 1.65, -0.82],
+      M.red
+    );
+
+    // Small side steps.
+    for (const side of [-1, 1]) {
+      box(
+        `CabStep_${side}`,
+        [0.58, 0.1, 0.38],
+        [1.3, 0.48, side * 1.35],
+        M.steel
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Export
+    // ------------------------------------------------------------
+    const exportButton = document.getElementById("exportBtn");
+    const status = document.getElementById("status");
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB...";
+
+      asset.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary",
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "truck-mounted-irrigation-unit.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "GLB exported successfully.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Render loop
+    // ------------------------------------------------------------
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+  </script>
+</body>
+</html>
