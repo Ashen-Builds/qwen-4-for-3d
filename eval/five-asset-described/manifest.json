@@ -1,0 +1,27 @@
+[
+ {
+  "id": "1-lamp",
+  "kind": "concept",
+  "category": "prop"
+ },
+ {
+  "id": "2-police-officer",
+  "kind": "concept",
+  "category": "character"
+ },
+ {
+  "id": "3-dragon",
+  "kind": "concept",
+  "category": "character"
+ },
+ {
+  "id": "4-green-van",
+  "kind": "concept",
+  "category": "prop"
+ },
+ {
+  "id": "5-skyscraper",
+  "kind": "concept",
+  "category": "prop"
+ }
+]

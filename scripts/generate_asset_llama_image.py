@@ -1,4 +1,8 @@
-"""Image-to-asset generation: one task-owned llama.cpp process per image, then exit."""
+"""Asset generation: one task-owned llama.cpp process per request, then exit.
+
+With --image the request is the image plus a short instruction; without it the
+prompt file is the whole request (a written description).
+"""
 
 import argparse
 import hashlib
@@ -13,10 +17,10 @@ import time
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--model", required=True, help="GGUF text model")
-    p.add_argument("--mmproj", required=True, help="GGUF vision projector")
-    p.add_argument("--image", required=True, type=Path)
+    p.add_argument("--mmproj", help="GGUF vision projector; needed with --image")
+    p.add_argument("--image", type=Path, help="Reference image; omit for a text-only request")
     p.add_argument("--out", type=Path, required=True)
-    p.add_argument("--prompt", required=True, help="File holding the user instruction that accompanies the image")
+    p.add_argument("--prompt", required=True, help="File holding the user request (the instruction that accompanies the image, or the full description)")
     p.add_argument("--system", required=True, help="File holding the system prompt")
     p.add_argument("--binary", default="llama-cli")
     p.add_argument("--predict", type=int, default=32768)
@@ -29,16 +33,19 @@ def main():
     if args.out.exists() and any((args.out / n).exists() for n in ["metrics.json", "response.txt"]):
         raise SystemExit("Preserve existing run evidence; choose a new output directory")
     args.out.mkdir(parents=True, exist_ok=True)
-    command = [args.binary, "--model", args.model, "--mmproj", args.mmproj, "--image", str(args.image),
+    if args.image and not args.mmproj:
+        raise SystemExit("--image needs --mmproj")
+    media = ["--mmproj", args.mmproj, "--image", str(args.image)] if args.image else []
+    command = [args.binary, "--model", args.model, *media,
                "--gpu-layers", "99", "--flash-attn", "on",
                "--ctx-size", "65536", "--batch-size", "1024", "--ubatch-size", "512",
                "--threads", "8", "--temp", "0.8", "--top-k", "40", "--top-p", "0.95",
                "--min-p", "0", "--repeat-penalty", "1", "--seed", str(args.seed), "--predict", str(args.predict),
                "--system-prompt-file", args.system, "--file", args.prompt,
                "--single-turn", "--no-display-prompt", "--reasoning", "on"]
-    image_bytes = args.image.read_bytes()
     (args.out / "input.json").write_text(json.dumps({
-        "image": args.image.name, "image_sha256": hashlib.sha256(image_bytes).hexdigest(),
+        "image": args.image.name if args.image else None,
+        "image_sha256": hashlib.sha256(args.image.read_bytes()).hexdigest() if args.image else None,
         "user": Path(args.prompt).read_text().strip(), "system": Path(args.system).read_text().strip(),
         "command": command}, indent=2) + "\n")
     started = time.monotonic()
@@ -57,11 +64,11 @@ def main():
     if complete:
         (args.out / "generated.html").write_text(candidate[:end + len("</html>")].strip() + "\n")
     log = (args.out / "runtime.log").read_text(errors="replace")
-    metrics = {"backend": "llama.cpp", "model_file": Path(args.model).name, "mmproj_file": Path(args.mmproj).name,
+    metrics = {"backend": "llama.cpp", "model_file": Path(args.model).name, "mmproj_file": Path(args.mmproj).name if args.image else None,
                "elapsed_seconds": round(time.monotonic() - started, 2), "exit_code": code,
                "response_chars": len(raw), "complete_html": complete, "seed": args.seed,
                "thinking": True, "predict_cap": args.predict,
-               "image_loaded": "Loaded media from" in raw or "Loaded media from" in log}
+               "image_loaded": ("Loaded media from" in raw or "Loaded media from" in log) if args.image else None}
     (args.out / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     print(json.dumps(metrics), flush=True)
     raise SystemExit(code)

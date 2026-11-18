@@ -32,8 +32,11 @@ def main():
     p.add_argument("--llama", required=True)
     p.add_argument("--mmproj", required=True)
     p.add_argument("--kind", help="Only run manifest items of this kind")
+    p.add_argument("--arm-prompts", action="append", default=[],
+                   help="name=/dir of <id>.txt: that arm gets the written description instead of the image")
     args = p.parse_args()
     arms = [a.split("=", 1) for a in args.arm]
+    written = {k: Path(v) for k, v in (a.split("=", 1) for a in args.arm_prompts)}
     manifest = json.loads((args.panel / "manifest.json").read_text())
     items = [m for m in manifest if not args.kind or m["kind"] == args.kind]
     prompts = REPO / "eval/prompts/five-asset-20261117"
@@ -59,14 +62,17 @@ def main():
                             time.sleep(300)
                         run.parent.mkdir(parents=True, exist_ok=True)
                         say(f"seed{seed} {arm} {item['id']}: generating")
+                        if arm in written:
+                            request = ["--prompt", str(written[arm] / f"{item['id']}.txt")]
+                        else:
+                            request = ["--mmproj", args.mmproj, "--image", str(args.panel / "images" / f"{item['id']}.png"),
+                                       "--prompt", str(prompts / "image-instruction.txt")]
                         code = subprocess.run(
                             [str(SLOT), "capture", "--label", f"panel-{arm}-{item['id']}-s{seed}",
                              "--json", str(run.parent / f"{item['id']}-gpu.json"), "--",
                              "python3", str(REPO / "scripts/generate_asset_llama_image.py"),
-                             "--binary", args.llama, "--model", model, "--mmproj", args.mmproj,
-                             "--image", str(args.panel / "images" / f"{item['id']}.png"), "--out", str(run),
-                             "--prompt", str(prompts / "image-instruction.txt"), "--system", str(prompts / "system.txt"),
-                             "--seed", str(seed)],
+                             "--binary", args.llama, "--model", model, *request, "--out", str(run),
+                             "--system", str(prompts / "system.txt"), "--seed", str(seed)],
                             stdout=(run.parent / f"{item['id']}.log").open("w"), stderr=subprocess.STDOUT).returncode
                         if code == 75 or (code != 0 and not (run / "response.txt").exists()):
                             refused += 1
