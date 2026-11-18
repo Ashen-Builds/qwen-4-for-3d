@@ -1,6 +1,6 @@
 # Image-to-3D plan
 
-Written November 17, 2026, 13:50 EST, on branch `Astra`. This replaces the full-scene direction. Nothing here authorizes training; the owner starts each stage.
+Written November 17, 2026, 13:50 EST, on branch `Astra`; Stage 0 and the first training run finished November 18 (see the result link in the training log). This replaces the full-scene direction. Nothing here authorizes training; the owner starts each stage.
 
 ## Goal
 
@@ -25,10 +25,10 @@ Resume (both arms skip anything already recorded):
 
 ```sh
 cd ~/work/qwen-4-for-3d
-export FIVE_ASSET_LLAMA=/Users/midir/Documents/Codex/2026-11-16/hey-buddy-we-re-going-to/work/llama-native-build/bin/llama-cli
+export FIVE_ASSET_LLAMA=~/Documents/Codex/2026-11-16/hey-buddy-we-re-going-to/work/llama-native-build/bin/llama-cli
 export FIVE_ASSET_MMPROJ=$HOME/work/models-native/lmstudio-community--Qwen3.5-4B-GGUF/mmproj-Qwen3.5-4B-BF16.gguf
 scripts/run_five_asset_image_test.sh qwen-original $HOME/work/models-native/lmstudio-community--Qwen3.5-4B-GGUF/Qwen3.5-4B-Q8_0.gguf
-scripts/run_five_asset_image_test.sh ccore /Users/midir/Documents/Codex/2026-11-16/hey-buddy-we-re-going-to/work/models-native/ccore-q8/Qwen3.5-4B-GLB-3D-Coder-Q8_0.gguf
+scripts/run_five_asset_image_test.sh ccore ~/Documents/Codex/2026-11-16/hey-buddy-we-re-going-to/work/models-native/ccore-q8/Qwen3.5-4B-GLB-3D-Coder-Q8_0.gguf
 python3 scripts/build_five_asset_gallery.py --images eval/prompts/five-asset-20261117/images --outputs ~/work/outputs/five-asset-image-20261117 --arm "qwen-original=Original Qwen 3.5 4B" --arm "ccore=CCORE" --page ~/work/outputs/five-asset-image-20261117/index.html
 ```
 
@@ -49,13 +49,17 @@ Original Qwen takes about a minute per asset, CCORE about three. Gallery: `~/wor
 
 ## Training run log (owner started it with a session goal, November 17)
 
-- Trainer: `scripts/train_image_to_asset.py`. MLX with the `mlx-vlm` Qwen3.5 model (vision tower, M-RoPE positions and a chunked, differentiable gated-delta scan). Every language-model weight trains in float32 with Adafactor (relative step 1e-4, warmup 20); the vision tower is frozen. Gradient checkpointing per decoder layer. Runs as 30-minute `gpu_slot` segments with resumable checkpoints (`scripts/run_training_segments.sh`).
+- Trainer: `scripts/train_image_to_asset.py`. MLX with the `mlx-vlm` Qwen3.5 model (vision tower, M-RoPE positions and a chunked, differentiable gated-delta scan). Every language-model weight trains in float32 with Adafactor (relative step 1e-4, warmup 20); the vision tower is frozen. Gradient checkpointing per decoder layer. Runs as 30-minute `gpu_slot` segments with resumable checkpoints (`scripts/run_training_segments.sh`). Training environment: `uv venv` with `mlx==0.32.4 mlx-lm==0.32.2 mlx-vlm==0.8.0 pyarrow pillow safetensors numpy` at `~/work/envs/a3d`.
 - Measured cost: about 7 s for a 2,200-token step and 80 to 130 s for a 16,000 to 20,000-token step; peak 96 GB at 20,000 tokens. bfloat16 compute was tried and was not faster.
 - Finding: CCORE has memorized its training split (loss 0.04 to 0.13 even with an image prompt) and has not seen its validation split (loss about 1.0). So the full-length training examples come from the 392 validation-split pairs not held out; 25 validation pairs are held out and never trained on. 600 training-split pairs are used only as short "grounding" rows (first 1,500 target tokens).
 - Memorize test: 20 unseen pairs (first 3,000 target tokens), five passes, mean loss 1.58, 1.30, 1.02, 0.68, 0.31. Passed.
 - Pilot 1 (30 minutes, 77 steps): held-out loss 0.846 to 0.734, but the behavior check failed. Given a held-out render of a robed innkeeper, the pilot model planned and built a pirate ship. The dataset's reasoning was written for text prompts and never refers to an image, so training taught the model to proceed as if a prompt had named the asset. Pilot 1 was discarded.
 - Fix: every training target now opens with "Looking at the image: <one-sentence description>", where the description comes from the base model's own vision (`scripts/caption_training_images.py`, no paid service). Pilot 2 must pass both the loss check and the behavior check before the long run starts.
 - Export: `scripts/export_trained_to_hf.py` writes trained weights back to the Hugging Face layout (self-test against the original: 426 tensors, max difference 2.4e-7), then `convert_hf_to_gguf.py --outtype q8_0` gives a file the same size as CCORE's published Q8.
+
+- Pilot 2 (30 minutes, 77 steps, captioned targets): held-out loss 0.837 to 0.732, behavior check failed again. The model described the innkeeper image, then built a generic blue wizard. Discarded.
+- Pilot 3 (30 minutes, 15 steps, full-length unseen pairs only, no captions, no grounding rows): held-out loss 0.846 to 0.725 and 3 of 3 held-out renders rebuilt as working GLBs that follow their pictures. Passed; the long run continued from it.
+- Long run: 240 pairs, 451.5 training minutes in 15 segments, held-out loss 0.623 at the end. Result and three-way comparison: [image-to-3d-result-20261118.md](image-to-3d-result-20261118.md).
 
 ## Stage 1: scoring panel
 

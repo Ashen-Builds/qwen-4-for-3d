@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "green-utility-van.glb",
+  "bytes": 395436,
+  "sha256": "6114515321df98980a456a1002565cd9f6318269faa54b9d3af7b5dea73418ef",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 181,
+  "nodes": 186,
+  "materials": 15,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 3870,
+  "animations": [],
+  "size_xyz": [
+   5.459999996423721,
+   3.097500001192093,
+   2.5219999992251396
+  ]
+ }
+}

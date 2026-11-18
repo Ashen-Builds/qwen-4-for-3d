@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ornate Ceiling Lamp</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #0b1017;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+    }
+
+    #stage canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .ui {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(350px, calc(100vw - 44px));
+      padding: 18px;
+      color: #eef5f7;
+      background: rgba(11, 18, 26, 0.84);
+      border: 1px solid rgba(211, 190, 125, 0.25);
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(14px);
+    }
+
+    h1 {
+      margin: 0 0 7px;
+      color: #f1d38d;
+      font-size: 19px;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      margin: 0 0 15px;
+      color: #aebdc2;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #f0c96c;
+      border-radius: 8px;
+      color: #241a07;
+      background: linear-gradient(180deg, #f0d185, #c59536);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        0 5px 15px rgba(0, 0, 0, 0.28);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      filter: grayscale(0.4);
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 10px;
+      color: #8fa2aa;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .hint {
+      margin-top: 12px;
+      color: #718189;
+      font-size: 11px;
+      text-align: center;
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="stage"></div>
+
+  <div class="ui">
+    <h1>Ornate Ceiling Lamp</h1>
+    <p>
+      A low-poly, decorative gold and deep-teal ceiling lamp with sculpted
+      panels, layered chain hardware, and warm crystal accents.
+    </p>
+
+    <button id="exportButton" type="button">Export GLB</button>
+    <div id="status">Ready to export.</div>
+
+    <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const stage = document.getElementById("stage");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b1017);
+    scene.fog = new THREE.Fog(0x0b1017, 8, 18);
+
+    const camera = new THREE.PerspectiveCamera(
+      34,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(5.4, 4.35, 6.5);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.05, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 4.0;
+    controls.maxDistance = 12.0;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // -------------------------------------------------------------------------
+    // Lighting
+    // -------------------------------------------------------------------------
+
+    scene.add(new THREE.HemisphereLight(0xbdd9ff, 0x302116, 2.2));
+
+    const keyLight = new THREE.DirectionalLight(0xfff0d0, 4.1);
+    keyLight.position.set(4.5, 7.5, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.bias = -0.00025;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x87bfff, 2.2);
+    rimLight.position.set(-4, 4.5, -4);
+    scene.add(rimLight);
+
+    const warmLight = new THREE.PointLight(0xff8a32, 15, 6, 2);
+    warmLight.position.set(0, 2.35, 0);
+    scene.add(warmLight);
+
+    const fillLight = new THREE.PointLight(0x68d7dd, 8, 8, 2);
+    fillLight.position.set(-3, 2.8, 2);
+    scene.add(fillLight);
+
+    // -------------------------------------------------------------------------
+    // Materials
+    // -------------------------------------------------------------------------
+
+    const materials = {
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xc49438,
+        metalness: 0.86,
+        roughness: 0.28,
+        flatShading: true
+      }),
+      brightGold: new THREE.MeshStandardMaterial({
+        color: 0xf0c666,
+        metalness: 0.82,
+        roughness: 0.2,
+        flatShading: true
+      }),
+      darkGold: new THREE.MeshStandardMaterial({
+        color: 0x765017,
+        metalness: 0.8,
+        roughness: 0.36,
+        flatShading: true
+      }),
+      teal: new THREE.MeshStandardMaterial({
+        color: 0x085b55,
+        metalness: 0.4,
+        roughness: 0.3,
+        flatShading: true
+      }),
+      tealLight: new THREE.MeshStandardMaterial({
+        color: 0x238578,
+        metalness: 0.35,
+        roughness: 0.28,
+        flatShading: true
+      }),
+      tealDark: new THREE.MeshStandardMaterial({
+        color: 0x073d3d,
+        metalness: 0.45,
+        roughness: 0.34,
+        flatShading: true
+      }),
+      glow: new THREE.MeshStandardMaterial({
+        color: 0xffc86b,
+        emissive: 0xff8b25,
+        emissiveIntensity: 2.25,
+        metalness: 0.15,
+        roughness: 0.25
+      }),
+      glass: new THREE.MeshPhysicalMaterial({
+        color: 0xffbd70,
+        emissive: 0xff7a22,
+        emissiveIntensity: 0.55,
+        metalness: 0,
+        roughness: 0.14,
+        transparent: true,
+        opacity: 0.38,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      }),
+      ground: new THREE.MeshStandardMaterial({
+        color: 0x111a22,
+        roughness: 0.9,
+        metalness: 0.05
+      })
+    };
+
+    // -------------------------------------------------------------------------
+    // Model helpers
+    // -------------------------------------------------------------------------
+
+    const model = new THREE.Group();
+    model.name = "Ornate_Ceiling_Lamp";
+    scene.add(model);
+
+    function addMesh(geometry, material, parent = model) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addMeshBetween(a, b, radius, material, segments = 8, parent = model) {
+      const start = new THREE.Vector3(...a);
+      const end = new THREE.Vector3(...b);
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radius,
+        radius,
+        length,
+        segments,
+        1,
+        false
+      );
+
+      const mesh = addMesh(geometry, material, parent);
+      mesh.position.copy(start).add(end).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    function addRing(radius, tube, y, material, parent = model) {
+      const ring = addMesh(
+        new THREE.TorusGeometry(radius, tube, 6, 24),
+        material,
+        parent
+      );
+      ring.rotation.x = Math.PI * 0.5;
+      ring.position.y = y;
+      return ring;
+    }
+
+    function addLowPolyDiamond(radius, height, material, parent = model) {
+      const diamond = addMesh(
+        new THREE.OctahedronGeometry(radius, 0),
+        material,
+        parent
+      );
+      diamond.scale.y = height;
+      return diamond;
+    }
+
+    // -------------------------------------------------------------------------
+    // Ceiling canopy
+    // -------------------------------------------------------------------------
+
+    const canopy = addMesh(
+      new THREE.CylinderGeometry(1.03, 1.13, 0.18, 12),
+      materials.gold
+    );
+    canopy.position.y = 3.12;
+
+    addRing(0.91, 0.035, 3.015, materials.brightGold);
+    addRing(0.62, 0.025, 3.235, materials.darkGold);
+
+    const canopyCap = addMesh(
+      new THREE.CylinderGeometry(0.68, 0.73, 0.17, 12),
+      materials.gold
+    );
+    canopyCap.position.y = 3.24;
+
+    const canopyTop = addMesh(
+      new THREE.CylinderGeometry(0.25, 0.32, 0.13, 10),
+      materials.darkGold
+    );
+    canopyTop.position.y = 3.38;
+
+    const canopyFinial = addMesh(
+      new THREE.ConeGeometry(0.15, 0.28, 8),
+      materials.brightGold
+    );
+    canopyFinial.position.y = 3.56;
+
+    const canopyBall = addMesh(
+      new THREE.SphereGeometry(0.075, 8, 6),
+      materials.brightGold
+    );
+    canopyBall.position.y = 3.72;
+
+    // Radial canopy mounting plates.
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2 + Math.PI / 6;
+      const plate = addMesh(
+        new THREE.CylinderGeometry(0.17, 0.19, 0.055, 8),
+        materials.darkGold
+      );
+      plate.position.set(
+        Math.cos(angle) * 0.49,
+        2.96,
+        Math.sin(angle) * 0.49
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Hanging rods and chain hardware
+    // -------------------------------------------------------------------------
+
+    const rodAngles = [
+      Math.PI * 0.25,
+      Math.PI * 0.75,
+      Math.PI * 1.25,
+      Math.PI * 1.75
+    ];
+
+    for (const angle of rodAngles) {
+      const mount = addMesh(
+        new THREE.CylinderGeometry(0.16, 0.19, 0.055, 8),
+        materials.darkGold
+      );
+      mount.position.set(
+        Math.cos(angle) * 0.39,
+        2.92,
+        Math.sin(angle) * 0.39
+      );
+
+      const rodTop = addMeshBetween(
+        [
+          Math.cos(angle) * 0.39,
+          2.92,
+          Math.sin(angle) * 0.39
+        ],
+        [
+          Math.cos(angle) * 0.51,
+          2.39,
+          Math.sin(angle) * 0.51
+        ],
+        0.034,
+        materials.gold
+      );
+
+      const finial = addMesh(
+        new THREE.OctahedronGeometry(0.09, 0),
+        materials.brightGold
+      );
+      finial.position.set(
+        Math.cos(angle) * 0.39,
+        2.99,
+        Math.sin(angle) * 0.39
+      );
+
+      // Small decorative crown around each rod attachment.
+      const crown = addMesh(
+        new THREE.CylinderGeometry(0.095, 0.065, 0.14, 8),
+        materials.darkGold
+      );
+      crown.position.set(
+        Math.cos(angle) * 0.39,
+        2.89,
+        Math.sin(angle) * 0.39
+      );
+
+      const rodEnd = addMesh(
+        new THREE.TorusGeometry(0.074, 0.018, 5, 12),
+        materials.brightGold
+      );
+      rodEnd.position.set(
+        Math.cos(angle) * 0.51,
+        2.40,
+        Math.sin(angle) * 0.51
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Main lantern shade and lower ornamentation
+    // -------------------------------------------------------------------------
+
+    const shadeProfile = [
+      new THREE.Vector2(0.0, 2.59),
+      new THREE.Vector2(0.42, 2.58),
+      new THREE.Vector2(0.68, 2.50),
+      new THREE.Vector2(0.80, 2.39),
+      new THREE.Vector2(0.80, 2.27),
+      new THREE.Vector2(0.72, 2.17),
+      new THREE.Vector2(0.59, 2.10),
+      new THREE.Vector2(0.38, 2.08),
+      new THREE.Vector2(0.0, 2.08)
+    ];
+
+    const shade = addMesh(
+      new THREE.LatheGeometry(shadeProfile, 12),
+      materials.teal
+    );
+    shade.name = "Sculpted_Lantern_Shade";
+
+    // Gold lower skirt and rim.
+    const lowerSkirt = addMesh(
+      new THREE.CylinderGeometry(0.65, 0.73, 0.19, 12),
+      materials.gold
+    );
+    lowerSkirt.position.y = 2.12;
+
+    addRing(0.69, 0.035, 2.025, materials.brightGold);
+
+    const lowerCrown = addMesh(
+      new THREE.CylinderGeometry(0.61, 0.67, 0.12, 12),
+      materials.darkGold
+    );
+    lowerCrown.position.y = 1.97;
+
+    addRing(0.61, 0.028, 1.935, materials.gold);
+
+    // Bottom cup / foot.
+    const footProfile = [
+      new THREE.Vector2(0.08, 1.72),
+      new THREE.Vector2(0.18, 1.78),
+      new THREE.Vector2(0.38, 1.86),
+      new THREE.Vector2(0.56, 1.98),
+      new THREE.Vector2(0.70, 2.08),
+      new THREE.Vector2(0.72, 2.15),
+      new THREE.Vector2(0.63, 2.20),
+      new THREE.Vector2(0.50, 2.10),
+      new THREE.Vector2(0.34, 1.94),
+      new THREE.Vector2(0.18, 1.80),
+      new THREE.Vector2(0.08, 1.74)
+    ];
+
+    const foot = addMesh(
+      new THREE.LatheGeometry(footProfile, 12),
+      materials.tealDark
+    );
+    foot.name = "Lower_Ornate_Foot";
+
+    addRing(0.42, 0.025, 1.84, materials.gold);
+    addRing(0.60, 0.032, 2.035, materials.brightGold);
+
+    const footPoint = addMesh(
+      new THREE.ConeGeometry(0.14, 0.30, 8),
+      materials.gold
+    );
+    footPoint.position.y = 1.58;
+
+    // Central pedestal and medallion.
+    const stem = addMesh(
+      new THREE.CylinderGeometry(0.075, 0.095, 0.45, 10),
+      materials.gold
+    );
+    stem.position.y = 1.90;
+
+    addRing(0.29, 0.035, 1.96, materials.brightGold);
+
+    const medallion = addMesh(
+      new THREE.TorusGeometry(0.245, 0.035, 6, 18),
+      materials.gold
+    );
+    medallion.position.y = 1.96;
+
+    const medallionCore = addMesh(
+      new THREE.OctahedronGeometry(0.105, 0),
+      materials.brightGold
+    );
+    medallionCore.position.y = 2.04;
+    medallionCore.scale.y = 1.35;
+
+    // Vertical ribs on the deep-teal body.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
+
+      addMeshBetween(
+        [
+          Math.cos(angle) * 0.31,
+          1.78,
+          Math.sin(angle) * 0.31
+        ],
+        [
+          Math.cos(angle) * 0.64,
+          2.07,
+          Math.sin(angle) * 0.64
+        ],
+        0.018,
+        materials.darkGold,
+        6
+      );
+    }
+
+    // Small decorative rosettes around the lower body.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
+
+      const rosette = addLowPolyDiamond(
+        0.065,
+        1.15,
+        materials.gold,
+        model
+      );
+
+      rosette.position.set(
+        Math.cos(angle) * 0.61,
+        1.79,
+        Math.sin(angle) * 0.61
+      );
+      rosette.rotation.z = Math.cos(angle) * 0.32;
+      rosette.rotation.x = Math.sin(angle) * 0.32;
+    }
+
+    // -------------------------------------------------------------------------
+    // Six glass panels with gold framing
+    // -------------------------------------------------------------------------
+
+    function createPanel(angleStart, angleEnd, inset = 0, inner = false) {
+      const topRadius = inner ? 0.39 : 0.44;
+      const bottomRadius = inner ? 0.64 : 0.73;
+
+      const topLeft = new THREE.Vector3(
+        Math.cos(angleStart) * topRadius,
+        2.49,
+        Math.sin(angleStart) * topRadius
+      );
+
+      const topRight = new THREE.Vector3(
+        Math.cos(angleEnd) * topRadius,
+        2.49,
+        Math.sin(angleEnd) * topRadius
+      );
+
+      const bottomRight = new THREE.Vector3(
+        Math.cos(angleEnd) * bottomRadius,
+        2.18,
+        Math.sin(angleEnd) * bottomRadius
+      );
+
+      const bottomLeft = new THREE.Vector3(
+        Math.cos(angleStart) * bottomRadius,
+        2.18,
+        Math.sin(angleStart) * bottomRadius
+      );
+
+      const positions = new Float32Array([
+        ...topLeft.toArray(),
+        ...topRight.toArray(),
+        ...bottomRight.toArray(),
+        ...bottomLeft.toArray()
+      ]);
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.BufferAttribute(positions, 3)
+      );
+      geometry.setIndex([0, 1, 2, 0, 2, 3]);
+      geometry.computeVertexNormals();
+
+      const glass = addMesh(geometry, materials.glass);
+      glass.castShadow = false;
+      glass.receiveShadow = false;
+
+      const innerTop = inner
+        ? new THREE.Vector3(
+            Math.cos(angleStart) * 0.35,
+            2.445,
+            Math.sin(angleStart) * 0.35
+          )
+        : new THREE.Vector3(
+            Math.cos(angleStart) * 0.475,
+            2.455,
+            Math.sin(angleStart) * 0.475
+          );
+
+      const innerBottom = inner
+        ? new THREE.Vector3(
+            Math.cos(angleEnd) * 0.61,
+            2.235,
+            Math.sin(angleEnd) * 0.61
+          )
+        : new THREE.Vector3(
+            Math.cos(angleEnd) * 0.715,
+            2.235,
+            Math.sin(angleEnd) * 0.715
+          );
+
+      const innerGeometry = new THREE.BufferGeometry();
+      innerGeometry.setAttribute(
+        "position",
+        new Float32Array(
+          innerTop.toArray().concat(innerRight.toArray(), innerBottom.toArray(), innerLeft.toArray())
+        )
+      );
+      innerGeometry.setIndex([0, 1, 2, 0, 2, 3]);
+      innerGeometry.computeVertexNormals();
+
+      const innerGlass = addMesh(innerGeometry, materials.glow);
+      innerGlass.castShadow = false;
+      innerGlass.receiveShadow = false;
+
+      const addFrameEdge = (a, b) => {
+        addMeshBetween(a.toArray(), b.toArray(), 0.035, materials.brightGold, 6);
+      };
+
+      addFrameEdge(topLeft, topRight);
+      addFrameEdge(bottomLeft, bottomRight);
+      addFrameEdge(topLeft, bottomLeft);
+      addFrameEdge(topRight, bottomRight);
+    }
+
+    for (let i = 0; i < 6; i++) {
+      const angleStart = (i / 6) * Math.PI * 2 + Math.PI / 6;
+      const angleEnd = ((i + 1) / 6) * Math.PI * 2 + Math.PI / 6;
+
+      createPanel(angleStart, angleEnd, false, false);
+      createPanel(angleStart, angleEnd, true, true);
+    }
+
+    // Gold rivets around the shade.
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const rivet = addMesh(
+        new THREE.SphereGeometry(0.047, 6, 4),
+        materials.brightGold
+      );
+      rivet.position.set(
+        Math.cos(angle) * 0.79,
+        2.365,
+        Math.sin(angle) * 0.79
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Lamp core and lower finial
+    // -------------------------------------------------------------------------
+
+    const core = addMesh(
+      new THREE.IcosahedronGeometry(0.22, 1),
+      materials.glow
+    );
+    core.position.set(0, 2.38, 0);
+    core.scale.y = 1.35;
+    core.castShadow = false;
+
+    const lowerFinial = addMesh(
+      new THREE.ConeGeometry(0.12, 0.27, 8),
+      materials.gold
+    );
+    lowerFinial.position.y = 1.49;
+
+    // -------------------------------------------------------------------------
+    // Ground and shadow receiver (not included in exported model)
+    // -------------------------------------------------------------------------
+
+    const ground = addMesh(
+      new THREE.CircleGeometry(9, 64),
+      materials.ground,
+      scene
+    );
+    ground.rotation.x = -Math.PI * 0.5;
+    ground.position.y = 0;
+    ground.castShadow = false;
+    ground.receiveShadow = true;
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", async () => {
+      exportButton.disabled = true;
+      status.textContent = "Building GLB…";
+
+      try {
+        model.updateMatrixWorld(true);
+
+        const exporter = new GLTFExporter();
+        const result = await exporter.parseAsync(model, {
+          binary: true,
+          onlyVisible: true,
+          trs: false
+        });
+
+        const glb = new Blob([result], {
+          type: "model/gltf-binary"
+        });
+
+        const url = URL.createObjectURL(glb);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "ornate_ceiling_lamp.glb";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+        status.textContent = "Exported ornate_ceiling_lamp.glb";
+      } catch (error) {
+        console.error(error);
+        status.textContent = "Export failed. See the browser console.";
+      } finally {
+        exportButton.disabled = false;
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", onResize);
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

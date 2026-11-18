@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Green Van</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #101722;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #ui {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 14px 14px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(13, 19, 28, 0.86);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(12px);
+      user-select: none;
+    }
+
+    #title {
+      padding: 0 4px 0 2px;
+      color: #edf3f7;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    #export {
+      appearance: none;
+      border: 0;
+      border-radius: 9px;
+      padding: 10px 15px;
+      color: #09210c;
+      background: #8df4b7;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
+    }
+
+    #export:hover {
+      transform: translateY(-1px);
+      background: #a8ffca;
+    }
+
+    #export:active {
+      transform: translateY(0);
+    }
+
+    #export:disabled {
+      opacity: 0.6;
+      cursor: wait;
+      transform: none;
+    }
+
+    #status {
+      position: fixed;
+      right: 20px;
+      bottom: 18px;
+      z-index: 10;
+      max-width: min(430px, calc(100vw - 40px));
+      padding: 9px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 9px;
+      color: #b9c5ce;
+      background: rgba(13, 19, 28, 0.82);
+      font-size: 12px;
+      text-align: right;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    #hint {
+      position: fixed;
+      bottom: 18px;
+      left: 22px;
+      z-index: 10;
+      color: rgba(220, 231, 240, 0.68);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      #ui {
+        right: 14px;
+        left: 14px;
+        justify-content: space-between;
+      }
+
+      #hint {
+        display: none;
+      }
+
+      #status {
+        right: 14px;
+        bottom: 14px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div id="ui">
+    <div id="title">LOW-POLY GREEN VAN</div>
+    <button id="export" type="button">Export GLB</button>
+  </div>
+
+  <div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+  <div id="status">Ready to export</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("export");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x101722);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(6.8, 4.4, 7.4);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.05, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 4.2;
+    controls.maxDistance = 14;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // Lighting and display-only ground plane.
+    const hemiLight = new THREE.HemisphereLight(0xc9e6ff, 0x30251c, 2.1);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.2);
+    keyLight.position.set(5.5, 8.5, 6.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -7;
+    keyLight.shadow.camera.right = 7;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -7;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x78baff, 1.15);
+    fillLight.position.set(-6, 4, -4);
+    scene.add(fillLight);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({
+        color: 0x18232e,
+        roughness: 0.96,
+        metalness: 0.0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(30, 30, 0x31505f, 0x24343f);
+    grid.position.y = 0.002;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.35;
+    scene.add(grid);
+
+    const van = new THREE.Group();
+    van.name = "GreenLowPolyVan";
+    scene.add(van);
+
+    const materials = {
+      green: new THREE.MeshStandardMaterial({
+        color: 0x218f42,
+        roughness: 0.38,
+        metalness: 0.18,
+        flatShading: true
+      }),
+      greenDark: new THREE.MeshStandardMaterial({
+        color: 0x15672f,
+        roughness: 0.46,
+        metalness: 0.15,
+        flatShading: true
+      }),
+      greenLight: new THREE.MeshStandardMaterial({
+        color: 0x39a754,
+        roughness: 0.34,
+        metalness: 0.16,
+        flatShading: true
+      }),
+      trim: new THREE.MeshStandardMaterial({
+        color: 0x20282d,
+        roughness: 0.7,
+        metalness: 0.1,
+        flatShading: true
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x111518,
+        roughness: 0.92,
+        metalness: 0.0,
+        flatShading: true
+      }),
+      tread: new THREE.MeshStandardMaterial({
+        color: 0x090d0f,
+        roughness: 0.96,
+        metalness: 0.0,
+        flatShading: true
+      }),
+      metal: new THREE.MeshStandardMaterial({
+        color: 0x8b969e,
+        roughness: 0.32,
+        metalness: 0.72,
+        flatShading: true
+      }),
+      darkMetal: new THREE.MeshStandardMaterial({
+        color: 0x30383d,
+        roughness: 0.48,
+        metalness: 0.6,
+        flatShading: true
+      }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0x6eb9ca,
+        roughness: 0.14,
+        metalness: 0.2,
+        transparent: true,
+        opacity: 0.72,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        flatShading: true
+      }),
+      headlight: new THREE.MeshStandardMaterial({
+        color: 0xffe9aa,
+        emissive: 0xffb64d,
+        emissiveIntensity: 1.6,
+        roughness: 0.25,
+        metalness: 0.08,
+        flatShading: true
+      }),
+      tailLight: new THREE.MeshStandardMaterial({
+        color: 0xb81518,
+        emissive: 0x8c080b,
+        emissiveIntensity: 1.15,
+        roughness: 0.3,
+        flatShading: true
+      }),
+      plate: new THREE.MeshStandardMaterial({
+        color: 0xe7e9e8,
+        roughness: 0.55,
+        metalness: 0.05,
+        flatShading: true
+      })
+    };
+
+    function addMesh(geometry, material, position, rotation = [0, 0, 0], parent = van) {
+      const object = new THREE.Mesh(geometry, material);
+      object.position.set(...position);
+      object.rotation.set(...rotation);
+      object.castShadow = true;
+      object.receiveShadow = true;
+      parent.add(object);
+      return object;
+    }
+
+    function roundedBox(width, height, depth, radius = 0.06, segments = 1) {
+      return new RoundedBoxGeometry(
+        width,
+        height,
+        depth,
+        segments,
+        Math.min(radius, Math.min(width, height, depth) * 0.45)
+      );
+    }
+
+    // Cargo box.
+    addMesh(
+      roundedBox(1.92, 1.45, 2.15, 0.09, 2),
+      materials.green,
+      [0, 1.53, -1.05]
+    );
+
+    // Raised cargo roof.
+    addMesh(
+      roundedBox(1.96, 0.06, 2.19, 0.035, 1),
+      materials.greenLight,
+      [0, 2.285, -1.05]
+    );
+
+    // Cargo side door panels.
+    for (const side of [-1, 1]) {
+      addMesh(
+        roundedBox(0.035, 0.92, 1.44, 0.018, 1),
+        materials.greenDark,
+        [side * 0.969, 1.51, -0.98]
+      );
+
+      // Vertical cargo panel seams.
+      for (const z of [-0.43, -1.48]) {
+        addMesh(
+          roundedBox(0.025, 0.98, 0.028, 0.01, 1),
+          materials.greenDark,
+          [side * 0.994, 1.51, z]
+        );
+      }
+
+      // Cargo door hinges.
+      for (const y of [1.12, 1.91]) {
+        addMesh(
+          new THREE.CylinderGeometry(0.055, 0.055, 0.23, 8),
+          materials.darkMetal,
+          [side * 1.007, y, -0.28]
+        );
+      }
+
+      // Lower cargo side trim.
+      addMesh(
+        roundedBox(0.05, 0.13, 1.66, 0.025, 1),
+        materials.trim,
+        [side * 0.987, 1.0, -1.04]
+      );
+    }
+
+    // Rear cargo doors.
+    for (const side of [-1, 1]) {
+      addMesh(
+        roundedBox(0.91, 1.25, 0.055, 0.07, 1),
+        materials.greenDark,
+        [side * 0.465, 1.54, -2.145]
+      );
+
+      addMesh(
+        roundedBox(0.76, 0.98, 0.025, 0.035, 1),
+        materials.green,
+        [side * 0.465, 1.54, -2.178]
+      );
+
+      addMesh(
+        roundedBox(0.035, 0.16, 0.06, 0.012, 1),
+        materials.trim,
+        [side * 0.465, 1.56, -2.205]
+      );
+    }
+
+    // Rear bumper and tail lights.
+    addMesh(
+      roundedBox(1.98, 0.18, 0.18, 0.06, 1),
+      materials.trim,
+      [0, 0.79, -2.18]
+    );
+
+    for (const side of [-1, 1]) {
+      addMesh(
+        roundedBox(0.25, 0.18, 0.08, 0.04, 1),
+        materials.tailLight,
+        [side * 0.74, 1.13, -2.17]
+      );
+
+      addMesh(
+        roundedBox(0.28, 0.25, 0.045, 0.03, 1),
+        materials.plate,
+        [side * 0.74, 1.0, -2.185]
+      );
+    }
+
+    // Lower cab body.
+    addMesh(
+      roundedBox(1.84, 0.58, 1.68, 0.1, 2),
+      materials.green,
+      [0, 1.03, 0.56]
+    );
+
+    // Cab roof.
+    addMesh(
+      roundedBox(1.88, 0.14, 1.96, 0.06, 1),
+      materials.greenLight,
+      [0, 2.245, 0.43]
+    );
+
+    // Front hood.
+    addMesh(
+      roundedBox(1.72, 0.38, 0.52, 0.08, 1),
+      materials.green,
+      [0, 1.04, 1.78]
+    );
+
+    // Windshield and its frame.
+    addMesh(
+      roundedBox(1.63, 0.81, 0.04, 0.035, 1),
+      materials.glass,
+      [0, 1.67, 1.415],
+      [-0.08, 0, 0]
+    );
+
+    addMesh(
+      roundedBox(0.065, 0.83, 0.065, 0.025, 1),
+      materials.trim,
+      [-0.83, 1.67, 1.435],
+      [-0.08, 0, 0]
+    );
+
+    addMesh(
+      roundedBox(0.065, 0.83, 0.065, 0.025, 1),
+      materials.trim,
+      [0.83, 1.67, 1.435],
+      [-0.08, 0, 0]
+    );
+
+    addMesh(
+      roundedBox(1.75, 0.065, 0.065, 0.025, 1),
+      materials.trim,
+      [0, 2.075, 1.435],
+      [-0.08, 0, 0]
+    );
+
+    addMesh(
+      roundedBox(1.75, 0.065, 0.065, 0.025, 1),
+      materials.trim,
+      [0, 1.265, 1.435],
+      [-0.08, 0, 0]
+    );
+
+    // Side windows.
+    for (const side of [-1, 1]) {
+      addMesh(
+        roundedBox(1.32, 0.72, 0.035, 0.03, 1),
+        materials.glass,
+        [side * 0.935, 1.67, 0.44],
+        [0, side * Math.PI / 2, 0]
+      );
+
+      // Window divider.
+      addMesh(
+        roundedBox(0.055, 0.78, 1.31, 0.022, 1),
+        materials.trim,
+        [side * 0.957, 1.67, 0.44],
+        [0, side * Math.PI / 2, 0]
+      );
+
+      // Door handles.
+      addMesh(
+        roundedBox(0.075, 0.08, 0.28, 0.025, 1),
+        materials.darkMetal,
+        [side * 1.015, 1.29, 0.19]
+      );
+
+      // Door seam.
+      addMesh(
+        roundedBox(0.025, 0.9, 0.025, 0.01, 1),
+        materials.greenDark,
+        [side * 0.957, 1.52, -0.16]
+      );
+
+      // Side step.
+      addMesh(
+        roundedBox(0.28, 0.1, 0.72, 0.03, 1),
+        materials.trim,
+        [side * 1.0, 0.64, 0.38]
+      );
+
+      addMesh(
+        roundedBox(0.06, 0.13, 0.55, 0.02, 1),
+        materials.darkMetal,
+        [side * 1.02, 0.77, 0.38]
+      );
+    }
+
+    // Mirrors and their supports.
+    for (const side of [-1, 1]) {
+      const stalk = addMesh(
+        new THREE.CylinderGeometry(0.035, 0.035, 0.38, 8),
+        materials.darkMetal,
+        [side * 1.08, 1.72, 0.76],
+        [0, 0, side * Math.PI / 2]
+      );
+      stalk.castShadow = true;
+
+      addMesh(
+        roundedBox(0.15, 0.38, 0.25, 0.045, 1),
+        materials.trim,
+        [side * 1.22, 1.73, 0.76]
+      );
+
+      addMesh(
+        roundedBox(0.018, 0.29, 0.18, 0.01, 1),
+        materials.glass,
+        [side * 1.297, 1.73, 0.76]
+      );
+    }
+
+    // Roof rack.
+    for (const side of [-1, 1]) {
+      addMesh(
+        roundedBox(0.055, 0.06, 1.76, 0.02, 1),
+        materials.metal,
+        [side * 0.66, 2.38, 0.43]
+      );
+
+      addMesh(
+        roundedBox(0.12, 0.07, 0.13, 0.025, 1),
+        materials.darkMetal,
+        [side * 0.66, 2.35, 0.35]
+      );
+    }
+
+    for (const z of [-0.25, 1.12]) {
+      addMesh(
+        roundedBox(1.38, 0.055, 0.055, 0.02, 1),
+        materials.metal,
+        [0, 2.38, z]
+      );
+    }
+
+    // Front bumper.
+    addMesh(
+      roundedBox(1.98, 0.18, 0.19, 0.06, 1),
+      materials.trim,
+      [0, 0.78, 2.005]
+    );
+
+    // Front grille and horizontal bars.
+    addMesh(
+      roundedBox(0.68, 0.23, 0.045, 0.035, 1),
+      materials.trim,
+      [0, 1.05, 2.067]
+    );
+
+    for (let i = 0; i < 3; i++) {
+      addMesh(
+        roundedBox(0.58, 0.025, 0.025, 0.01, 1),
+        materials.metal,
+        [0, 0.96 + i * 0.065, 2.097]
+      );
+    }
+
+    // Headlights with black bezels.
+    for (const side of [-1, 1]) {
+      addMesh(
+        roundedBox(0.32, 0.25, 0.045, 0.04, 1),
+        materials.trim,
+        [side * 0.63, 1.14, 2.065]
+      );
+
+      addMesh(
+        roundedBox(0.25, 0.18, 0.05, 0.03, 1),
+        materials.headlight,
+        [side * 0.63, 1.14, 2.09]
+      );
+
+      // Small side marker.
+      addMesh(
+        roundedBox(0.12, 0.12, 0.06, 0.025, 1),
+        materials.headlight,
+        [side * 0.91, 1.22, 2.055]
+      );
+    }
+
+    // Wheels and hubs.
+    const wheelRadius = 0.45;
+    const wheelCenterY = 0.47;
+
+    function createWheel(z, side) {
+      const wheel = new THREE.Group();
+      wheel.name = side > 0 ? "RightWheel" : "LeftWheel";
+      wheel.position.set(side * 1.045, wheelCenterY, z);
+      van.add(wheel);
+
+      const tire = addMesh(
+        new THREE.CylinderGeometry(wheelRadius, wheelRadius, 0.27, 12, 1, false),
+        materials.rubber,
+        [0, 0, 0],
+        [0, 0, Math.PI / 2],
+        wheel
+      );
+      tire.castShadow = true;
+
+      const rim = addMesh(
+        new THREE.CylinderGeometry(0.23, 0.23, 0.29, 12, 1, false),
+        materials.darkMetal,
+        [0, 0, 0],
+        [0, 0, Math.PI / 2],
+        wheel
+      );
+      rim.castShadow = true;
+
+      const hub = addMesh(
+        new THREE.CylinderGeometry(0.13, 0.13, 0.33, 10, 1, false),
+        materials.metal,
+        [0, 0, 0],
+        [0, 0, Math.PI / 2],
+        wheel
+      );
+      hub.castShadow = true;
+
+      // Six simple low-poly spokes.
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+
+        const spoke = addMesh(
+          roundedBox(0.33, 0.42, 0.045, 0.035, 1),
+          materials.metal,
+          [
+            0,
+            Math.sin(angle) * 0.145,
+            Math.cos(angle) * 0.145
+          ],
+          [-angle, 0, 0],
+          wheel
+        );
+        spoke.castShadow = true;
+      }
+
+      // Lug bolts.
+      for (let i = 0; i < 5; i++) {
+        const angle = (i / 5) * Math.PI * 2;
+        addMesh(
+          new THREE.CylinderGeometry(0.026, 0.026, 0.035, 6),
+          materials.darkMetal,
+          [side * -0.174, Math.sin(angle) * 0.15, Math.cos(angle) * 0.15],
+          [0, 0, Math.PI / 2],
+          wheel
+        );
+      }
+
+      // Low-poly tread blocks.
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+
+        addMesh(
+          new THREE.BoxGeometry(0.29, 0.07, 0.16),
+          materials.tread,
+          [
+            0,
+            Math.sin(angle) * 0.445,
+            Math.cos(angle) * 0.445
+          ],
+          [-angle, 0, 0],
+          wheel
+        );
+      }
+
+      // Angular fender arch.
+      addMesh(
+        new THREE.TorusGeometry(0.57, 0.075, 4, 10, Math.PI),
+        materials.trim,
+        [side * 1.045, wheelCenterY, z],
+        [0, Math.PI / 2, 0]
+      );
+    }
+
+    createWheel(1.25, -1);
+    createWheel(1.25, 1);
+    createWheel(-1.25, -1);
+    createWheel(-1.25, 1);
+
+    // Small front tow hooks.
+    for (const side of [-1, 1]) {
+      addMesh(
+        roundedBox(0.12, 0.09, 0.12, 0.025, 1),
+        materials.metal,
+        [side * 0.72, 0.78, 2.12]
+      );
+    }
+
+    // Export only the van group, excluding the floor, camera, lights and helpers.
+    exportButton.addEventListener("click", async () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB…";
+
+      try {
+        const exporter = new GLTFExporter();
+        const result = await exporter.parseAsync(van, {
+          binary: true,
+          onlyVisible: true,
+          truncateDrawRange: true
+        });
+
+        const blob = new Blob([result], {
+          type: "model/gltf-binary"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "green-low-poly-van.glb";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+        status.textContent = "Exported green-low-poly-van.glb";
+      } catch (error) {
+        console.error(error);
+        status.textContent = "Export failed. See the browser console for details.";
+      } finally {
+        exportButton.disabled = false;
+      }
+    });
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

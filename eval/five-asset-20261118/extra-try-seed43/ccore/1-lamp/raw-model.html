@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Royal Crystal Lamp — Three.js GLB Asset</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #d8ddd8;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .title-card {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      max-width: 340px;
+      padding: 16px 18px;
+      color: #282014;
+      background: rgba(250, 247, 235, 0.82);
+      border: 1px solid rgba(95, 67, 28, 0.2);
+      border-radius: 12px;
+      box-shadow: 0 10px 35px rgba(28, 25, 20, 0.12);
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .title-card h1 {
+      margin: 0 0 5px;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .title-card p {
+      margin: 0;
+      color: #695e50;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    #export-button {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      min-width: 142px;
+      padding: 12px 18px;
+      border: 1px solid #80551f;
+      border-radius: 9px;
+      color: #fff8e7;
+      background: linear-gradient(180deg, #b98630, #875519);
+      box-shadow:
+        0 5px 0 #5d3812,
+        0 10px 24px rgba(67, 40, 12, 0.25);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease;
+    }
+
+    #export-button:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    #export-button:active {
+      transform: translateY(3px);
+      box-shadow:
+        0 2px 0 #5d3812,
+        0 5px 14px rgba(67, 40, 12, 0.2);
+    }
+
+    #export-button:disabled {
+      cursor: wait;
+      filter: grayscale(0.3);
+      opacity: 0.75;
+    }
+
+    #status {
+      position: fixed;
+      right: 24px;
+      bottom: 20px;
+      padding: 8px 11px;
+      border-radius: 7px;
+      color: #51493d;
+      background: rgba(250, 247, 235, 0.78);
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    .hint {
+      position: fixed;
+      bottom: 20px;
+      left: 24px;
+      color: rgba(54, 48, 40, 0.65);
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      .title-card {
+        top: 14px;
+        left: 14px;
+        max-width: calc(100vw - 28px);
+      }
+
+      .title-card p {
+        display: none;
+      }
+
+      #export-button {
+        top: auto;
+        right: 14px;
+        bottom: 48px;
+      }
+
+      .hint {
+        display: none;
+      }
+
+      #status {
+        right: 14px;
+        bottom: 14px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="stage"></div>
+
+  <div class="title-card">
+    <h1>Royal Crystal Lamp</h1>
+    <p>
+      An ornate low-poly ceremonial lamp with polished gold,
+      ivory detailing, royal blue marble, and hanging crystals.
+    </p>
+  </div>
+
+  <button id="export-button" type="button">Export GLB</button>
+  <div class="hint">Drag to rotate · Scroll to zoom</div>
+  <div id="status">Ready to export</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    const stage = document.getElementById("stage");
+    const exportButton = document.getElementById("export-button");
+    const status = document.getElementById("status");
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      powerPreference: "high-performance"
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    stage.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xd8ddd8);
+    scene.fog = new THREE.Fog(0xd8ddd8, 10, 22);
+
+    const camera = new THREE.PerspectiveCamera(
+      36,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(5.15, 3.55, 6.35);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.85, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 4.2;
+    controls.maxDistance = 11;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const roomEnvironment = new RoomEnvironment();
+    const environmentTarget = pmremGenerator.fromScene(roomEnvironment, 0.04);
+    scene.environment = environmentTarget.texture;
+    pmremGenerator.dispose();
+
+    scene.add(new THREE.HemisphereLight(0xfff5dc, 0x27323c, 1.6));
+
+    const keyLight = new THREE.DirectionalLight(0xffe3b0, 3.4);
+    keyLight.position.set(4.5, 7, 4.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.bias = -0.00025;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x9fc8ff, 2.2);
+    rimLight.position.set(-5, 4, -4);
+    scene.add(rimLight);
+
+    const warmFill = new THREE.PointLight(0xffb96b, 11, 7, 2);
+    warmFill.position.set(-1.8, 2.6, 2.8);
+    scene.add(warmFill);
+
+    // -------------------------------------------------------------------------
+    // Procedural textures
+    // -------------------------------------------------------------------------
+
+    function makeFabricTexture() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 512;
+
+      const context = canvas.getContext("2d");
+      const gradient = context.createRadialGradient(
+        256, 256, 8,
+        256, 256, 256
+      );
+
+      gradient.addColorStop(0, "#f6e8bc");
+      gradient.addColorStop(0.48, "#d9bd82");
+      gradient.addColorStop(1, "#75502b");
+
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, 512, 512);
+
+      let seed = 73939;
+      const random = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+
+      // Flourishing gold leaf motifs.
+      for (let i = 0; i < 13; i++) {
+        const angle = (i / 13) * Math.PI * 2;
+        const radius = 142 + random() * 55;
+
+        context.save();
+        context.translate(
+          Math.cos(angle) * radius,
+          Math.sin(angle) * radius
+        );
+        context.rotate(angle);
+        context.scale(1.35 + random() * 0.25, 0.78, 0.72);
+
+        context.fillStyle = "#b78331";
+        context.beginPath();
+
+        context.moveTo(0, -0.92);
+        context.bezierCurveTo(95, -48, 125, 48, 0, 108);
+        context.bezierCurveTo(-125, 48, -95, -48, 0, -0.92);
+        context.fill();
+
+        context.lineWidth = 4;
+        context.strokeStyle = "#5d3515";
+        context.stroke();
+
+        context.restore();
+      }
+
+      // Fine veins radiating from the center.
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+
+        context.strokeStyle = "rgba(98, 58, 22, 0.34)";
+        context.lineWidth = 3;
+
+        for (let j = 0; j < 11; j++) {
+          const t = j / 10;
+          const x = 256 + Math.cos(angle) * (20 + t * 170);
+          const y = 256 + Math.sin(angle) * (20 + t * 170);
+
+          if (j === 0) {
+            context.beginPath();
+            context.moveTo(245, 245);
+            context.lineTo(x, y);
+          } else {
+            context.beginPath();
+            context.moveTo(256, 256);
+            context.lineTo(x, y);
+          }
+
+          context.stroke();
+        }
+      }
+
+      // Small decorative dots.
+      for (let i = 0; i < 180; i++) {
+        const angle = random() * Math.PI * 2;
+        const radius = 80 + random() * 205;
+        const size = 0.6 + random() * 2.1;
+
+        context.fillStyle = random() > 0.55
+          ? "rgba(84, 52, 23, 0.25)"
+          : "rgba(255, 244, 205, 0.28)";
+
+        context.beginPath();
+        context.arc(
+          Math.cos(angle) * radius,
+          Math.sin(angle) * radius,
+          size,
+          0,
+          Math.PI * 2
+        );
+        context.fill();
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+      return texture;
+    }
+
+    function makeMarbleTexture() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 256;
+      canvas.height = 256;
+
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#173e52";
+      context.fillRect(0, 0, 256, 256);
+
+      let seed = 4516;
+      const random = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+
+      for (let i = 0; i < 1800; i++) {
+        const value = 190 + Math.floor(random() * 75);
+        const alpha = 0.04 + random() * 0.16;
+
+        context.fillStyle = `rgba(${value}, ${value}, ${value}, ${alpha})`;
+        const size = 0.4 + random() * 2.4;
+        context.beginPath();
+        context.arc(
+          random() * 256,
+          random() * 256,
+          size,
+          0,
+          Math.PI * 2
+        );
+        context.fill();
+      }
+
+      context.lineWidth = 1.5;
+      for (let i = 0; i < 13; i++) {
+        const angle = (i / 13) * Math.PI * 2;
+        const radius = 8 + random() * 19;
+
+        context.strokeStyle = `rgba(225,245,255,${0.035 + random() * 0.07})`;
+        context.beginPath();
+        context.moveTo(
+          128 + Math.cos(angle) * radius,
+          128 + Math.sin(angle) * radius
+        );
+        context.lineTo(
+          128 + Math.cos(angle) * (115 + random() * 75),
+          128 + Math.sin(angle) * (115 + random() * 75)
+        );
+        context.stroke();
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(2, 2);
+      texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
+      return texture;
+    }
+
+    function makeMarbleBump() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 256;
+      canvas.height = 256;
+
+      const context = canvas.getContext("2d");
+      context.fillStyle = "#808080";
+      context.fillRect(0, 0, 256, 256);
+
+      let seed = 9187;
+      const random = () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+
+      for (let i = 0; i < 1800; i++) {
+        const shade = 95 + Math.floor(random() * 65);
+        const alpha = 0.05 + random() * 0.18;
+        context.fillStyle = `rgba(${shade},${shade},${shade},${alpha})`;
+        context.beginPath();
+        context.arc(
+          random() * 256,
+          random() * 256,
+          0.5 + random() * 2.2,
+          0,
+          Math.PI * 2
+        );
+        context.fill();
+      }
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.NoColorSpace;
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(2, 2);
+
+      return texture;
+    }
+
+    const fabricTexture = makeFabricTexture();
+    const marbleTexture = makeMarbleTexture();
+    const marbleBumpTexture = makeMarbleBump();
+
+    // -------------------------------------------------------------------------
+    // Materials
+    // -------------------------------------------------------------------------
+
+    const goldMaterial = new THREE.MeshStandardMaterial({
+      color: 0xc9963e,
+      metalness: 0.88,
+      roughness: 0.24,
+      envMapIntensity: 1.35
+    });
+
+    const antiqueGoldMaterial = new THREE.MeshStandardMaterial({
+      color: 0x8c6326,
+      metalness: 0.78,
+      roughness: 0.38,
+      envMapIntensity: 1.15
+    });
+
+    const marbleMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: marbleTexture,
+      bumpMap: marbleBumpTexture,
+      bumpScale: 0.035,
+      metalness: 0.12,
+      roughness: 0.34
+    });
+
+    const fabricMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      map: fabricTexture,
+      bumpMap: fabricTexture,
+      bumpScale: 0.018,
+      metalness: 0,
+      roughness: 0.8,
+      side: THREE.DoubleSide
+    });
+
+    const crystalMaterial = new THREE.MeshPhysicalMaterial({
+      color: 0xf0d284,
+      metalness: 0.03,
+      roughness: 0.1,
+      transmission: 0.3,
+      thickness: 0.35,
+      ior: 1.45,
+      transparent: true,
+      opacity: 0.88,
+      clearcoat: 1,
+      clearcoatRoughness: 0.08,
+      side: THREE.DoubleSide
+    });
+
+    const crystalCoreMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffd978,
+      emissive: 0xd98a22,
+      emissiveIntensity: 0.65,
+      metalness: 0.08,
+      roughness: 0.2
+    });
+
+    // -------------------------------------------------------------------------
+    // Asset construction
+    // -------------------------------------------------------------------------
+
+    const asset = new THREE.Group();
+    asset.name = "Royal_Crystal_Lamp";
+    asset.userData = {
+      assetType: "Low-poly ceremonial lamp",
+      style: "Royal gold and blue marble",
+      exportedFor: "Godot GLB import"
+    };
+    scene.add(asset);
+
+    function addMesh(geometry, material, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addHorizontalRing(radius, tube, material, y, segments = 32) {
+      const ring = addMesh(
+        new THREE.TorusGeometry(radius, tube, 6, segments),
+        material
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = y;
+      return ring;
+    }
+
+    // Layered pedestal.
+    addMesh(
+      new THREE.CylinderGeometry(1.16, 1.20, 0.16, 12),
+      antiqueGold
+    ).position.y = 0.08;
+
+    addMesh(
+      new THREE.CylinderGeometry(0.98, 1.08, 0.18, 12),
+      gold
+    ).position.y = 0.27;
+
+    addHorizontalRing(1.045, 0.035, antiqueGoldMaterial, 0.37, 24);
+
+    addMesh(
+      new THREE.CylinderGeometry(0.86, 0.98, 0.15, 12),
+      gold
+    ).position.y = 0.47;
+
+    addHorizontalRing(0.93, 0.026, antiqueGoldMaterial, 0.57, 24);
+
+    // Faceted decorative studs around the base.
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const stud = addMesh(
+        new THREE.SphereGeometry(0.052, 6, 4),
+        antiqueGoldMaterial
+      );
+      stud.position.set(
+        Math.cos(angle) * 1.025,
+        0.39,
+        Math.sin(angle) * 1.025
+      );
+      stud.scale.y = 0.65;
+    }
+
+    // Main marbled lamp body.
+    const bodyProfile = [
+      [0.72, 0.50],
+      [0.88, 0.58],
+      [1.00, 0.78],
+      [0.97, 0.98],
+      [0.82, 1.18],
+      [0.87, 1.36],
+      [0.97, 1.52],
+      [0.98, 1.66],
+      [0.91, 1.80]
+    ];
+
+    addMesh(
+      new THREE.LatheGeometry(
+        bodyProfile.map(point => new THREE.Vector2(point[0], point[1])),
+        16
+      ),
+      marbleMaterial
+    );
+
+    // Gold vertical ribs following the marble body.
+    const ribProfile = [
+      [0.88, 0.58],
+      [1.00, 0.78],
+      [0.96, 0.98],
+      [0.82, 1.18],
+      [0.87, 1.36],
+      [0.97, 1.52],
+      [0.98, 1.66],
+      [0.91, 1.80]
+    ];
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
+      const points = ribProfile.map(([radius, height]) => {
+        return new THREE.Vector3(
+          Math.cos(angle) * radius,
+          height,
+          Math.sin(angle) * radius
+        );
+      });
+
+      const curve = new THREE.CatmullRomCurve3(points);
+      addMesh(
+        new THREE.TubeGeometry(curve, 24, 0.024, 5, false),
+        gold
+      );
+    }
+
+    addMesh(
+      new THREE.CylinderGeometry(0.94, 0.94, 0.075, 16),
+      gold
+    ).position.y = 0.65;
+
+    addMesh(
+      new THREE.CylinderGeometry(0.86, 0.86, 0.07, 16),
+      antiqueGoldMaterial
+    ).position.y = 1.77;
+
+    addMesh(
+      new THREE.CylinderGeometry(0.73, 0.80, 0.12, 16),
+      gold
+    ).position.y = 1.88;
+
+    // Neck and upper collar.
+    addMesh(
+      new THREE.CylinderGeometry(0.39, 0.36, 0.18, 12),
+      antiqueGoldMaterial
+    ).position.y = 2.01;
+
+    addMesh(
+      new THREE.CylinderGeometry(0.30, 0.34, 0.24, 12),
+      marbleMaterial
+    ).position.y = 2.20;
+
+    addHorizontalRing(0.66, 0.052, goldMaterial, 2.35, 24);
+
+    // -------------------------------------------------------------------------
+    // Fabric lamp head
+    // -------------------------------------------------------------------------
+
+    function createPetalGeometry() {
+      const segmentsU = 4;
+      const segmentsV = 6;
+      const baseRadius = 0.58;
+      const positions = [];
+      const uvs = [];
+      const indices = [];
+
+      for (let j = 0; j <= segmentsV; j++) {
+        const t = j / segmentsV;
+
+        for (let i = 0; i <= segmentsU; i++) {
+          const angular = (i / segmentsU) * 2 - 1;
+          const width = 0.42 + 0.34 * t;
+          const radius = baseRadius + width;
+
+          const x = Math.cos(angular) * radius;
+          const z = Math.sin(angular) * radius;
+          const y =
+            2.39 +
+            0.78 * t -
+            0.14 * t * t +
+            0.08 * Math.sin(Math.PI * t);
+
+          positions.push(x, y, z);
+          uvs.push(i / segmentsU, t);
+        }
+      }
+
+      for (let j = 0; j < segmentsV; j++) {
+        for (let i = 0; i < segmentsU; i++) {
+          const a = j * (segmentsU + 1) + i;
+          const b = a + 1;
+          const c = a + segmentsU + 1;
+          const d = c + 1;
+
+          indices.push(a, b, c, b, d, c);
+        }
+      }
+
+      const topGeometry = new THREE.BufferGeometry();
+      topGeometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      topGeometry.setAttribute(
+        "uv",
+        new THREE.Float32BufferAttribute(uvs, 2)
+      );
+      topGeometry.setIndex(indices);
+      topGeometry.computeVertexNormals();
+
+      return topGeometry;
+    }
+
+    const petalGeometry = createPetalGeometry();
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const point = new THREE.Vector3(
+        Math.cos(angle) * 0.58,
+        2.39,
+        Math.sin(angle) * 0.58
+      );
+
+      const curve = new THREE.CatmullRomCurve3(
+        Array.from({ length: 8 }, (_, index) => {
+          const t = 0.07 + index / 8 * 0.86;
+          const radius = 0.58 + 0.70 * t;
+          const y =
+            2.39 +
+            0.78 * t -
+            0.14 * t * t +
+            0.08 * Math.sin(Math.PI * t);
+
+          return new THREE.Vector3(
+            Math.cos(angle) * radius,
+            y,
+            Math.sin(angle) * radius
+          );
+        })
+      );
+
+      addMesh(
+        new THREE.TubeGeometry(curve, 24, 0.021, 5, false),
+        gold
+      );
+    }
+
+    const petalMaterial = fabricMaterial.clone();
+    petalMaterial.side = THREE.DoubleSide;
+
+    for (let i = 0; i < 8; i++) {
+      const petal = addMesh(petalGeometry, petalMaterial);
+      petal.name = `Lamp_Fabric_Petal_${i + 1}`;
+    }
+
+    // Crown cap.
+    const crownProfile = [
+      [0.38, 3.00],
+      [0.57, 3.06],
+      [0.68, 3.17],
+      [0.64, 3.28],
+      [0.47, 3.37],
+      [0.22, 3.40],
+      [0.00, 3.41]
+    ];
+
+    addMesh(
+      new THREE.LatheGeometry(
+        crownProfile.map(point => new THREE.Vector2(point[0], point[1])),
+        12
+      ),
+      gold
+    );
+
+    addHorizontalRing(0.61, 0.043, antiqueGoldMaterial, 3.045, 24);
+
+    // Finial.
+    addMesh(
+      new THREE.CylinderGeometry(0.055, 0.07, 0.18, 8),
+      gold
+    ).position.y = 3.49;
+
+    const finialBall = addMesh(
+      new THREE.SphereGeometry(0.11, 10, 6),
+      gold
+    );
+    finialBall.position.y = 3.60;
+
+    const crownCrystal = addMesh(
+      new THREE.OctahedronGeometry(0.125, 0),
+      crystalMaterial
+    );
+    crownCrystal.position.y = 3.735;
+    crownCrystal.rotation.y = Math.PI / 4;
+
+    // -------------------------------------------------------------------------
+    // Hanging chains and crystals
+    // -------------------------------------------------------------------------
+
+    function createCrystalGeometry() {
+      const positions = [];
+      const indices = [];
+      const upperRadius = 0.10;
+      const lowerRadius = 0.112;
+
+      positions.push(0, 0.18, 0);
+
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        positions.push(
+          Math.cos(angle) * upperRadius,
+          0.06,
+          Math.sin(angle) * upperRadius
+        );
+      }
+
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2 + Math.PI / 6;
+        positions.push(
+          Math.cos(angle) * lowerRadius,
+          -0.08,
+          Math.sin(angle) * lowerRadius
+        );
+      }
+
+      positions.push(0, -0.20, 0);
+
+      for (let i = 0; i < 6; i++) {
+        const next = (i + 1) % 6;
+        const upper = 1 + i;
+        const upperNext = 1 + next;
+        const lower = 7 + i;
+        const lowerNext = 7 + next;
+
+        indices.push(0, upperNext, upper);
+        indices.push(upper, upperNext, lower, upperNext, lowerNext, lower);
+        indices.push(lower, lowerNext, bottom);
+      }
+
+      const bottom = positions.length / 3 - 1;
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      return geometry;
+    }
+
+    const crystalGeometry = createCrystalGeometry();
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2 + 0.16;
+      const start = new THREE.Vector3(
+        Math.cos(angle) * 0.73,
+        2.37,
+        Math.sin(angle) * 0.73
+      );
+
+      const end = new THREE.Vector3(
+        Math.cos(angle) * 0.82,
+        2.08,
+        Math.sin(angle) * 0.82
+      );
+
+      for (let linkIndex = 0; linkIndex < 5; linkIndex++) {
+        const t = linkIndex / 4;
+        const position = start.clone().lerp(end, t);
+
+        const link = addMesh(
+          new THREE.TorusGeometry(0.052, 0.014, 4, 8),
+          gold
+        );
+        link.position.copy(position);
+        link.rotation.y = linkIndex % 2 === 0 ? 0 : Math.PI / 2;
+      }
+
+      const crystal = addMesh(
+        crystalGeometry,
+        crystalMaterial
+      );
+      crystal.name = `Hanging_Crystal_${i + 1}`;
+      crystal.position.set(end.x, 1.95, end.z);
+      crystal.rotation.y = angle;
+      crystal.scale.setScalar(i % 3 === 0 ? 1.18 : 0.94);
+
+      const core = addMesh(
+        new THREE.OctahedronGeometry(0.058, 0),
+        crystalCoreMaterial
+      );
+      core.name = `Crystal_Core_${i + 1}`;
+      core.position.copy(crystal.position);
+      core.rotation.copy(crystal.rotation);
+    }
+
+    // -------------------------------------------------------------------------
+    // Front medallion
+    // -------------------------------------------------------------------------
+
+    const medallion = new THREE.Group();
+    medallion.name = "Front_Medallion";
+    medallion.position.set(0, 0.94, 0.87);
+    asset.add(medallion);
+
+    const medallionDisk = addMesh(
+      new THREE.CylinderGeometry(0.19, 0.19, 0.07, 12),
+      gold,
+      medallion
+    );
+    medallionDisk.rotation.x = Math.PI / 2;
+
+    const medallionCenter = addMesh(
+      new THREE.CylinderGeometry(0.115, 0.115, 0.08, 12),
+      marbleMaterial,
+      medallion
+    );
+    medallionCenter.rotation.x = Math.PI / 2;
+
+    const medallionRim = addMesh(
+      new THREE.TorusGeometry(0.16, 0.024, 6, 24),
+      antiqueGoldMaterial,
+      medallion
+    );
+    medallionRim.position.z = 0.045;
+
+    const starShape = new THREE.Shape();
+    for (let i = 0; i < 10; i++) {
+      const angle = Math.PI / 2 + (i / 10) * Math.PI * 2;
+      const radius = i % 2 === 0 ? 0.125 : 0.052;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+
+      if (i === 0) {
+        starShape.moveTo(x, y);
+      } else {
+        starShape.lineTo(x, y);
+      }
+    }
+    starShape.closePath();
+
+    const star = addMesh(
+      new THREE.ExtrudeGeometry(starShape, {
+        depth: 0.025,
+        bevelEnabled: true,
+        bevelSegments: 1,
+        bevelSize: 0.008,
+        bevelThickness: 0.008,
+        steps: 1
+      }),
+      gold,
+      medallion
+    );
+    star.position.z = 0.075;
+
+    // -------------------------------------------------------------------------
+    // Display ground, excluded from GLB export
+    // -------------------------------------------------------------------------
+
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(11, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0xb9beb7,
+        roughness: 0.96,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.012;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting…";
+      status.textContent = "Preparing binary GLB";
+
+      asset.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+
+      try {
+        exporter.parse(
+          asset,
+          result => {
+            const blob = new Blob([result], {
+              type: "model/gltf-binary"
+            });
+
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = "royal-crystal-lamp.glb";
+            document.body.appendChild(anchor);
+            anchor.click();
+            anchor.remove();
+
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+            exportButton.disabled = false;
+            exportButton.textContent = "Export GLB";
+            status.textContent = `GLB exported · ${(blob.size / 1024).toFixed(1)} KB`;
+          },
+          error => {
+            console.error(error);
+            exportButton.disabled = false;
+            exportButton.textContent = "Export GLB";
+            status.textContent = "Export failed — see console";
+          },
+          {
+            binary: true,
+            onlyVisible: true,
+            trs: false,
+            maxTextureSize: 2048
+          }
+        );
+      } catch (error) {
+        console.error(error);
+        exportButton.disabled = false;
+        exportButton.textContent = "Export GLB";
+        status.textContent = "Export failed — see console";
+      }
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

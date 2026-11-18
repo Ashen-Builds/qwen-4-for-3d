@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "low-poly-cargo-van.glb",
+  "bytes": 279992,
+  "sha256": "a48bf4b6dab9ce0bebea2ddd4f0f4fe66bbebf8b53eb42156cc030b58e79fb66",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 128,
+  "nodes": 129,
+  "materials": 12,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 2596,
+  "animations": [],
+  "size_xyz": [
+   3.321000000372529,
+   2.622500008791685,
+   4.837500000596046
+  ]
+ }
+}

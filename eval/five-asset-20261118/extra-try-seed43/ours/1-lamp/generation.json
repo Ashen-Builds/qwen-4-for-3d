@@ -1,0 +1,13 @@
+{
+  "backend": "llama.cpp",
+  "model_file": "ours-Q8_0.gguf",
+  "mmproj_file": "mmproj-Qwen3.5-4B-BF16.gguf",
+  "elapsed_seconds": 135.9,
+  "exit_code": 0,
+  "response_chars": 45242,
+  "complete_html": true,
+  "seed": 43,
+  "thinking": true,
+  "predict_cap": 32768,
+  "image_loaded": true
+}

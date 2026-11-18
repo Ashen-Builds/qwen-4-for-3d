@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vintage Lamp - Low Poly 3D Export</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #e0e0e0; font-family: sans-serif; }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+        button {
+            pointer-events: auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:hover { background-color: #555; }
+    </style>
+</head>
+<body>
+
+<div id="info">
+    <h3>Gold Ornate Table Lamp</h3>
+    <button id="exportBtn">Download GLB</button>
+</div>
+
+<!-- Import Three.js as a module -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+    import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+
+    // --- Scene Setup ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdddddd);
+    
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(3, 2, 4);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+
+    // --- Procedural Textures ---
+
+    // 1. Gold Texture (Metallic/Rustic)
+    function createGoldTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512; canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        
+        // Base Gold
+        ctx.fillStyle = '#D4AF37';
+        ctx.fillRect(0, 0, 512, 512);
+        
+        // Noise
+        for(let i=0; i<5000; i++) {
+            ctx.fillStyle = Math.random() > 0.5 ? '#C19B35' : '#E5C559';
+            ctx.fillRect(Math.random()*512, Math.random()*512, 2, 2);
+        }
+        // Scratches
+        ctx.globalCompositeOperation = 'source-atop';
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        for(let i=0; i<20; i++) {
+            ctx.fillRect(Math.random()*512, Math.random()*512, 2, 2);
+        }
+        
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+    }
+
+    // 2. Blue Marble Texture (Base)
+    function createMarbleTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256; canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+
+        // Dark Blue Base
+        ctx.fillStyle = '#0f3d5e';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Veins
+        ctx.strokeStyle = '#3e6b99';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(50, 100); ctx.lineTo(200, 200);
+        ctx.moveTo(100, 200); ctx.lineTo(150, 50);
+        ctx.stroke();
+
+        // Specular highlights
+        ctx.fillStyle = '#6aa3c3';
+        ctx.beginPath();
+        ctx.ellipse(100, 150, 20, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        const tex = new THREE.CanvasTexture(canvas);
+        return tex;
+    }
+
+    const goldTex = createGoldTexture();
+    const marbleTex = createMarbleTexture();
+
+    // --- Materials ---
+    const materialGold = new THREE.MeshStandardMaterial({ 
+        color: 0xD4AF37, 
+        roughness: 0.2, 
+        metalness: 0.9,
+        map: goldTex
+    });
+    
+    const materialGoldFlat = new THREE.MeshStandardMaterial({ 
+        color: 0xD4AF37, 
+        roughness: 0.1, 
+        metalness: 0.8,
+        flatShading: true 
+    });
+
+    const materialBlue = new THREE.MeshStandardMaterial({ 
+        color: 0x1a4f85, 
+        roughness: 0.3, 
+        metalness: 0.3,
+        map: marbleTex,
+        bumpMap: marbleTex,
+        bumpScale: 0.05,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.1
+    });
+
+    const materialShade = new THREE.MeshPhysicalMaterial({
+        color: 0xF5E6D3,
+        roughness: 0.1,
+        metalness: 0.0,
+        transmission: 0.9, // Glass-like
+        thickness: 0.5,
+        transparent: true,
+        opacity: 0.9,
+        side: THREE.DoubleSide
+    });
+
+    // --- Lamp Construction ---
+    
+    const lampGroup = new THREE.Group();
+
+    // 1. The Base (Lower part)
+    const baseGeo = new THREE.TorusGeometry(1.5, 0.5, 16, 64);
+    const base = new THREE.Mesh(baseGeo, materialBlue);
+    base.position.y = -2;
+    base.castShadow = true;
+    base.receiveShadow = true;
+
+    // 2. The Base (Upper body) - Marble sphere shape
+    const bodyGeo = new THREE.SphereGeometry(1.2, 32, 32, 0, Math.PI * 2, 0, Math.PI/2);
+    const body = new THREE.Mesh(bodyGeo, materialBlue);
+    body.position.y = -0.8;
+    body.castShadow = true;
+    body.receiveShadow = true;
+
+    // 3. The Ornamental Flourishes (Gold leaves)
+    const flourishGeo = new THREE.TorusKnotGeometry(0.5, 0.15, 64, 8, 0, 3 * Math.PI);
+    const flourish = new THREE.Mesh(florishGeo, materialGold);
+    flourish.position.set(0, -0.5, 0.8);
+    
+    // Add some detail meshes for leaves
+    const leafGeo = new THREE.CylinderGeometry(0.4, 0.1, 0.6, 8);
+    leafGeo.translate(0, 0.3, 0);
+    const leaf = new THREE.Mesh(leafGeo, materialGold);
+    leaf.position.set(0.3, -0.8, 0.8);
+    
+    lampGroup.add(base, body, flourish, leaf);
+
+    // 4. The Neck (Connecting cylinder)
+    const neckGeo = new THREE.CylinderGeometry(0.3, 0.4, 1.0, 16);
+    neckGeo.translate(0, 0.2, 0); // push down slightly to connect
+    const neck = new THREE.Mesh(neckGeo, materialGold);
+    neck.castShadow = true;
+    
+    // Neck ornament
+    const neckOrnGeo = new THREE.TorusGeometry(0.25, 0.05, 8, 32, Math.PI);
+    neckOrnGeo.translate(0, 0.5, 0);
+    const neckOrn = new THREE.Mesh(neckOrnGeo, materialGoldFlat);
+    neckOrn.position.y = -0.5; // relative to neck
+    neck.add(neckOrn);
+
+    lampGroup.add(neck);
+
+    // 5. The Shade
+    // Create a custom path for the flared shape
+    const shadePath = new THREE.Path();
+    shadePath.moveTo(0, 0);
+    // Center back of shade
+    shadePath.lineTo(0, -4.5); 
+    // Left side curve
+    shadePath.bezierCurveTo(-3, -3.5, -4.5, -0.5, -4.2, 0);
+    // Right side curve
+    shadePath.bezierCurveTo(4.2, 0, 4.5, -0.5, 3, -3.5);
+    
+    // Extrude settings
+    const shadeOptions = {
+        depth: 0.15,
+        bevelEnabled: true,
+        bevelThickness: 0.02,
+        bevelSize: 0.02,
+        bevelSegments: 3
+    };
+
+    const shadeGeo = new THREE.ExtrudeGeometry(shadePath, shadeOptions);
+    // Center the geometry
+    shadeGeo.center();
+    
+    // Tilt the shade slightly
+    shadeGeo.rotateX(-0.1);
+
+    const shade = new THREE.Mesh(shadeGeo, materialShade);
+    shade.position.y = 0.8;
+    shade.castShadow = true;
+    lampGroup.add(shade);
+
+    // 6. The Rim Decoration (Gold ropes)
+    const rimGeo = new THREE.TorusGeometry(3.2, 0.08, 16, 64);
+    const rim = new THREE.Mesh(rimGeo, materialGoldFlat);
+    rim.position.y = -1.2;
+    rim.rotation.x = -0.5; // Orient flat
+    lampGroup.add(rim);
+
+    // 7. Chains and Crystals
+    function createCrystal() {
+        const geo = new THREE.ConeGeometry(0.04, 0.6, 4);
+        geo.rotateZ(Math.PI / 2);
+        const mat = new THREE.MeshPhysicalMaterial({
+            color: 0xffffff,
+            roughness: 0.1,
+            metalness: 0.1,
+            transmission: 0.9,
+            thickness: 0.8,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.1
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        return mesh;
+    }
+
+    // Add crystals around the rim
+    const crystalPositions = [
+        {x: 0, y: -1.2, z: 0},
+        {x: -2.5, y: -1.2, z: 0},
+        {x: 2.5, y: -1.2, z: 0},
+        {x: 0, y: -1.2, z: -0.3}, // Inner one
+        {x: -2, y: -1.2, z: -0.2},
+        {x: 2, y: -1.2, z: -0.2}
+    ];
+
+    crystalPositions.forEach(pos => {
+        const crystal = createCrystal();
+        crystal.position.set(pos.x, pos.y, pos.z);
+        lampGroup.add(crystal);
+
+        // Add a tiny gold bead above crystal
+        const beadGeo = new THREE.SphereGeometry(0.03);
+        const bead = new THREE.Mesh(beadGeo, materialGold);
+        bead.position.set(pos.x, pos.y + 0.3, pos.z);
+        lampGroup.add(bead);
+    });
+
+    // Add chains (Line geometry)
+    const chainGeo = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(-2.5, -1.15, 0), new THREE.Vector3(-2.5, -1.8, 0)
+    ]);
+    const chainMat = new THREE.LineBasicMaterial({ color: 0xD4AF37, linewidth: 2 }); // Note: linewidth only works in some renderers
+    const chain1 = new THREE.Line(chainGeo, chainMat);
+    lampGroup.add(chain1);
+    
+    // Add a second chain for depth
+    const chainGeo2 = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(2.5, -1.15, 0), new THREE.Vector3(2.5, -1.8, 0)
+    ]);
+    const chain2 = new THREE.Line(chainGeo2, chainMat);
+    lampGroup.add(chain2);
+
+    // --- Lighting ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+    dirLight.position.set(5, 10, 7);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    scene.add(dirLight);
+
+    // Point light acting as the lamp bulb
+    const bulbLight = new THREE.PointLight(0xffaa00, 1000, 20);
+    bulbLight.position.set(0, 1.5, 0);
+    lampGroup.add(bulbLight);
+
+    scene.add(lampGroup);
+
+    // --- Export Logic ---
+
+    const exportBtn = document.getElementById('exportBtn');
+    const exporter = new GLTFExporter();
+
+    // Helper to get 3D mesh data from a 2D canvas texture
+    function getTextureFromMesh(mesh) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        const scale = 512 / mesh.material.map.image.width;
+        ctx.drawImage(mesh.material.map.image, 0, 0, 256, 256);
+        return new THREE.CanvasTexture(canvas);
+    }
+
+    exportBtn.addEventListener('click', () => {
+        // Update textures with procedural data to ensure they survive export
+        const goldTex2 = getTextureFromMesh(materialGold);
+        goldTex2.wrapS = THREE.RepeatWrapping;
+        goldTex2.wrapT = THREE.RepeatWrapping;
+        materialGold.map = goldTex2;
+
+        const marbleTex2 = getTextureFromMesh(materialBlue);
+        marbleTex2.wrapS = THREE.RepeatWrapping;
+        marbleTex2.wrapT = THREE.RepeatWrapping;
+        materialBlue.map = marbleTex2;
+        materialBlue.bumpMap = marbleTex2;
+
+        exporter.parse(
+            lampGroup,
+            (result) => {
+                const url = URL.createObjectURL(new Blob([result.buffer], { type: 'application/octet-stream' }));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'vintage_lamp.glb';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            },
+            (error) => {
+                console.error(error);
+                alert("Export failed. Check console.");
+            }
+        );
+    });
+
+    // Animation Loop
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // Handle Resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+</script>
+</body>
+</html>

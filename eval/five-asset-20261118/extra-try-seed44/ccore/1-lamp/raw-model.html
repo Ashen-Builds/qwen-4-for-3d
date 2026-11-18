@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Brass Lamp</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #d9d0c1;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .panel {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(330px, calc(100vw - 44px));
+      padding: 18px;
+      color: #f7f0df;
+      background: rgba(25, 23, 19, 0.84);
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 14px;
+      box-shadow: 0 14px 38px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0 0 7px;
+      font-size: 19px;
+      font-weight: 650;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin: 0 0 15px;
+      color: #bdb5a5;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    button {
+      width: 100%;
+      padding: 11px 16px;
+      border: 0;
+      border-radius: 9px;
+      color: #241a0d;
+      background: linear-gradient(135deg, #e5bd67, #b98230);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 750;
+      cursor: pointer;
+      box-shadow: 0 7px 18px rgba(0, 0, 0, 0.22);
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+
+    button:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      filter: grayscale(0.35);
+      opacity: 0.72;
+      transform: none;
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 10px;
+      color: #c9c0af;
+      font-size: 12px;
+      text-align: center;
+    }
+
+    .hint {
+      position: fixed;
+      right: 20px;
+      bottom: 17px;
+      z-index: 10;
+      padding: 8px 11px;
+      color: rgba(40, 35, 28, 0.72);
+      background: rgba(255, 252, 245, 0.58);
+      border: 1px solid rgba(60, 45, 25, 0.1);
+      border-radius: 8px;
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <h1>Elegant Brass Lamp</h1>
+    <p class="subtitle">
+      A static low-poly ceremonial lamp with sculpted petals, blue enamel,
+      hanging crystals, and a polished brass finish.
+    </p>
+
+    <button id="exportButton" type="button">Export GLB</button>
+    <div id="status" aria-live="polite"></div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    // ------------------------------------------------------------
+    // Renderer and scene
+    // ------------------------------------------------------------
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    viewport.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xd9d0c1);
+    scene.fog = new THREE.Fog(0xd9d0c1, 8, 17);
+
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      50
+    );
+
+    camera.position.set(5.6, 4.25, 6.4);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.15, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 4.1;
+    controls.maxDistance = 11;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // Soft studio reflections for the metallic surfaces.
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const roomEnvironment = new RoomEnvironment();
+    const environmentTarget = pmremGenerator.fromScene(roomEnvironment, 0.04);
+    scene.environment = environmentTarget.texture;
+    pmremGenerator.dispose();
+
+    // ------------------------------------------------------------
+    // Lighting
+    // ------------------------------------------------------------
+
+    const hemisphereLight = new THREE.HemisphereLight(
+      0xfff5df,
+      0x293441,
+      2.1
+    );
+    scene.add(hemisphereLight);
+
+    const keyLight = new THREE.DirectionalLight(0xffedcf, 3.5);
+    keyLight.position.set(4.5, 7.5, 4.2);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 18;
+    keyLight.shadow.bias = -0.00025;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xb9d9ff, 1.8);
+    rimLight.position.set(-4, 4.5, -5);
+    scene.add(rimLight);
+
+    const warmFill = new THREE.PointLight(0xffb96b, 8, 5, 2);
+    warmFill.position.set(0, 3.05, 0);
+    scene.add(warmFill);
+
+    // Ground is intentionally outside the exported asset.
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0xcfc5b3,
+        roughness: 0.92,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // ------------------------------------------------------------
+    // Exported lamp root
+    // ------------------------------------------------------------
+
+    const lamp = new THREE.Group();
+    lamp.name = "Elegant_Brass_Lamp";
+    scene.add(lamp);
+
+    const brass = new THREE.MeshStandardMaterial({
+      color: 0xc5933d,
+      metalness: 0.86,
+      roughness: 0.25,
+      flatShading: true
+    });
+
+    const brightBrass = new THREE.MeshStandardMaterial({
+      color: 0xe0b75b,
+      metalness: 0.9,
+      roughness: 0.2,
+      flatShading: true
+    });
+
+    const darkBrass = new THREE.MeshStandardMaterial({
+      color: 0x72501f,
+      metalness: 0.82,
+      roughness: 0.34,
+      flatShading: true
+    });
+
+    const enamel = new THREE.MeshStandardMaterial({
+      color: 0x173d62,
+      metalness: 0.18,
+      roughness: 0.3,
+      flatShading: true
+    });
+
+    const enamelDark = new THREE.MeshStandardMaterial({
+      color: 0x0c263e,
+      metalness: 0.22,
+      roughness: 0.38,
+      flatShading: true
+    });
+
+    const fabric = new THREE.MeshStandardMaterial({
+      color: 0xf0d39b,
+      emissive: 0x6c3710,
+      emissiveIntensity: 0.15,
+      metalness: 0,
+      roughness: 0.72,
+      side: THREE.DoubleSide,
+      flatShading: true
+    });
+
+    const bulbMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffe39a,
+      emissive: 0xffa52b,
+      emissiveIntensity: 2.4,
+      roughness: 0.35,
+      metalness: 0.05,
+      flatShading: true
+    });
+
+    const crystalMaterial = new THREE.MeshStandardMaterial({
+      color: 0x62dce7,
+      emissive: 0x16879c,
+      emissiveIntensity: 0.8,
+      metalness: 0.08,
+      roughness: 0.14,
+      transparent: true,
+      opacity: 0.9,
+      flatShading: true
+    });
+
+    function addMesh(geometry, material, parent = lamp) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addCylinder(
+      radiusTop,
+      radiusBottom,
+      height,
+      material,
+      position,
+      parent = lamp,
+      segments = 8
+    ) {
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments
+        ),
+        material,
+        parent
+      );
+      mesh.position.copy(position);
+      return mesh;
+    }
+
+    function addHorizontalRing(
+      radius,
+      tube,
+      material,
+      position,
+      parent = lamp,
+      tubularSegments = 32
+    ) {
+      const ring = addMesh(
+        new THREE.TorusGeometry(radius, tube, 6, tubularSegments),
+        material,
+        parent
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.copy(position);
+      return ring;
+    }
+
+    function addCylinderBetween(
+      start,
+      end,
+      radius,
+      material,
+      parent = lamp,
+      segments = 6
+    ) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const length = direction.length();
+      const midpoint = new THREE.Vector3()
+        .addVectors(start, end)
+        .multiplyScalar(0.5);
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radius,
+          radius,
+          length,
+          segments
+        ),
+        material,
+        parent
+      );
+
+      mesh.position.copy(midpoint);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Octagonal base and blue enamel pedestal
+    // ------------------------------------------------------------
+
+    addCylinder(
+      0.94,
+      1.06,
+      0.16,
+      darkBrass,
+      new THREE.Vector3(0, 0.08, 0),
+      lamp,
+      8
+    );
+
+    addCylinder(
+      0.77,
+      0.87,
+      0.17,
+      enamelDark,
+      new THREE.Vector3(0, 0.21, 0),
+      lamp,
+      12
+    );
+
+    const pedestalProfile = [
+      new THREE.Vector2(0.0, 0.24),
+      new THREE.Vector2(0.56, 0.24),
+      new THREE.Vector2(0.69, 0.32),
+      new THREE.Vector2(0.67, 0.51),
+      new THREE.Vector2(0.49, 0.79),
+      new THREE.Vector2(0.34, 1.06),
+      new THREE.Vector2(0.41, 1.29),
+      new THREE.Vector2(0.6, 1.46),
+      new THREE.Vector2(0.0, 1.46)
+    ];
+
+    addMesh(
+      new THREE.LatheGeometry(pedestalProfile, 12),
+      enamel
+    );
+
+    // Pedestal gold trim.
+    addCylinder(
+      0.69,
+      0.69,
+      0.085,
+      brightBrass,
+      new THREE.Vector3(0, 0.44, 0),
+      lamp,
+      12
+    );
+
+    addCylinder(
+      0.43,
+      0.43,
+      0.085,
+      brightBrass,
+      new THREE.Vector3(0, 1.28, 0),
+      lamp,
+      12
+    );
+
+    addHorizontalRing(
+      0.68,
+      0.027,
+      darkBrass,
+      new THREE.Vector3(0, 0.52, 0)
+    );
+
+    // Small rivets around the upper pedestal.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const rivet = addMesh(
+        new THREE.SphereGeometry(0.038, 6, 4),
+        brightBrass
+      );
+      rivet.position.set(
+        Math.cos(angle) * 0.43,
+        1.31,
+        Math.sin(angle) * 0.43
+      );
+      rivet.scale.y = 0.55;
+    }
+
+    // ------------------------------------------------------------
+    // Central brass stem and collars
+    // ------------------------------------------------------------
+
+    addCylinder(
+      0.17,
+      0.22,
+      1.3,
+      brass,
+      new THREE.Vector3(0, 2.08, 0),
+      lamp,
+      8
+    );
+
+    addHorizontalRing(
+      0.205,
+      0.034,
+      brightBrass,
+      new THREE.Vector3(0, 1.57, 0)
+    );
+
+    addHorizontalRing(
+      0.19,
+      0.034,
+      brightBrass,
+      new THREE.Vector3(0, 2.43, 0)
+    );
+
+    addHorizontalRing(
+      0.225,
+      0.038,
+      darkBrass,
+      new THREE.Vector3(0, 2.73, 0)
+    );
+
+    addCylinder(
+      0.31,
+      0.24,
+      0.18,
+      brightBrass,
+      new THREE.Vector3(0, 2.79, 0),
+      lamp,
+      8
+    );
+
+    // ------------------------------------------------------------
+    // Lamp head
+    // ------------------------------------------------------------
+
+    lamp.position.y = 2.84;
+
+    const petalRadialSegments = 9;
+    const petalAngularSegments = 14;
+
+    function smoothstep(min, max, value) {
+      const x = THREE.MathUtils.clamp(
+        (value - min) / (max - min),
+        0,
+        1
+      );
+      return x * x * (3 - 2 * x);
+    }
+
+    function getPetalPoint(u, centerAngle, radialPosition) {
+      const radius = 0.22 + 0.96 * radialPosition;
+      const edgeFactor = smoothstep(0.76, 1.0, radialPosition);
+
+      let y =
+        0.1 +
+        0.72 * Math.sin(Math.PI * u * 0.92) +
+        0.045 * Math.sin(u * Math.PI * 2) * radialPosition;
+
+      // Scalloped lower edge.
+      y -=
+        0.18 *
+        edgeFactor *
+        Math.sin(u * Math.PI * 12);
+
+      return new THREE.Vector3(
+        Math.cos(centerAngle + (u - 0.5) * 0.92) * radius,
+        y,
+        Math.sin(centerAngle + (u - 0.5) * 0.92) * radius
+      );
+    }
+
+    function createPetalGeometry(centerAngle) {
+      const positions = [];
+      const indices = [];
+
+      for (let j = 0; j <= petalRadialSegments; j++) {
+        const radialPosition = j / petalRadialSegments;
+
+        for (let i = 0; i <= petalAngularSegments; i++) {
+          const angularPosition = i / petalAngularSegments;
+          const point = getPetalPoint(
+            angularPosition,
+            centerAngle,
+            radialPosition
+          );
+
+          positions.push(point.x, point.y, point.z);
+        }
+      }
+
+      const rowSize = petalAngularSegments + 1;
+
+      for (let j = 0; j < petalRadialSegments; j++) {
+        for (let i = 0; i < petalAngularSegments; i++) {
+          const a = j * rowSize + i;
+          const b = a + 1;
+          const c = a + rowSize;
+          const d = c + 1;
+
+          indices.push(a, b, c);
+          indices.push(b, d, c);
+        }
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      return geometry;
+    }
+
+    const petalCount = 6;
+
+    for (let i = 0; i < petalCount; i++) {
+      const centerAngle = (i / petalCount) * Math.PI * 2;
+      const petalGroup = new THREE.Group();
+      petalGroup.name = `Lamp_Petal_${i + 1}`;
+      lamp.add(petalGroup);
+
+      const fabricMesh = addMesh(
+        createPetalGeometry(centerAngle),
+        fabric,
+        petalGroup
+      );
+      fabricMesh.castShadow = true;
+      fabricMesh.receiveShadow = true;
+
+      // Outer brass border.
+      const outerPoints = [];
+      for (let j = 0; j <= 14; j++) {
+        outerPoints.push(
+          getPetalPoint(j / 14, centerAngle, 1)
+        );
+      }
+
+      const outerCurve = new THREE.CatmullRomCurve3(outerPoints);
+      const outerBorder = addMesh(
+        new THREE.TubeGeometry(outerCurve, 30, 0.044, 5, false),
+        brightBrass,
+        petalGroup
+      );
+      outerBorder.castShadow = true;
+
+      // Inner brass border.
+      const innerPoints = [];
+      for (let j = 0; j <= 14; j++) {
+        innerPoints.push(
+          getPetalPoint(j / 14, centerAngle, 0)
+        );
+      }
+
+      const innerCurve = new THREE.CatmullRomCurve3(innerPoints);
+      const innerBorder = addMesh(
+        new THREE.TubeGeometry(innerCurve, 30, 0.027, 5, false),
+        darkBrass,
+        petalGroup
+      );
+      innerBorder.castShadow = true;
+
+      // A raised central brass vein.
+      const veinPoints = [];
+      for (let j = 0; j <= 18; j++) {
+        const radialPosition = 0.1 + 0.8 * radialPosition;
+        const angle =
+          centerAngle +
+          0.13 * Math.sin(Math.PI * radialPosition) +
+          0.04 * Math.sin(radialPosition * Math.PI * 4);
+
+        veinPoints.push(
+          getPetalPoint(
+            angle,
+            centerAngle,
+            radialPosition
+          )
+        );
+      }
+
+      const veinCurve = new THREE.CatmullRomCurve3(veinPoints);
+      const vein = addMesh(
+        new THREE.TubeGeometry(veinCurve, 28, 0.017, 5, false),
+        brightBrass,
+        petalGroup
+      );
+      vein.castShadow = true;
+
+      // Small decorative studs.
+      for (const radialPosition of [0.34, 0.57, 0.79]) {
+        const studPosition = getPetalPoint(
+          1,
+          centerAngle,
+          radialPosition
+        );
+
+        const stud = addMesh(
+          new THREE.SphereGeometry(0.044, 6, 4),
+          brightBrass,
+          petalGroup
+        );
+        stud.position.copy(studPosition);
+        stud.scale.y = 0.7;
+      }
+    }
+
+    // Bottom rim beneath the sculpted petals.
+    addHorizontalRing(
+      1.17,
+      0.042,
+      brightBrass,
+      new THREE.Vector3(0, 0.105, 0),
+      lamp,
+      48
+    );
+
+    // Central warm bulb visible through the open cage.
+    const bulb = addMesh(
+      new THREE.SphereGeometry(0.19, 10, 7),
+      bulbMaterial
+    );
+    bulb.position.y = 0.31;
+    bulb.scale.y = 1.15;
+
+    // ------------------------------------------------------------
+    // Top crown, hanging loop, and chain
+    // ------------------------------------------------------------
+
+    addCylinder(
+      0.43,
+      0.58,
+      0.21,
+      brass,
+      new THREE.Vector3(0, 0.84, 0),
+      lamp,
+      8
+    );
+
+    const crownRim = addMesh(
+      new THREE.TorusGeometry(0.48, 0.037, 6, 24),
+      brightBrass
+    );
+    crownRim.rotation.x = Math.PI / 2;
+    crownRim.position.y = 0.93;
+
+    addCylinder(
+      0.052,
+      0.062,
+      0.23,
+      brightBrass,
+      new THREE.Vector3(0, 1.1, 0),
+      lamp,
+      8
+    );
+
+    const hangingLoop = addMesh(
+      new THREE.TorusGeometry(0.19, 0.043, 6, 28),
+      brightBrass
+    );
+    hangingLoop.position.y = 1.39;
+    hangingLoop.scale.z = 0.9;
+
+    // Alternating chain links.
+    for (let i = 0; i < 4; i++) {
+      const link = addMesh(
+        new THREE.TorusGeometry(0.075, 0.019, 5, 14),
+        brightBrass
+      );
+
+      link.position.set(
+        0,
+        1.235 - i * 0.105,
+        0
+      );
+
+      if (i % 2 === 1) {
+        link.rotation.y = Math.PI / 2;
+      } else {
+        link.rotation.y = 0;
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Hanging crystals
+    // ------------------------------------------------------------
+
+    const crystalCount = 6;
+
+    for (let i = 0; i < crystalCount; i++) {
+      const angle = (i / crystalCount) * Math.PI * 2 + Math.PI / 6;
+      const radius = 1.04;
+
+      const chainStart = new THREE.Vector3(
+        Math.cos(angle) * radius,
+        0.07,
+        Math.sin(angle) * radius
+      );
+
+      const chainEnd = new THREE.Vector3(
+        Math.cos(angle) * radius,
+        -0.235,
+        Math.sin(angle) * radius
+      );
+
+      addCylinderBetween(
+        chainStart,
+        chainEnd,
+        0.014,
+        darkBrass,
+        lamp,
+        5
+      );
+
+      const bead = addMesh(
+        new THREE.SphereGeometry(0.042, 6, 4),
+        brightBrass
+      );
+      bead.position.copy(chainEnd);
+
+      const crystal = addMesh(
+        new THREE.OctahedronGeometry(0.16, 0),
+        crystalMaterial
+      );
+      crystal.name = `Hanging_Crystal_${i + 1}`;
+      crystal.position.set(
+        Math.cos(angle) * radius,
+        -0.51,
+        Math.sin(angle) * radius
+      );
+      crystal.scale.set(0.72, 1.65, 0.72);
+      crystal.rotation.z = 0.12;
+      crystal.rotation.y = angle;
+
+      const crystalSetting = addHorizontalRing(
+        0.09,
+        0.018,
+        brightBrass,
+        new THREE.Vector3(
+          Math.cos(angle) * radius,
+          -0.285,
+          Math.sin(angle) * radius
+        )
+      );
+      crystalSetting.scale.z = 0.8;
+    }
+
+    // ------------------------------------------------------------
+    // Optional subtle enamel accents on the base
+    // ------------------------------------------------------------
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const accent = addMesh(
+        new THREE.BoxGeometry(0.055, 0.34, 0.025),
+        darkBrass
+      );
+
+      accent.position.set(
+        Math.cos(angle) * 0.54,
+        0.77,
+        Math.sin(angle) * 0.54
+      );
+      accent.rotation.y = -angle;
+    }
+
+    // ------------------------------------------------------------
+    // GLB export
+    // ------------------------------------------------------------
+
+    exportButton.addEventListener("click", async () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB…";
+
+      try {
+        lamp.updateMatrixWorld(true);
+
+        const exporter = new GLTFExporter();
+
+        const binary = await new Promise((resolve, reject) => {
+          exporter.parse(
+            lamp,
+            resolve,
+            reject,
+            {
+              binary: true,
+              onlyVisible: true,
+              truncateDrawRange: true
+            }
+          );
+        });
+
+        const blob = new Blob([binary], {
+          type: "model/gltf-binary"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+
+        link.href = url;
+        link.download = "elegant-brass-lamp.glb";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, 1000);
+
+        status.textContent = "GLB exported successfully.";
+      } catch (error) {
+        console.error(error);
+        status.textContent = "Export failed. See the browser console.";
+      } finally {
+        exportButton.disabled = false;
+      }
+    });
+
+    // ------------------------------------------------------------
+    // Resize handling and render loop
+    // ------------------------------------------------------------
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

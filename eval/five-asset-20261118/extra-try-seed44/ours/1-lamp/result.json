@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "ornate-lamp.glb",
+  "bytes": 264508,
+  "sha256": "d66210b70b57e0bbe30952864a7783b329cd9d601537a4ed86135484480914c7",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 76,
+  "nodes": 80,
+  "materials": 7,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 5560,
+  "animations": [],
+  "size_xyz": [
+   1.8700000047683716,
+   2.098250000998378,
+   1.8700000047683716
+  ]
+ }
+}

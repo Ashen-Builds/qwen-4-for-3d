@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Cargo Van — GLB Asset</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #e8ece7;
+      color: #17211d;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      width: min(330px, calc(100vw - 40px));
+      padding: 18px;
+      border: 1px solid rgba(31, 49, 41, 0.14);
+      border-radius: 16px;
+      background: rgba(250, 252, 249, 0.9);
+      box-shadow: 0 14px 40px rgba(31, 49, 41, 0.12);
+      backdrop-filter: blur(12px);
+    }
+
+    #panel h1 {
+      margin: 0 0 6px;
+      font-size: 19px;
+      letter-spacing: -0.02em;
+    }
+
+    #panel p {
+      margin: 0 0 14px;
+      color: #607068;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    #export-button {
+      width: 100%;
+      padding: 11px 16px;
+      border: 0;
+      border-radius: 10px;
+      background: #347c38;
+      color: white;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 5px 14px rgba(52, 124, 56, 0.25);
+      transition: transform 120ms ease, background 120ms ease;
+    }
+
+    #export-button:hover {
+      background: #286b30;
+      transform: translateY(-1px);
+    }
+
+    #export-button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 10px;
+      color: #607068;
+      font-size: 12px;
+    }
+
+    #hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 10;
+      padding: 8px 11px;
+      border-radius: 9px;
+      background: rgba(250, 252, 249, 0.78);
+      color: #5b6861;
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      #panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      #hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div id="panel">
+    <h1>Low-Poly Cargo Van</h1>
+    <p>
+      A stylized utility van with a green body, tinted windows, roof rails,
+      detailed wheels, and separate trim pieces.
+    </p>
+    <button id="export-button" type="button">Export GLB</button>
+    <div id="status">Ready to export.</div>
+  </div>
+
+  <div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("export-button");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe8ece7);
+    scene.fog = new THREE.Fog(0xe8ece7, 13, 28);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(7.2, 4.5, 7.4);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: false
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.15, -0.05);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 5;
+    controls.maxDistance = 15;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const hemisphere = new THREE.HemisphereLight(0xe8f2ff, 0x665847, 2.1);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xfff4dc, 3.7);
+    keyLight.position.set(5.5, 9, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -7;
+    keyLight.shadow.camera.right = 7;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -7;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xbcd7ff, 1.3);
+    fillLight.position.set(-5, 4, -6);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.1);
+    rimLight.position.set(0, 5, -7);
+    scene.add(rimLight);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({
+        color: 0xd9dfd7,
+        roughness: 0.96,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // -------------------------------------------------------------------------
+    // Vehicle hierarchy
+    // -------------------------------------------------------------------------
+
+    const vehicle = new THREE.Group();
+    vehicle.name = "LowPolyCargoVan";
+    scene.add(vehicle);
+
+    const materials = {
+      body: new THREE.MeshStandardMaterial({
+        color: 0x367a32,
+        roughness: 0.48,
+        metalness: 0.18,
+        flatShading: true
+      }),
+      bodyLight: new THREE.MeshStandardMaterial({
+        color: 0x468b3b,
+        roughness: 0.52,
+        metalness: 0.14,
+        flatShading: true
+      }),
+      bodyDark: new THREE.MeshStandardMaterial({
+        color: 0x285b29,
+        roughness: 0.58,
+        metalness: 0.12,
+        flatShading: true
+      }),
+      black: new THREE.MeshStandardMaterial({
+        color: 0x202727,
+        roughness: 0.72,
+        metalness: 0.12,
+        flatShading: true
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x101414,
+        roughness: 0.94,
+        metalness: 0,
+        flatShading: true
+      }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0x183940,
+        roughness: 0.2,
+        metalness: 0.28,
+        flatShading: true
+      }),
+      metal: new THREE.MeshStandardMaterial({
+        color: 0x929b98,
+        roughness: 0.38,
+        metalness: 0.72,
+        flatShading: true
+      }),
+      darkMetal: new THREE.MeshStandardMaterial({
+        color: 0x4b5553,
+        roughness: 0.48,
+        metalness: 0.65,
+        flatShading: true
+      }),
+      headlight: new THREE.MeshStandardMaterial({
+        color: 0xf4f0d8,
+        roughness: 0.2,
+        metalness: 0.08,
+        flatShading: true
+      }),
+      amber: new THREE.MeshStandardMaterial({
+        color: 0xffa51e,
+        roughness: 0.35,
+        metalness: 0.08,
+        flatShading: true
+      }),
+      red: new THREE.MeshStandardMaterial({
+        color: 0xc92728,
+        roughness: 0.38,
+        metalness: 0.06,
+        flatShading: true
+      }),
+      white: new THREE.MeshStandardMaterial({
+        color: 0xe7e4d7,
+        roughness: 0.65,
+        metalness: 0.04,
+        flatShading: true
+      })
+    };
+
+    function addMesh(geometry, material, parent = vehicle) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(parent, size, position, material, rotation = null) {
+      const mesh = addMesh(
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        material,
+        parent
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+
+      if (rotation) {
+        mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      }
+
+      return mesh;
+    }
+
+    function addCylinder(
+      parent,
+      radius,
+      depth,
+      position,
+      material,
+      radialSegments = 12,
+      rotation = null
+    ) {
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radius,
+          radius,
+          depth,
+          radialSegments,
+          1,
+          false
+        ),
+        material,
+        parent
+      );
+
+      mesh.position.set(position[0], position[1], position[2]);
+
+      if (rotation) {
+        mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      }
+
+      return mesh;
+    }
+
+    // -------------------------------------------------------------------------
+    // Chassis and cargo body
+    // -------------------------------------------------------------------------
+
+    addBox(vehicle, [2.30, 0.32, 4.55], [0, 0.62, -0.05], materials.black);
+    addBox(vehicle, [2.38, 0.28, 3.65], [0, 0.48, -0.25], materials.black);
+
+    // Cargo compartment.
+    addBox(vehicle, [2.46, 1.48, 2.42], [0, 1.68, -1.10], materials.body);
+    addBox(vehicle, [2.58, 0.16, 2.52], [0, 2.48, -1.10], materials.bodyLight);
+    addBox(vehicle, [2.46, 0.31, 2.42], [0, 0.99, -1.10], materials.black);
+
+    // Roof ribs.
+    for (const z of [-1.82, -1.43, -1.04, -0.65]) {
+      addBox(vehicle, [2.28, 0.035, 0.075], [0, 2.575, z], materials.bodyDark);
+    }
+
+    // Rear cargo door panel and seam.
+    addBox(
+      vehicle,
+      [2.18, 1.18, 0.045],
+      [0, 1.69, -2.325],
+      materials.bodyLight
+    );
+    addBox(
+      vehicle,
+      [0.035, 1.18, 0.035],
+      [0, 1.69, -2.355],
+      materials.bodyDark
+    );
+
+    // Rear door handle.
+    addBox(vehicle, [0.30, 0.075, 0.075], [0, 1.72, -2.39], materials.black);
+
+    // Cab body.
+    addBox(vehicle, [2.46, 0.91, 1.82], [0, 1.31, 1.05], materials.body);
+    addBox(vehicle, [2.58, 0.18, 2.05], [0, 2.38, 1.03], materials.bodyLight);
+    addBox(vehicle, [2.42, 0.11, 0.16], [0, 2.34, 1.91], materials.black);
+
+    // A-pillars.
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.13, 1.02, 0.13],
+        [side * 1.235, 1.90, 0.39],
+        materials.body
+      );
+      addBox(
+        vehicle,
+        [0.13, 1.02, 0.13],
+        [side * 1.235, 1.90, 1.77],
+        materials.body
+      );
+    }
+
+    // Windshield.
+    const windshield = addBox(
+      vehicle,
+      [2.12, 0.83, 0.065],
+      [0, 1.91, 1.88],
+      materials.glass
+    );
+    windshield.rotation.x = -0.075;
+
+    // Side windows.
+    for (const side of [-1, 1]) {
+      const windowPanel = addBox(
+        vehicle,
+        [0.055, 0.73, 1.27],
+        [side * 1.265, 1.92, 1.04],
+        materials.glass
+      );
+      windowPanel.rotation.x = -0.035;
+    }
+
+    // Window trim.
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.075, 0.075, 1.35],
+        [side * 1.295, 2.29, 1.04],
+        materials.bodyDark
+      );
+      addBox(
+        vehicle,
+        [0.075, 0.075, 1.35],
+        [side * 1.295, 1.53, 1.04],
+        materials.bodyDark
+      );
+      addBox(
+        vehicle,
+        [0.075, 0.86, 0.075],
+        [side * 1.295, 1.92, 0.43],
+        materials.bodyDark
+      );
+      addBox(
+        vehicle,
+        [0.075, 0.86, 0.075],
+        [side * 1.295, 1.92, 1.65],
+        materials.bodyDark
+      );
+    }
+
+    // Door seams and handles.
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.025, 0.76, 0.03],
+        [side * 1.278, 1.36, 0.42],
+        materials.bodyDark
+      );
+      addBox(
+        vehicle,
+        [0.025, 0.76, 0.03],
+        [side * 1.278, 1.36, 1.70],
+        materials.bodyDark
+      );
+      addBox(
+        vehicle,
+        [0.06, 0.085, 0.30],
+        [side * 1.30, 1.36, 1.12],
+        materials.metal
+      );
+      addBox(
+        vehicle,
+        [0.06, 0.085, 0.30],
+        [side * 1.30, 1.36, 1.48],
+        materials.metal
+      );
+    }
+
+    // Side steps.
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.36, 0.12, 0.72],
+        [side * 1.37, 0.61, 1.28],
+        materials.black
+      );
+      addBox(
+        vehicle,
+        [0.08, 0.18, 0.10],
+        [side * 1.29, 0.72, 1.55],
+        materials.darkMetal
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Roof rails
+    // -------------------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.085, 0.085, 2.16],
+        [side * 0.91, 2.62, -1.10],
+        materials.black
+      );
+
+      for (const z of [-1.92, -0.25, 0.35]) {
+        addBox(
+          vehicle,
+          [0.085, 0.21, 0.085],
+          [side * 0.91, 2.52, z],
+          materials.darkMetal
+        );
+      }
+    }
+
+    // -------------------------------------------------------------------------
+    // Front grille, lights, bumper, and winch
+    // -------------------------------------------------------------------------
+
+    addBox(
+      vehicle,
+      [1.91, 0.44, 0.10],
+      [0, 1.25, 2.035],
+      materials.black
+    );
+
+    for (let i = 0; i < 5; i++) {
+      addBox(
+        vehicle,
+        [1.67, 0.035, 0.035],
+        [0, 1.08 + i * 0.075, 2.095],
+        materials.metal
+      );
+    }
+
+    // Main headlights.
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.38, 0.27, 0.09],
+        [side * 0.80, 1.45, 2.055],
+        materials.headlight
+      );
+      addBox(
+        vehicle,
+        [0.12, 0.16, 0.055],
+        [side * 1.02, 1.31, 2.045],
+        materials.amber
+      );
+    }
+
+    // Lower bumper.
+    addBox(vehicle, [2.43, 0.25, 0.29], [0, 0.67, 2.20], materials.black);
+    addBox(vehicle, [2.18, 0.08, 0.08], [0, 0.82, 2.37], materials.metal);
+
+    // Front license plate.
+    addBox(vehicle, [0.56, 0.19, 0.035], [0, 0.71, 2.37], materials.white);
+
+    // Winch housing and spool.
+    addBox(vehicle, [0.62, 0.18, 0.18], [0, 0.95, 2.13], materials.darkMetal);
+    addCylinder(
+      vehicle,
+      0.12,
+      0.24,
+      [0, 0.95, 2.28],
+      materials.metal,
+      12,
+      [Math.PI / 2, 0, 0]
+    );
+
+    // -------------------------------------------------------------------------
+    // Rear lights and license plate
+    // -------------------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.29, 0.38, 0.085],
+        [side * 0.87, 1.43, -2.36],
+        materials.red
+      );
+    }
+
+    addBox(vehicle, [0.59, 0.19, 0.04], [0, 0.73, -2.38], materials.white);
+
+    // -------------------------------------------------------------------------
+    // Mirrors
+    // -------------------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.24, 0.08, 0.09],
+        [side * 1.39, 1.92, 1.65],
+        materials.black
+      );
+      addBox(
+        vehicle,
+        [0.19, 0.30, 0.27],
+        [side * 1.55, 1.94, 1.64],
+        materials.black
+      );
+      addBox(
+        vehicle,
+        [0.025, 0.23, 0.19],
+        [side * 1.648, 1.94, 1.64],
+        materials.glass
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Wheels and fender arches
+    // -------------------------------------------------------------------------
+
+    function addWheel(side, z, isFront) {
+      const wheelCenterX = side * 1.38;
+      const centerY = 0.50;
+      const centerZ = z;
+
+      const tire = addCylinder(
+        vehicle,
+        0.46,
+        0.34,
+        [wheelCenterX, centerY, centerZ],
+        materials.rubber,
+        12,
+        [0, 0, Math.PI / 2]
+      );
+      tire.name = isFront ? "FrontTire" : "RearTire";
+
+      const hub = addCylinder(
+        vehicle,
+        0.255,
+        0.365,
+        [wheelCenterX, centerY, centerZ],
+        materials.darkMetal,
+        12,
+        [0, 0, Math.PI / 2]
+      );
+      hub.name = isFront ? "FrontHub" : "RearHub";
+
+      addCylinder(
+        vehicle,
+        0.115,
+        0.39,
+        [wheelCenterX, centerY, centerZ],
+        materials.metal,
+        10,
+        [0, 0, Math.PI / 2]
+      );
+
+      // Six visible lug nuts on the outer face.
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        addCylinder(
+          vehicle,
+          0.043,
+          0.035,
+          [
+            side * 1.575,
+            centerY + Math.sin(angle) * 0.175,
+            centerZ + Math.cos(angle) * 0.175
+          ],
+          materials.metal,
+          6,
+          [0, 0, Math.PI / 2]
+        );
+      }
+
+      // Low-poly fender arch.
+      const arch = addMesh(
+        new THREE.TorusGeometry(0.54, 0.075, 4, 12, Math.PI),
+        materials.black
+      );
+      arch.position.set(wheelCenterX, centerY, centerZ);
+      arch.rotation.y = Math.PI / 2;
+      arch.name = isFront ? "FrontFenderArch" : "RearFenderArch";
+
+      // Mud flap behind each wheel.
+      if (isFront) {
+        addBox(
+          vehicle,
+          [0.36, 0.32, 0.035],
+          [wheelCenterX, 0.24, centerZ - 0.43],
+          materials.rubber
+        );
+      } else {
+        addBox(
+          vehicle,
+          [0.36, 0.32, 0.035],
+          [wheelCenterX, 0.24, centerZ + 0.43],
+          materials.rubber
+        );
+      }
+    }
+
+    for (const side of [-1, 1]) {
+      addWheel(side, 1.38, true);
+      addWheel(side, -1.48, false);
+    }
+
+    // -------------------------------------------------------------------------
+    // Small utility details
+    // -------------------------------------------------------------------------
+
+    // Side cargo-panel seams.
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.025, 0.035, 2.02],
+        [side * 1.285, 1.24, -1.10],
+        materials.bodyDark
+      );
+      addBox(
+        vehicle,
+        [0.025, 0.035, 2.02],
+        [side * 1.285, 2.10, -1.10],
+        materials.bodyDark
+      );
+      addBox(
+        vehicle,
+        [0.035, 0.035, 0.28],
+        [side * 1.29, 1.70, -0.48],
+        materials.black
+      );
+    }
+
+    // Small silver cargo emblem.
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.025, 0.22, 0.34],
+        [side * 1.292, 1.78, -1.63],
+        materials.metal
+      );
+    }
+
+    // Rear reflectors.
+    for (const side of [-1, 1]) {
+      addBox(
+        vehicle,
+        [0.16, 0.10, 0.05],
+        [side * 1.03, 1.18, -2.355],
+        materials.amber
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Export vehicle only, excluding the ground and lighting
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building GLB...";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        vehicle,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low-poly-cargo-van.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          exportButton.disabled = false;
+          status.textContent = "Exported low-poly-cargo-van.glb";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. Check the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          truncateDrawRange: true
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

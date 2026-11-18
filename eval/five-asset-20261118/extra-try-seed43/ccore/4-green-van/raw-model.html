@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Utility Van — Three.js</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #d9e0e4;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #viewport {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 14px 12px 16px;
+      color: #172027;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(30, 45, 55, 0.14);
+      backdrop-filter: blur(10px);
+    }
+
+    .title {
+      min-width: 150px;
+    }
+
+    .title strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 14px;
+      letter-spacing: 0.01em;
+    }
+
+    .title span {
+      display: block;
+      color: #64717a;
+      font-size: 11px;
+    }
+
+    #exportButton {
+      appearance: none;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 15px;
+      color: #ffffff;
+      background: #278b3e;
+      box-shadow: 0 3px 9px rgba(39, 139, 62, 0.25);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform 120ms ease, background 120ms ease;
+      white-space: nowrap;
+    }
+
+    #exportButton:hover {
+      background: #1f7832;
+      transform: translateY(-1px);
+    }
+
+    #exportButton:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #hint {
+      position: fixed;
+      z-index: 10;
+      right: 20px;
+      bottom: 18px;
+      padding: 8px 11px;
+      color: #526069;
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 8px;
+      font-size: 11px;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+
+    #status {
+      position: fixed;
+      z-index: 20;
+      left: 50%;
+      bottom: 24px;
+      padding: 10px 15px;
+      color: #ffffff;
+      background: rgba(23, 32, 39, 0.9);
+      border-radius: 8px;
+      font-size: 12px;
+      opacity: 0;
+      transform: translate(-50%, 8px);
+      transition: opacity 180ms ease, transform 180ms ease;
+      pointer-events: none;
+    }
+
+    #status.visible {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 620px) {
+      .panel {
+        right: 12px;
+        left: 12px;
+        top: 12px;
+        justify-content: space-between;
+      }
+
+      .title span {
+        display: none;
+      }
+
+      #hint {
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <canvas id="viewport"></canvas>
+
+  <div class="panel">
+    <div class="title">
+      <strong>Green Utility Van</strong>
+      <span>Procedural low-poly vehicle asset</span>
+    </div>
+    <button id="exportButton" type="button">Export GLB</button>
+  </div>
+
+  <div id="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+  <div id="status"></div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const canvas = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const statusElement = document.getElementById("status");
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: false
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xd9e0e4);
+
+    const camera = new THREE.PerspectiveCamera(
+      35,
+      window.innerWidth / window.innerHeight,
+      0.05,
+      100
+    );
+    camera.position.set(7.4, 4.6, 6.6);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.15, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 14;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // Exportable vehicle root.
+    const assetRoot = new THREE.Group();
+    assetRoot.name = "GreenUtilityVan";
+    scene.add(assetRoot);
+
+    // Presentation-only ground, excluded from the GLB.
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({
+        color: 0xcbd3d7,
+        roughness: 0.96,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const hemisphere = new THREE.HemisphereLight(0xf4fbff, 0x57655f, 2.15);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffffff, 3.4);
+    keyLight.position.set(5, 9, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -7;
+    keyLight.shadow.camera.right = 7;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -7;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.normalBias = 0.025;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xb9d8ff, 1.15);
+    fillLight.position.set(-6, 4, -5);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 1.4);
+    rimLight.position.set(-2, 6, 7);
+    scene.add(rimLight);
+
+    function material(name, color, roughness = 0.65, metalness = 0, options = {}) {
+      return new THREE.MeshStandardMaterial({
+        name,
+        color,
+        roughness,
+        metalness,
+        flatShading: true,
+        ...options
+      });
+    }
+
+    const MAT = {
+      body: material("Van Green", 0x2d8d3b, 0.48, 0.12),
+      bodyLight: material("Van Green Panel", 0x39a34b, 0.52, 0.08),
+      bodyDark: material("Van Green Shadow", 0x247335, 0.58, 0.08),
+      chassis: material("Charcoal Chassis", 0x30363a, 0.72, 0.2),
+      rubber: material("Rubber", 0x141719, 0.92, 0.02),
+      tread: material("Tread", 0x202426, 0.95, 0.01),
+      metal: material("Silver Metal", 0xaeb8bc, 0.32, 0.72),
+      darkMetal: material("Dark Metal", 0x4d575c, 0.4, 0.6),
+      glass: material(
+        "Blue Smoked Glass",
+        0x85bdc2,
+        0.18,
+        0.25,
+        {
+          transparent: true,
+          opacity: 0.58,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        }
+      ),
+      window: material(
+        "Cab Glass",
+        0x78aeb3,
+        0.2,
+        0.2,
+        {
+          transparent: true,
+          opacity: 0.46,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        }
+      ),
+      headlight: material(
+        "Headlight",
+        0xfff2c4,
+        0.25,
+        0.05,
+        {
+          emissive: 0xffd166,
+          emissiveIntensity: 0.85
+        }
+      ),
+      taillight: material(
+        "Taillight",
+        0xc62626,
+        0.3,
+        0.05,
+        {
+          emissive: 0xa71010,
+          emissiveIntensity: 0.75
+        }
+      ),
+      white: material("Ivory", 0xf1f0df, 0.68, 0.04),
+      orange: material("Safety Orange", 0xe8862f, 0.58, 0.04),
+      black: material("Black Trim", 0x171b1d, 0.7, 0.06)
+    };
+
+    function addMesh(geometry, mat, name, parent = assetRoot) {
+      const mesh = new THREE.Mesh(geometry, mat);
+      mesh.name = name;
+      mesh.castShadow = !mat.transparent;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(name, size, position, mat, parent = assetRoot) {
+      const mesh = addMesh(
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        mat,
+        name,
+        parent
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+      return mesh;
+    }
+
+    function addCylinder(
+      name,
+      radius,
+      depth,
+      position,
+      mat,
+      segments = 12,
+      parent = assetRoot
+    ) {
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(radius, radius, depth, segments),
+        mat,
+        name,
+        parent
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+      return mesh;
+    }
+
+    function addRod(name, start, end, radius, mat, parent = assetRoot, segments = 8) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = new THREE.Vector3().subVectors(b, a);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(radius, radius, length, segments),
+        mat,
+        name,
+        parent
+      );
+
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    function addBar(name, start, end, thickness, depth, mat, parent = assetRoot) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = new THREE.Vector3().subVectors(b, a);
+      const length = direction.length();
+
+      const mesh = addMesh(
+        new THREE.BoxGeometry(thickness, length, depth),
+        mat,
+        name,
+        parent
+      );
+
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    function addQuad(name, points, mat, parent = assetRoot) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(points.flat(), 3)
+      );
+      geometry.setIndex([0, 1, 2, 0, 2, 3]);
+      geometry.computeVertexNormals();
+
+      return addMesh(geometry, mat, name, parent);
+    }
+
+    function addWheel(name, x, side) {
+      const wheel = new THREE.Group();
+      wheel.name = name;
+      wheel.position.set(x, 0.49, side * 1.02);
+      assetRoot.add(wheel);
+
+      const tire = addMesh(
+        new THREE.TorusGeometry(0.35, 0.145, 6, 16),
+        MAT.rubber,
+        `${name} Tire`,
+        wheel
+      );
+
+      const hub = addCylinder(
+        `${name} Hub`,
+        0.225,
+        0.38,
+        [0, 0, 0],
+        MAT.metal,
+        12,
+        wheel
+      );
+      hub.rotation.x = Math.PI / 2;
+
+      const cap = addCylinder(
+        `${name} Hub Cap`,
+        0.105,
+        0.41,
+        [0, 0, 0],
+        MAT.darkMetal,
+        10,
+        wheel
+      );
+      cap.rotation.x = Math.PI / 2;
+
+      const outerZ = side * 0.205;
+
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const spoke = addBox(
+          `${name} Spoke ${i + 1}`,
+          [0.28, 0.055, 0.055],
+          [Math.cos(angle) * 0.135, Math.sin(angle) * 0.135, outerZ],
+          MAT.metal,
+          wheel
+        );
+        spoke.rotation.z = angle;
+      }
+
+      for (let i = 0; i < 12; i++) {
+        const angle = (i / 12) * Math.PI * 2;
+        const tread = addBox(
+          `${name} Tread ${i + 1}`,
+          [0.115, 0.085, 0.34],
+          [Math.cos(angle) * 0.455, Math.sin(angle) * 0.455, 0],
+          MAT.tread,
+          wheel
+        );
+        tread.rotation.z = angle;
+      }
+    }
+
+    // Chassis and main body volumes.
+    addBox(
+      "Main Chassis",
+      [4.82, 0.24, 1.76],
+      [0, 0.69, 0],
+      MAT.chassis
+    );
+
+    addBox(
+      "Cargo Body",
+      [2.65, 1.38, 1.84],
+      [-1.15, 1.53, 0],
+      MAT.body
+    );
+
+    addBox(
+      "Cab Body",
+      [1.58, 1.38, 1.84],
+      [1.31, 1.48, 0],
+      MAT.body
+    );
+
+    addBox(
+      "Cargo Roof",
+      [2.69, 0.13, 1.9],
+      [-1.15, 2.25, 0],
+      MAT.bodyDark
+    );
+
+    addBox(
+      "Cab Roof",
+      [1.5, 0.12, 1.9],
+      [1.31, 2.2, 0],
+      MAT.bodyDark
+    );
+
+    // Distinct side panels and cab door.
+    for (const side of [-1, 1]) {
+      addBox(
+        `Cargo Side Panel ${side}`,
+        [2.48, 1.1, 0.035],
+        [-1.15, 1.56, side * 0.94],
+        MAT.bodyLight
+      );
+
+      addBox(
+        `Cab Door ${side}`,
+        [1.3, 0.86, 0.035],
+        [1.27, 1.3, side * 0.943],
+        MAT.bodyLight
+      );
+
+      addBox(
+        `Door Handle ${side}`,
+        [0.27, 0.06, 0.075],
+        [0.72, 1.44, side * 0.985],
+        MAT.black
+      );
+
+      addBox(
+        `Door Seam ${side}`,
+        [0.022, 0.79, 0.022],
+        [0.56, 1.34, side * 0.966],
+        MAT.bodyDark
+      );
+
+      addBox(
+        `Safety Stripe ${side}`,
+        [2.25, 0.09, 0.032],
+        [-1.15, 1.08, side * 0.968],
+        MAT.orange
+      );
+
+      addBox(
+        `Lower Body Rail ${side}`,
+        [2.56, 0.09, 0.075],
+        [-1.15, 0.97, side * 0.975],
+        MAT.chassis
+      );
+
+      addBox(
+        `Upper Body Trim ${side}`,
+        [2.56, 0.07, 0.075],
+        [-1.15, 2.08, side * 0.975],
+        MAT.chassis
+      );
+
+      // Side window.
+      addQuad(
+        `Side Window ${side}`,
+        [
+          [0.73, 1.53, side * 0.962],
+          [1.96, 1.53, side * 0.962],
+          [1.87, 2.12, side * 0.962],
+          [0.73, 2.12, side * 0.962]
+        ],
+        MAT.window
+      );
+
+      addBar(
+        `Side Window Lower Frame ${side}`,
+        [0.73, 1.51, side * 0.97],
+        [1.96, 1.51, side * 0.97],
+        0.045,
+        0.045,
+        MAT.chassis
+      );
+
+      addBar(
+        `Side Window Upper Frame ${side}`,
+        [0.73, 2.14, side * 0.97],
+        [1.87, 2.14, side * 0.97],
+        0.045,
+        0.045,
+        MAT.chassis
+      );
+
+      addBar(
+        `Side Window Rear Frame ${side}`,
+        [0.73, 1.53, side * 0.97],
+        [0.73, 2.14, side * 0.97],
+        0.045,
+        0.045,
+        MAT.chassis
+      );
+
+      // Mirror stalk and housing.
+      addRod(
+        `Mirror Stalk ${side}`,
+        [1.67, 1.76, side * 0.91],
+        [1.67, 1.76, side * 1.15],
+        0.035,
+        MAT.darkMetal
+      );
+
+      addBox(
+        `Mirror Housing ${side}`,
+        [0.19, 0.28, 0.13],
+        [1.67, 1.77, side * 1.18],
+        MAT.black
+      );
+
+      addBox(
+        `Mirror Glass ${side}`,
+        [0.145, 0.22, 0.018],
+        [1.67, 1.77, side * 1.252],
+        MAT.glass
+      );
+    }
+
+    // Front hood and grille.
+    addBox(
+      "Front Hood",
+      [0.56, 0.55, 1.83],
+      [2.31, 1.45, 0],
+      MAT.body
+    );
+
+    addBox(
+      "Front Hood Top",
+      [0.48, 0.06, 1.72],
+      [2.31, 1.755, 0],
+      MAT.bodyLight
+    );
+
+    addBox(
+      "Front Grille",
+      [0.055, 0.35, 1.3],
+      [2.608, 1.44, 0],
+      MAT.black
+    );
+
+    for (let i = 0; i < 7; i++) {
+      addBox(
+        `Grille Bar ${i + 1}`,
+        [0.035, 0.29, 0.035],
+        [2.644, 1.44, -0.54 + i * 0.18],
+        MAT.darkMetal
+      );
+    }
+
+    for (const side of [-1, 1]) {
+      addBox(
+        `Headlight ${side}`,
+        [0.075, 0.27, 0.35],
+        [2.61, 1.61, side * 0.65],
+        MAT.headlight
+      );
+
+      addBox(
+        `Amber Marker ${side}`,
+        [0.08, 0.11, 0.18],
+        [2.62, 1.39, side * 0.82],
+        MAT.orange
+      );
+    }
+
+    // Front bumper and tow points.
+    addBox(
+      "Front Bumper",
+      [0.28, 0.24, 1.96],
+      [2.38, 0.78, 0],
+      MAT.chassis
+    );
+
+    addBox(
+      "Rear Bumper",
+      [0.27, 0.23, 1.94],
+      [-2.46, 0.77, 0],
+      MAT.chassis
+    );
+
+    for (const side of [-1, 1]) {
+      addRod(
+        `Front Tow Hook ${side}`,
+        [2.53, 0.79, side * 0.72],
+        [2.69, 0.79, side * 0.72],
+        0.045,
+        MAT.darkMetal
+      );
+
+      addRod(
+        `Rear Tow Hook ${side}`,
+        [-2.61, 0.78, side * 0.72],
+        [-2.77, 0.78, side * 0.72],
+        0.045,
+        MAT.darkMetal
+      );
+    }
+
+    // Windshield.
+    addQuad(
+      "Front Windshield",
+      [
+        [2.355, 1.28, 0.83],
+        [2.355, 1.28, -0.83],
+        [1.55, 2.18, -0.83],
+        [1.55, 2.18, 0.83]
+      ],
+      MAT.glass
+    );
+
+    addBar(
+      "Windshield Lower Frame",
+      [2.37, 1.27, 0.85],
+      [2.37, 1.27, -0.85],
+      0.07,
+      0.07,
+      MAT.chassis
+    );
+
+    addBar(
+      "Windshield Upper Frame",
+      [1.54, 2.19, 0.85],
+      [1.54, 2.19, -0.85],
+      0.07,
+      0.07,
+      MAT.chassis
+    );
+
+    for (const side of [-1, 1]) {
+      addBar(
+        `Windshield Side Frame ${side}`,
+        [2.37, 1.27, side * 0.85],
+        [1.54, 2.19, side * 0.85],
+        0.07,
+        0.07,
+        MAT.chassis
+      );
+    }
+
+    addBar(
+      "Windshield Center Divider",
+      [2.37, 1.29, 0],
+      [1.55, 2.18, 0],
+      0.04,
+      0.04,
+      MAT.chassis
+    );
+
+    for (const side of [-1, 1]) {
+      addRod(
+        `Windshield Wiper ${side}`,
+        [2.44, 1.39, side * 0.38],
+        [2.14, 1.66, side * 0.27],
+        0.018,
+        MAT.black
+      );
+    }
+
+    // Side windows.
+    for (const side of [-1, 1]) {
+      addQuad(
+        `Cab Side Window ${side}`,
+        [
+          [0.76, 1.54, side * 0.963],
+          [1.98, 1.54, side * 0.963],
+          [1.88, 2.12, side * 0.963],
+          [0.76, 2.12, side * 0.963]
+        ],
+        MAT.window
+      );
+    }
+
+    // Rear wall, hatch seam, lights and plate.
+    addBox(
+      "Rear Wall Panel",
+      [0.045, 1.12, 1.72],
+      [-2.493, 1.55, 0],
+      MAT.bodyLight
+    );
+
+    addBox(
+      "Rear Hatch Seam",
+      [0.026, 0.86, 0.035],
+      [-2.525, 1.57, 0],
+      MAT.bodyDark
+    );
+
+    addBox(
+      "Rear Hatch Upper Handle",
+      [0.055, 0.055, 0.38],
+      [-2.545, 1.89, 0],
+      MAT.darkMetal
+    );
+
+    addBox(
+      "Rear Hatch Lower Handle",
+      [0.055, 0.055, 0.38],
+      [-2.545, 1.25, 0],
+      MAT.darkMetal
+    );
+
+    for (const side of [-1, 1]) {
+      addBox(
+        `Taillight ${side}`,
+        [0.075, 0.36, 0.19],
+        [-2.535, 1.62, side * 0.72],
+        MAT.taillight
+      );
+    }
+
+    addBox(
+      "Rear License Plate",
+      [0.045, 0.28, 0.7],
+      [-2.54, 1.17, 0],
+      MAT.white
+    );
+
+    addBox(
+      "Rear Plate Top Line",
+      [0.02, 0.035, 0.59],
+      [-2.568, 1.27, 0],
+      MAT.chassis
+    );
+
+    // Roof utility rails.
+    for (const side of [-1, 1]) {
+      addRod(
+        `Roof Rail ${side}`,
+        [-2.16, 2.39, side * 0.64],
+        [0.16, 2.39, side * 0.64],
+        0.038,
+        MAT.darkMetal
+      );
+
+      for (const x of [-2.04, -1.13, -0.04]) {
+        addRod(
+          `Roof Rail Support ${x} ${side}`,
+          [x, 2.31, side * 0.64],
+          [x, 2.39, side * 0.64],
+          0.028,
+          MAT.darkMetal
+        );
+      }
+    }
+
+    // Roof antenna.
+    addRod(
+      "Roof Antenna",
+      [-1.87, 2.31, 0.62],
+      [-1.87, 3.02, 0.62],
+      0.017,
+      MAT.black,
+      assetRoot,
+      6
+    );
+
+    addMesh(
+      new THREE.SphereGeometry(0.035, 6, 4),
+      MAT.black,
+      "Antenna Tip"
+    ).position.set(-1.87, 3.04, 0.62);
+
+    // Interior: dashboard, seat and steering wheel.
+    addBox(
+      "Dashboard",
+      [0.19, 0.25, 1.35],
+      [1.91, 1.68, 0],
+      MAT.chassis
+    );
+
+    addBox(
+      "Seat Cushion",
+      [0.57, 0.16, 0.58],
+      [1.13, 1.19, 0],
+      MAT.black
+    );
+
+    addBox(
+      "Seat Back",
+      [0.16, 0.61, 0.58],
+      [0.87, 1.51, 0],
+      MAT.black
+    );
+
+    addBox(
+      "Seat Headrest",
+      [0.16, 0.22, 0.42],
+      [0.79, 1.89, 0],
+      MAT.black
+    );
+
+    const steeringWheel = addMesh(
+      new THREE.TorusGeometry(0.19, 0.035, 6, 12),
+      MAT.black,
+      "Steering Wheel"
+    );
+    steeringWheel.position.set(1.68, 1.75, 0);
+    steeringWheel.rotation.y = Math.PI / 2;
+    steeringWheel.rotation.x = -0.18;
+
+    addRod(
+      "Steering Column",
+      [1.72, 1.63, 0],
+      [1.68, 1.75, 0],
+      0.028,
+      MAT.darkMetal
+    );
+
+    // Wheels and arches.
+    for (const side of [-1, 1]) {
+      addWheel(`Front Wheel ${side}`, 1.56, side);
+      addWheel(`Rear Wheel ${side}`, -1.56, side);
+
+      const fender = addMesh(
+        new THREE.TorusGeometry(0.55, 0.08, 6, 12, Math.PI),
+        MAT.bodyDark,
+        `Wheel Arch ${side}`
+      );
+      fender.position.set(1.56, 0.49, side * 1.02);
+    }
+
+    // Small side ventilation details.
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 4; i++) {
+        addBox(
+          `Vent Slimmer ${side} ${i + 1}`,
+          [0.055, 0.18, 0.025],
+          [0.91 + i * 0.11, 1.02, side * 0.971],
+          MAT.black
+        );
+      }
+    }
+
+    // Keep the model centered in the viewport.
+    controls.target.set(0, 1.25, 0);
+    controls.update();
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+
+    let statusTimer;
+
+    function showStatus(message) {
+      statusElement.textContent = message;
+      statusElement.classList.add("visible");
+      clearTimeout(statusTimer);
+      statusTimer = setTimeout(() => {
+        statusElement.classList.remove("visible");
+      }, 2600);
+    }
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting…";
+
+      // Export only the vehicle hierarchy. Ground, camera and lights are omitted.
+      assetRoot.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        assetRoot,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "green-utility-van.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          showStatus("GLB exported successfully");
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          showStatus("Export failed — see browser console");
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false
+        }
+      );
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Officer — GLB Asset</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #111827;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      width: min(330px, calc(100vw - 40px));
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 14px;
+      color: #f8fafc;
+      background: rgba(15, 23, 42, 0.86);
+      box-shadow: 0 16px 50px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(12px);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: #cbd5e1;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      padding: 5px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 999px;
+      color: #dbeafe;
+      background: rgba(12, 18, 30, 0.72);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      flex: 1;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 9px;
+      color: white;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    #export {
+      flex: 1.15;
+      background: linear-gradient(135deg, #334155, #1c293b);
+    }
+
+    #reset {
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 10px;
+      color: #94a3b8;
+      font-size: 11px;
+    }
+
+    .hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 10;
+      color: rgba(226, 232, 240, 0.64);
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <h1>Low-Poly Officer</h1>
+    <p>
+      A stylized game-ready character with layered clothing, equipment,
+      insignia, and readable proportions.
+    </p>
+
+    <div class="badge-row">
+      <span class="badge">Static</span>
+      <span class="badge">PBR Materials</span>
+      <span class="badge">No External Textures</span>
+      <span class="badge">Godot Ready</span>
+    </div>
+
+    <div class="actions">
+      <button id="export" type="button">Export GLB</button>
+      <button id="reset" type="button">Reset View</button>
+    </div>
+
+    <div id="status">Ready to export.</div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+    const viewport = document.getElementById('viewport');
+    const exportButton = document.getElementById('export');
+    const resetButton = document.getElementById('reset');
+    const status = document.getElementById('status');
+
+    // ---------------------------------------------------------------------
+    // Renderer, camera, and presentation
+    // ---------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111827);
+    scene.fog = new THREE.Fog(0x111827, 10, 22);
+
+    const camera = new THREE.PerspectiveCamera(
+      34,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const initialCameraPosition = new THREE.Vector3(4.8, 3.15, 6.5);
+    const initialTarget = new THREE.Vector3(0, 1.85, 0);
+
+    camera.position.copy(initialCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(initialTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 3.5;
+    controls.maxDistance = 12;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const hemisphere = new THREE.HemisphereLight(
+      0xdbeafe,
+      0x273140,
+      2.0
+    );
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(
+      0xfff1d6,
+      4.2
+    );
+    keyLight.position.set(4.5, 7.5, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.bias = -0.00035;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(
+      0x8291b8,
+      2.3
+    );
+    rimLight.position.set(-4, 4.5, -4);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.DirectionalLight(
+      0x94a3b8,
+      1.25
+    );
+    fillLight.position.set(-3, 3, 5);
+    scene.add(fillLight);
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0x1e293b,
+        roughness: 0.92,
+        metalness: 0.02
+      })
+    );
+
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.015;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const grid = new THREE.GridHelper(
+      16,
+      32,
+      0x334155,
+      0x273140
+    );
+    grid.position.y = -0.005;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.4;
+    scene.add(grid);
+
+    // ---------------------------------------------------------------------
+    // Materials
+    // ---------------------------------------------------------------------
+
+    const makeMaterial = (options) =>
+      new THREE.MeshStandardMaterial({
+        flatShading: true,
+        ...options
+      });
+
+    const materials = {
+      navy: makeMaterial({
+        color: 0x17385b,
+        roughness: 0.86,
+        metalness: 0.02
+      }),
+      navyDark: makeMaterial({
+        color: 0x10273b,
+        roughness: 0.9
+      }),
+      navyLight: makeMaterial({
+        color: 0x245378,
+        roughness: 0.82
+      }),
+      leather: makeMaterial({
+        color: 0x25232a,
+        roughness: 0.84
+      }),
+      glove: makeMaterial({
+        color: 0x3b3740,
+        roughness: 0.9
+      }),
+      skin: makeMaterial({
+        color: 0xd69a70,
+        roughness: 0.8
+      }),
+      skinLight: makeMaterial({
+        color: 0xe1a77d,
+        roughness: 0.78
+      }),
+      hair: makeMaterial({
+        color: 0x281c18,
+        roughness: 0.95
+      }),
+      eye: makeMaterial({
+        color: 0x111827,
+        roughness: 0.35
+      }),
+      iris: makeMaterial({
+        color: 0x86c2d8,
+        roughness: 0.25
+      }),
+      steel: makeMaterial({
+        color: 0xaeb8c5,
+        roughness: 0.36,
+        metalness: 0.72
+      }),
+      gold: makeMaterial({
+        color: 0xd9a439,
+        roughness: 0.3,
+        metalness: 0.66
+      }),
+      darkGold: makeMaterial({
+        color: 0x9b6c1d,
+        roughness: 0.4,
+        metalness: 0.55
+      }),
+      red: makeMaterial({
+        color: 0xa6292d,
+        roughness: 0.82
+      }),
+      belt: makeMaterial({
+        color: 0x17191d,
+        roughness: 0.72
+      }),
+      boot: makeMaterial({
+        color: 0x25242a,
+        roughness: 0.62
+      }),
+      sole: makeMaterial({
+        color: 0x111114,
+        roughness: 0.92
+      })
+    };
+
+    // ---------------------------------------------------------------------
+    // Geometry helpers
+    // ---------------------------------------------------------------------
+
+    const Y_AXIS = new THREE.Vector3(0, 1, 0);
+
+    function configureMesh(mesh, name, parent) {
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(parent, size, position, material, name, rotation = null) {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        material
+      );
+
+      mesh.position.set(position[0], position[1], position[2]);
+
+      if (rotation) {
+        mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      }
+
+      return configureMesh(mesh, name, parent);
+    }
+
+    function addCylinder(
+      parent,
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      name,
+      radialSegments = 8,
+      rotation = null
+    ) {
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          radialSegments
+        ),
+        material
+      );
+
+      mesh.position.set(position[0], position[1], position[2]);
+
+      if (rotation) {
+        mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      }
+
+      return configureMesh(mesh, name, parent);
+    }
+
+    function addSphere(
+      parent,
+      radius,
+      position,
+      material,
+      name,
+      scale = [1, 1, 1],
+      detail = 1
+    ) {
+      const mesh = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(radius, detail),
+        material
+      );
+
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.scale.set(scale[0], scale[1], scale[2]);
+      return configureMesh(mesh, name, parent);
+    }
+
+    function addTaperedBox(
+      parent,
+      bottomWidth,
+      topWidth,
+      bottomDepth,
+      topDepth,
+      bottomY,
+      topY,
+      material,
+      name
+    ) {
+      const positions = new Float32Array([
+        // Bottom
+        -bottomWidth / 2, bottomY, -bottomDepth / 2,
+         bottomWidth / 2, bottomY, -bottomDepth / 2,
+         bottomWidth / 2, bottomY,  bottomDepth / 2,
+        -bottomWidth / 2, bottomY,  bottomDepth / 2,
+
+        // Top
+        -topWidth / 2, topY, -topDepth / 2,
+         topWidth / 2, topY, -topDepth / 2,
+         topWidth / 2, topY,  topDepth / 2,
+        -topWidth / 2, topY,  topDepth / 2
+      ]);
+
+      const indices = [
+        0, 1, 5, 0, 5, 4,
+        3, 2, 6, 3, 6, 5,
+        0, 3, 7, 0, 7, 4,
+        1, 5, 6, 1, 6, 2,
+        0, 4, 7, 0, 7, 3,
+        1, 2, 6, 1, 6, 5
+      ];
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        'position',
+        new THREE.BufferAttribute(positions, 3)
+      );
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+
+      return configureMesh(
+        new THREE.Mesh(geometry, material),
+        name,
+        parent
+      );
+    }
+
+    function addCylinderBetween(
+      parent,
+      start,
+      end,
+      radiusTop,
+      radiusBottom,
+      material,
+      name,
+      radialSegments = 7
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          length,
+          radialSegments
+        ),
+        material
+      );
+
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        Y_AXIS,
+        direction.normalize()
+      );
+
+      return configureMesh(mesh, name, parent);
+    }
+
+    function addStarBadge(parent, position) {
+      const shape = new THREE.Shape();
+      const points = 8;
+
+      for (let i = 0; i < points * 2; i++) {
+        const radius = i % 2 === 0 ? 0.115 : 0.052;
+        const angle = Math.PI / 2 + (i / (points * 2)) * Math.PI * 2;
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+
+        if (i === 0) {
+          shape.moveTo(x, y);
+        } else {
+          shape.lineTo(x, y);
+        }
+      }
+
+      shape.closePath();
+
+      const badge = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(shape, {
+          depth: 0.035,
+          bevelEnabled: false,
+          curveSegments: 1
+        }),
+        materials.gold
+      );
+
+      badge.position.set(position[0], position[1], position[2]);
+      badge.rotation.x = -Math.PI / 2;
+      return configureMesh(badge, 'Gold_Star_Badge', parent);
+    }
+
+    // ---------------------------------------------------------------------
+    // Character construction
+    // ---------------------------------------------------------------------
+
+    const officer = new THREE.Group();
+    officer.name = 'LowPoly_Officer';
+    scene.add(officer);
+
+    // Hips and torso.
+    addBox(
+      officer,
+      [0.94, 0.29, 0.51],
+      [0, 1.56, 0],
+      materials.navyDark,
+      'Hips'
+    );
+
+    addTaperedBox(
+      officer,
+      0.50, 0.66,
+      0.31, 0.36,
+      1.55, 2.94,
+      materials.navy,
+      'Officer_Torso'
+    );
+
+    // Subtle center seam and chest shaping.
+    addBox(
+      officer,
+      [0.025, 1.22, 0.025],
+      [0, 2.23, 0.37],
+      materials.navyLight,
+      'Chest_Seam'
+    );
+
+    // Shoulder epaulettes.
+    for (const side of [-1, 1]) {
+      addBox(
+        officer,
+        [0.35, 0.085, 0.29],
+        [side * 0.57, 2.90, 0],
+        materials.navyLight,
+        side < 0 ? 'Left_Epaulette' : 'Right_Epaulette'
+      );
+
+      addBox(
+        officer,
+        [0.22, 0.025, 0.025],
+        [side * 0.57, 2.945, 0.15],
+        materials.red,
+        side < 0 ? 'Left_Epaulette_Stripe' : 'Right_Epaulette_Stripe'
+      );
+    }
+
+    // Belt.
+    const belt = addCylinder(
+      officer,
+      0.515, 0.515, 0.13,
+      [0, 1.58, 0],
+      materials.belt,
+      'Utility_Belt',
+      10
+    );
+    belt.scale.z = 0.68;
+
+    addBox(
+      officer,
+      [0.23, 0.17, 0.085],
+      [0, 1.58, 0.345],
+      materials.gold,
+      'Belt_Buckle'
+    );
+
+    addBox(
+      officer,
+      [0.085, 0.035, 0.015],
+      [0, 1.58, 0.395],
+      materials.belt,
+      'Buckle_Tongue'
+    );
+
+    // Belt pouches.
+    addBox(
+      officer,
+      [0.23, 0.25, 0.18],
+      [-0.54, 1.50, 0.08],
+      materials.leather,
+      'Left_Belt_Pouch'
+    );
+
+    addBox(
+      officer,
+      [0.23, 0.25, 0.18],
+      [0.54, 1.50, 0.08],
+      materials.leather,
+      'Right_Belt_Pouch'
+    );
+
+    // Belt pouch flap details.
+    addBox(
+      officer,
+      [0.24, 0.09, 0.20],
+      [-0.54, 1.61, 0.10],
+      materials.leather,
+      'Left_Pouch_Flap'
+    );
+
+    addBox(
+      officer,
+      [0.24, 0.09, 0.20],
+      [0.54, 1.61, 0.10],
+      materials.leather,
+      'Right_Pouch_Flap'
+    );
+
+    // Chest pockets and flaps.
+    for (const side of [-1, 1]) {
+      addBox(
+        officer,
+        [0.25, 0.27, 0.085],
+        [side * 0.36, 2.43, 0.305],
+        materials.navyDark,
+        side < 0 ? 'Left_Chest_Pocket' : 'Right_Chest_Pocket'
+      );
+
+      addBox(
+        officer,
+        [0.27, 0.085, 0.095],
+        [side * 0.36, 2.55, 0.33],
+        materials.navyLight,
+        side < 0 ? 'Left_Chest_Pocket_Flap' : 'Right_Chest_Pocket_Flap'
+      );
+
+      addBox(
+        officer,
+        [0.027, 0.027, 0.018],
+        [side * 0.36, 2.56, 0.385],
+        materials.gold,
+        side < 0 ? 'Left_Chest_Pocket_Button' : 'Right_Chest_Pocket_Button'
+      );
+    }
+
+    // Collar, tie, and scarf.
+    addBox(
+      officer,
+      [0.12, 0.55, 0.045],
+      [0, 2.45, 0.345],
+      materials.red,
+      'Tie'
+    );
+
+    addBox(
+      officer,
+      [0.11, 0.11, 0.055],
+      [0, 2.23, 0.35],
+      materials.red,
+      'Tie_Knot'
+    );
+
+    const scarfRing = new THREE.Mesh(
+      new THREE.TorusGeometry(0.25, 0.07, 6, 12),
+      materials.red
+    );
+    scarfRing.position.set(0, 2.88, 0);
+    scarfRing.rotation.x = Math.PI / 2;
+    configureMesh(scarfRing, 'Red_Scarf_Ring', officer);
+
+    addBox(
+      officer,
+      [0.14, 0.40, 0.075],
+      [0.10, 2.65, 0.36],
+      materials.red,
+      'Scarf_Tail_1',
+      [0, 0, -0.10]
+    );
+
+    addBox(
+      officer,
+      [0.12, 0.32, 0.07],
+      [-0.08, 2.67, 0.34],
+      materials.red,
+      'Scarf_Tail_2',
+      [0, 0, 0.12]
+    );
+
+    // Collar flaps.
+    addBox(
+      officer,
+      [0.18, 0.18, 0.12],
+      [-0.23, 2.84, 0.23],
+      materials.navyLight,
+      'Left_Collar_Flap',
+      [0, 0, -0.18]
+    );
+
+    addBox(
+      officer,
+      [0.18, 0.18, 0.12],
+      [0.23, 2.84, 0.23],
+      materials.navyLight,
+      'Right_Collar_Flap',
+      [0, 0, 0.18]
+    );
+
+    // Chest badge.
+    const badge = addCylinder(
+      officer,
+      0.13, 0.13, 0.035,
+      [-0.40, 2.55, 0.39],
+      materials.gold,
+      'Chest_Badge_Rim',
+      8,
+      [Math.PI / 2, 0, 0]
+    );
+    badge.castShadow = true;
+
+    addStarBadge(officer, [-0.40, 2.55, 0.413]);
+
+    // Radio on the left shoulder.
+    addBox(
+      officer,
+      [0.17, 0.34, 0.13],
+      [-0.68, 2.77, 0.16],
+      materials.leather,
+      'Shoulder_Radio'
+    );
+
+    addCylinder(
+      officer,
+      0.017, 0.017, 0.40,
+      [-0.68, 3.02, 0.16],
+      materials.steel,
+      'Radio_Antenna',
+      6
+    );
+
+    addBox(
+      officer,
+      [0.11, 0.035, 0.018],
+      [-0.68, 2.88, 0.235],
+      materials.steel,
+      'Radio_Display'
+    );
+
+    // ---------------------------------------------------------------------
+    // Legs and boots
+    // ---------------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      const hipX = side * 0.25;
+      const kneeX = side * 0.27;
+      const ankleX = side * 0.28;
+
+      addCylinderBetween(
+        officer,
+        [hipX, 1.47, 0],
+        [kneeX, 0.87, 0.015],
+        0.185,
+        0.195,
+        materials.navy,
+        side < 0 ? 'Left_Thigh' : 'Right_Thigh',
+        7
+      );
+
+      addCylinderBetween(
+        officer,
+        [kneeX, 0.87, 0.015],
+        [ankleX, 0.40, 0.02],
+        0.145,
+        0.165,
+        materials.navy,
+        side < 0 ? 'Left_Shin' : 'Right_Shin',
+        7
+      );
+
+      addBox(
+        officer,
+        [0.29, 0.25, 0.105],
+        [kneeX, 0.88, 0.235],
+        materials.navyLight,
+        side < 0 ? 'Left_Knee_Pad' : 'Right_Knee_Pad'
+      );
+
+      addBox(
+        officer,
+        [0.29, 0.07, 0.115],
+        [kneeX, 0.98, 0.235],
+        materials.leather,
+        side < 0 ? 'Left_Knee_Pad_Trim' : 'Right_Knee_Pad_Trim'
+      );
+
+      // Boot shaft.
+      addCylinder(
+        officer,
+        0.175, 0.165, 0.27,
+        [ankleX, 0.38, 0.02],
+        materials.boot,
+        side < 0 ? 'Left_Boot_Shaft' : 'Right_Boot_Shaft',
+        7
+      );
+
+      // Boot body.
+      addBox(
+        officer,
+        [0.38, 0.31, 0.59],
+        [ankleX, 0.18, 0.12],
+        materials.boot,
+        side < 0 ? 'Left_Boot' : 'Right_Boot'
+      );
+
+      // Rounded toe block.
+      addSphere(
+        officer,
+        0.205,
+        [ankleX, 0.16, 0.40],
+        materials.boot,
+        side < 0 ? 'Left_Boot_Toe' : 'Right_Boot_Toe',
+        [1.0, 0.75, 1.25],
+        1
+      );
+
+      // Sole.
+      addBox(
+        officer,
+        [0.41, 0.075, 0.64],
+        [ankleX, 0.035, 0.13],
+        materials.sole,
+        side < 0 ? 'Left_Boot_Sole' : 'Right_Boot_Sole'
+      );
+    }
+
+    // ---------------------------------------------------------------------
+    // Arms and hands
+    // ---------------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      const shoulderX = side * 0.63;
+      const elbowX = side * 0.86;
+      const wristX = side * 0.93;
+
+      addCylinderBetween(
+        officer,
+        [shoulderX, 2.80, 0],
+        [elbowX, 2.21, 0.015],
+        0.15,
+        0.175,
+        materials.navy,
+        side < 0 ? 'Left_Upper_Arm' : 'Right_Upper_Arm',
+        7
+      );
+
+      addCylinderBetween(
+        officer,
+        [elbowX, 2.21, 0.015],
+        [wristX, 1.73, 0.075],
+        0.125,
+        0.145,
+        materials.navyLight,
+        side < 0 ? 'Left_Forearm' : 'Right_Forearm',
+        7
+      );
+
+      addBox(
+        officer,
+        [0.29, 0.08, 0.27],
+        [elbowX, 2.22, 0.025],
+        materials.navyDark,
+        side < 0 ? 'Left_Elbow_Cuff' : 'Right_Elbow_Cuff'
+      );
+
+      addSphere(
+        officer,
+        0.145,
+        [wristX, 1.51, 0.09],
+        materials.glove,
+        side < 0 ? 'Left_Hand' : 'Right_Hand',
+        [0.85, 1.15, 0.75],
+        1
+      );
+
+      // Thumb.
+      addSphere(
+        officer,
+        0.065,
+        [wristX - side * 0.075, 1.54, 0.17],
+        materials.glove,
+        side < 0 ? 'Left_Thumb' : 'Right_Thumb',
+        [0.75, 1.25, 0.9],
+        0
+      );
+    }
+
+    // ---------------------------------------------------------------------
+    // Head, hair, face, and hat
+    // ---------------------------------------------------------------------
+
+    addCylinder(
+      officer,
+      0.16, 0.18, 0.24,
+      [0, 2.94, 0],
+      materials.skin,
+      'Neck',
+      8
+    );
+
+    addSphere(
+      officer,
+      0.35,
+      [0, 3.18, 0],
+      materials.skinLight,
+      'Head',
+      [0.92, 1.04, 0.94],
+      1
+    );
+
+    // Hair cap.
+    const hairCap = new THREE.Mesh(
+      new THREE.SphereGeometry(
+        0.365,
+        10,
+        5,
+        0,
+        Math.PI * 2,
+        0,
+        1.52
+      ),
+      materials.hair
+    );
+    hairCap.position.set(0, 3.18, -0.015);
+    configureMesh(hairCap, 'Hair_Cap', officer);
+
+    // Side hair.
+    addBox(
+      officer,
+      [0.11, 0.31, 0.17],
+      [-0.31, 3.12, 0.015],
+      materials.hair,
+      'Left_Side_Hair',
+      [0, 0, -0.08]
+    );
+
+    addBox(
+      officer,
+      [0.11, 0.31, 0.17],
+      [0.31, 3.12, 0.015],
+      materials.hair,
+      'Right_Side_Hair',
+      [0, 0, 0.08]
+    );
+
+    // Ears.
+    addSphere(
+      officer,
+      0.085,
+      [-0.335, 3.16, 0],
+      materials.skin,
+      'Left_Ear',
+      [0.6, 1.0, 0.8],
+      1
+    );
+
+    addSphere(
+      officer,
+      0.085,
+      [0.335, 3.16, 0],
+      materials.skin,
+      'Right_Ear',
+      [0.6, 1.0, 0.8],
+      1
+    );
+
+    // Eyes.
+    for (const side of [-1, 1]) {
+      addSphere(
+        officer,
+        0.038,
+        [side * 0.125, 3.235, 0.315],
+        materials.eye,
+        side < 0 ? 'Left_Eye' : 'Right_Eye',
+        [1, 0.72, 0.45],
+        0
+      );
+
+      addBox(
+        officer,
+        [0.105, 0.025, 0.025],
+        [side * 0.125, 3.305, 0.325],
+        materials.hair,
+        side < 0 ? 'Left_Eyebrow' : 'Right_Eyebrow',
+        [0, 0, side * 0.08]
+      );
+
+      addSphere(
+        officer,
+        0.018,
+        [side * 0.125, 3.235, 0.347],
+        materials.iris,
+        side < 0 ? 'Left_Eye_Iris' : 'Right_Eye_Iris',
+        [1, 1, 0.5],
+        0
+      );
+    }
+
+    // Nose.
+    const nose = new THREE.Mesh(
+      new THREE.ConeGeometry(0.058, 0.14, 4),
+      materials.skin
+    );
+    nose.position.set(0, 3.17, 0.36);
+    nose.rotation.x = Math.PI / 2;
+    configureMesh(nose, 'Nose', officer);
+
+    // Beard.
+    const beard = new THREE.Mesh(
+      new THREE.ConeGeometry(0.26, 0.40, 7),
+      materials.hair
+    );
+    beard.position.set(0, 2.99, 0.285);
+    beard.rotation.x = Math.PI;
+    configureMesh(beard, 'Low_Poly_Beard', officer);
+
+    // Moustache.
+    addBox(
+      officer,
+      [0.15, 0.055, 0.045],
+      [-0.07, 3.055, 0.335],
+      materials.hair,
+      'Left_Moustache',
+      [0, 0, 0.12]
+    );
+
+    addBox(
+      officer,
+      [0.15, 0.055, 0.045],
+      [0.07, 3.055, 0.335],
+      materials.hair,
+      'Right_Moustache',
+      [0, 0, -0.12]
+    );
+
+    // Mouth.
+    addBox(
+      officer,
+      [0.105, 0.018, 0.025],
+      [0, 2.955, 0.315],
+      materials.hair,
+      'Mouth'
+    );
+
+    // Earring.
+    const earring = new THREE.Mesh(
+      new THREE.TorusGeometry(0.055, 0.012, 5, 8),
+      materials.gold
+    );
+    earring.position.set(0.345, 3.055, 0.04);
+    configureMesh(earring, 'Gold_Earring', officer);
+
+    // Hat.
+    const hatBrim = addCylinder(
+      officer,
+      0.49, 0.49, 0.075,
+      [0, 3.48, 0],
+      materials.navyDark,
+      'Hat_Brim',
+      12
+    );
+    hatBrim.scale.z = 0.90;
+
+    addCylinder(
+      officer,
+      0.35, 0.39, 0.29,
+      [0, 3.64, 0],
+      materials.navy,
+      'Hat_Crown',
+      10
+    );
+
+    addCylinder(
+      officer,
+      0.395, 0.395, 0.07,
+      [0, 3.50, 0],
+      materials.navyDark,
+      'Hat_Band',
+      10
+    );
+
+    const hatBadge = addCylinder(
+      officer,
+      0.095, 0.095, 0.035,
+      [0, 3.64, 0.39],
+      materials.gold,
+      'Hat_Badge_Rim',
+      8,
+      [Math.PI / 2, 0, 0]
+    );
+    hatBadge.castShadow = true;
+
+    addStarBadge(officer, [0, 3.64, 0.412]);
+
+    // ---------------------------------------------------------------------
+    // Export
+    // ---------------------------------------------------------------------
+
+    exportButton.addEventListener('click', async () => {
+      exportButton.disabled = true;
+      status.textContent = 'Building GLB…';
+
+      try {
+        officer.updateMatrixWorld(true);
+
+        const exporter = new GLTFExporter();
+        const result = await exporter.parseAsync(officer, {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 2048
+        });
+
+        const blob = new Blob([result], {
+          type: 'model/gltf-binary'
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+
+        link.href = url;
+        link.download = 'low_poly_officer.glb';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+        status.textContent =
+          `Exported low_poly_officer.glb (${(blob.size / 1024).toFixed(1)} KB).`;
+      } catch (error) {
+        console.error(error);
+        status.textContent = 'Export failed. See the browser console for details.';
+      } finally {
+        exportButton.disabled = false;
+      }
+    });
+
+    resetButton.addEventListener('click', () => {
+      camera.position.copy(initialCameraPosition);
+      controls.target.copy(initialTarget);
+      controls.update();
+    });
+
+    // ---------------------------------------------------------------------
+    // Resize and render loop
+    // ---------------------------------------------------------------------
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

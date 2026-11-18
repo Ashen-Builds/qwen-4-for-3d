@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Victorian Pedestal Lamp</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #101519;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .hud {
+      position: fixed;
+      top: 22px;
+      left: 24px;
+      z-index: 10;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: #d6ad59;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #f3ead7;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(24px, 3vw, 38px);
+      font-weight: 500;
+      letter-spacing: 0.03em;
+      text-shadow: 0 3px 18px #0008;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: #a9b3b8;
+      font-size: 13px;
+    }
+
+    .toolbar {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .hint {
+      color: #9ba8ad;
+      font-size: 12px;
+      text-shadow: 0 2px 8px #000;
+      pointer-events: none;
+    }
+
+    button {
+      min-width: 154px;
+      padding: 13px 18px;
+      border: 1px solid #f0d38e;
+      border-radius: 8px;
+      background: linear-gradient(#d6b167, #aa7932);
+      color: #25170a;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      box-shadow:
+        0 8px 24px #0005,
+        inset 0 1px 0 #fff8e8;
+      transition: transform 160ms ease, filter 160ms ease;
+    }
+
+    button:hover {
+      filter: brightness(1.09);
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.7;
+      transform: none;
+    }
+
+    #status {
+      position: fixed;
+      left: 24px;
+      bottom: 24px;
+      z-index: 10;
+      color: #87959d;
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .hud {
+        top: 16px;
+        left: 16px;
+      }
+
+      .toolbar {
+        right: 16px;
+        bottom: 16px;
+      }
+
+      .hint {
+        display: none;
+      }
+
+      #status {
+        left: 16px;
+        bottom: 18px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.166.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div class="hud">
+    <p class="eyebrow">Game-ready asset</p>
+    <h1>Village Illuminator</h1>
+    <p class="subtitle">Ornate Victorian pedestal lamp</p>
+  </div>
+
+  <div class="toolbar">
+    <span class="hint">Drag to orbit · Scroll to zoom</span>
+    <button id="exportButton" type="button">Export GLB</button>
+  </div>
+
+  <div id="status">Static low-poly model · No external textures</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    // -------------------------------------------------------------------------
+    // Renderer and presentation
+    // -------------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x11171b);
+    scene.fog = new THREE.Fog(0x11171b, 12, 25);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(5.2, 4.35, 6.8);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.75, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 4.2;
+    controls.maxDistance = 13;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    scene.add(new THREE.HemisphereLight(0xffe8bd, 0x172228, 2.15));
+
+    const keyLight = new THREE.DirectionalLight(0xffe4b2, 3.3);
+    keyLight.position.set(4.5, 7.5, 5.0);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -5;
+    keyLight.shadow.camera.right = 5;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x7fb9d6, 1.35);
+    fillLight.position.set(-5, 3.5, 2);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xe4c78a, 1.7);
+    rimLight.position.set(1, 4, -6);
+    scene.add(rimLight);
+
+    const lampLight = new THREE.PointLight(0xffd38a, 9, 4.5, 2);
+    lampLight.position.set(0, 2.15, 0);
+    scene.add(lampLight);
+
+    // Presentation-only ground; it is intentionally not exported.
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(20, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x182025,
+        roughness: 0.93,
+        metalness: 0.03
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // -------------------------------------------------------------------------
+    // Asset root and materials
+    // -------------------------------------------------------------------------
+
+    const root = new THREE.Group();
+    root.name = "Victorian_Ornate_Pedestal_Lamp";
+    root.userData = {
+      assetType: "Static ornate pedestal lamp",
+      style: "Victorian",
+      gameEngine: "Godot"
+    };
+    scene.add(root);
+
+    const materials = {
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xc89b43,
+        metalness: 0.82,
+        roughness: 0.24,
+        flatShading: true
+      }),
+      goldLight: new THREE.MeshStandardMaterial({
+        color: 0xe0bd62,
+        metalness: 0.76,
+        roughness: 0.22,
+        flatShading: true
+      }),
+      goldDark: new THREE.MeshStandardMaterial({
+        color: 0x74501d,
+        metalness: 0.78,
+        roughness: 0.31,
+        flatShading: true
+      }),
+      teal: new THREE.MeshStandardMaterial({
+        color: 0x173d43,
+        metalness: 0.42,
+        roughness: 0.38,
+        flatShading: true
+      }),
+      tealDark: new THREE.MeshStandardMaterial({
+        color: 0x0b252b,
+        metalness: 0.52,
+        roughness: 0.3,
+        flatShading: true
+      }),
+      ivory: new THREE.MeshStandardMaterial({
+        color: 0xeadcba,
+        metalness: 0.02,
+        roughness: 0.82,
+        side: THREE.DoubleSide,
+        flatShading: true
+      }),
+      ivoryShade: new THREE.MeshStandardMaterial({
+        color: 0xd7c49d,
+        metalness: 0.01,
+        roughness: 0.84,
+        side: THREE.DoubleSide,
+        flatShading: true
+      }),
+      crimson: new THREE.MeshStandardMaterial({
+        color: 0x8c2029,
+        metalness: 0.18,
+        roughness: 0.64,
+        flatShading: true
+      }),
+      crystal: new THREE.MeshStandardMaterial({
+        color: 0x2e7890,
+        emissive: 0x0b2632,
+        emissiveIntensity: 0.7,
+        metalness: 0.35,
+        roughness: 0.18,
+        flatShading: true
+      }),
+      crystalCore: new THREE.MeshStandardMaterial({
+        color: 0xc5f3ff,
+        emissive: 0x4dbbd3,
+        emissiveIntensity: 1.2,
+        metalness: 0.15,
+        roughness: 0.12,
+        flatShading: true
+      })
+    };
+
+    // -------------------------------------------------------------------------
+    // Geometry helpers
+    // -------------------------------------------------------------------------
+
+    function addMesh(geometry, material, parent = root) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function cylinderBetween(a, b, radius, material, parent = root, radialSegments = 6) {
+      const start = new THREE.Vector3(...a);
+      const end = new THREE.Vector3(...b);
+      const direction = end.clone().sub(start);
+      const length = direction.length();
+      const midpoint = start.clone().add(end).multiplyScalar(0.5);
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(
+          radius,
+          radius,
+          length,
+          radialSegments,
+          1,
+          false
+        ),
+        material,
+        parent
+      );
+
+      mesh.position.copy(midpoint);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    function horizontalTorus(radius, tube, material, parent = root, segments = 16) {
+      const mesh = addMesh(
+        new THREE.TorusGeometry(radius, tube, 5, segments),
+        material,
+        parent
+      );
+      mesh.rotation.x = Math.PI / 2;
+      return mesh;
+    }
+
+    function createPanelGeometry(width, height, depth) {
+      const shape = new THREE.Shape();
+
+      shape.moveTo(-width * 0.62, 0);
+      shape.lineTo(width * 0.62, 0);
+      shape.lineTo(width * 0.62, -height * 0.53);
+      shape.lineTo(width * 0.45, -height * 0.68);
+      shape.lineTo(0, -height * 0.50);
+      shape.lineTo(-width * 0.45, -height * 0.68);
+      shape.lineTo(-width * 0.62, -height * 0.53);
+      shape.closePath();
+
+      const geometry = new THREE.ExtrudeGeometry(shape, {
+        depth,
+        bevelEnabled: false,
+        curveSegments: 1,
+        steps: 1
+      });
+
+      // The panel's height becomes radial depth, and the extrusion depth
+      // becomes vertical thickness after the rotation.
+      geometry.rotateX(Math.PI / 2);
+      geometry.translate(0, 0.0275, 0);
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    // -------------------------------------------------------------------------
+    // Stepped octagonal base
+    // -------------------------------------------------------------------------
+
+    const base = new THREE.Group();
+    base.name = "Stepped_Octagonal_Base";
+    root.add(base);
+
+    const baseFoot = addMesh(
+      new THREE.CylinderGeometry(1.30, 1.42, 0.24, 8),
+      materials.goldDark,
+      base
+    );
+    baseFoot.position.y = 0.12;
+
+    const baseFootCap = addMesh(
+      new THREE.CylinderGeometry(1.20, 1.30, 0.18, 8),
+      materials.gold,
+      base
+    );
+    baseFootCap.position.y = 0.33;
+
+    const basePlinth = addMesh(
+      new THREE.CylinderGeometry(1.00, 1.18, 0.20, 8),
+      materials.teal,
+      base
+    );
+    basePlinth.position.y = 0.56;
+
+    const baseTealInset = addMesh(
+      new THREE.CylinderGeometry(0.91, 0.91, 0.065, 8),
+      materials.tealDark,
+      base
+    );
+    baseTealInset.position.y = 0.685;
+
+    const baseLip = addMesh(
+      new THREE.CylinderGeometry(0.95, 0.95, 0.12, 8),
+      materials.gold,
+      base
+    );
+    baseLip.position.y = 0.79;
+
+    horizontalTorus(1.075, 0.038, materials.goldLight, base, 32);
+
+    // Radial fluting around the upper base.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const x = Math.cos(angle) * 1.06;
+      const z = Math.sin(angle) * 1.06;
+
+      cylinderBetween(
+        [x, 0.18, z],
+        [x, 0.77, z],
+        0.027,
+        materials.goldLight,
+        base,
+        5
+      );
+    }
+
+    // Teal medallion and small gold ring on the front-facing side.
+    const medallion = addMesh(
+      new THREE.CylinderGeometry(0.22, 0.22, 0.035, 8),
+      materials.tealDark,
+      base
+    );
+    medallion.rotation.x = Math.PI / 2;
+    medallion.position.set(0, 0.685, 0.91);
+
+    const medallionRing = horizontalTorus(0.22, 0.022, materials.goldLight, base, 20);
+    medallionRing.rotation.x = Math.PI / 2;
+    medallionRing.position.set(0, 0.685, 0.93);
+
+    // -------------------------------------------------------------------------
+    // Fluted pedestal and Victorian decorative scrolls
+    // -------------------------------------------------------------------------
+
+    const pedestal = new THREE.Group();
+    pedestal.name = "Fluted_Pedestal";
+    root.add(pedestal);
+
+    const pedestalCollar = addMesh(
+      new THREE.CylinderGeometry(0.40, 0.35, 0.13, 10),
+      materials.gold,
+      pedestal
+    );
+    pedestalCollar.position.y = 0.91;
+
+    const pedestalBody = addMesh(
+      new THREE.CylinderGeometry(0.30, 0.34, 0.88, 10),
+      materials.teal,
+      pedestal
+    );
+    pedestalBody.position.y = 1.48;
+
+    const pedestalCollarUpper = addMesh(
+      new THREE.CylinderGeometry(0.39, 0.34, 0.12, 10),
+      materials.goldDark,
+      pedestal
+    );
+    pedestalCollarUpper.position.y = 1.96;
+
+    horizontalTorus(0.365, 0.047, materials.goldLight, pedestal, 24);
+    horizontalTorus(0.385, 0.035, materials.gold, pedestal, 24);
+
+    // Vertical decorative ribs.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      cylinderBetween(
+        [Math.cos(angle) * 0.315, 1.05, Math.sin(angle) * 0.315],
+        [Math.cos(angle) * 0.315, 1.91, Math.sin(angle) * 0.315],
+        0.023,
+        materials.goldDark,
+        pedestal,
+        5
+      );
+    }
+
+    // Three raised spiral relief motifs.
+    for (let i = 0; i < 3; i++) {
+      const points = [];
+      const angle = (i / 3) * Math.PI * 2;
+
+      for (let j = 0; j <= 20; j++) {
+        const t = j / 20;
+        const y = 1.07 + t * 0.82;
+        const radius = 0.43 * (1 - t * 0.16);
+        points.push(
+          new THREE.Vector3(
+            Math.cos(angle) * radius,
+            y,
+            Math.sin(angle) * radius
+          )
+        );
+      }
+
+      const spiralCurve = new THREE.CatmullRomCurve3(points);
+      addMesh(
+        new THREE.TubeGeometry(spiralCurve, 24, 0.025, 5, false),
+        materials.goldLight,
+        pedestal
+      );
+    }
+
+    // -------------------------------------------------------------------------
+    // Ornate crown and finial
+    // -------------------------------------------------------------------------
+
+    const crown = new THREE.Group();
+    crown.name = "Ornate_Crown";
+    root.add(crown);
+
+    const crownCollar = addMesh(
+      new THREE.CylinderGeometry(0.43, 0.34, 0.15, 10),
+      materials.gold,
+      crown
+    );
+    crownCollar.position.y = 2.04;
+
+    horizontalTorus(0.39, 0.055, materials.goldLight, crown, 24);
+
+    const crownCore = addMesh(
+      new THREE.SphereGeometry(0.25, 8, 6),
+      materials.goldLight,
+      crown
+    );
+    crownCore.position.y = 2.42;
+
+    const crownRing = horizontalTorus(0.31, 0.04, materials.gold, crown, 20);
+    crownRing.position.y = 2.51;
+
+    // Small crown-like points.
+    for (let i = 0; i < 5; i++) {
+      const angle = (i / 5) * Math.PI * 2 + Math.PI / 5;
+      const x = Math.cos(angle) * 0.31;
+      const z = Math.sin(angle) * 0.31;
+
+      const point = addMesh(
+        new THREE.OctahedronGeometry(0.075, 0),
+        i % 2 === 0 ? materials.goldLight : materials.gold,
+        crown
+      );
+      point.position.set(x, 2.53, z);
+      point.scale.set(0.8, 1.35, 0.8);
+    }
+
+    const finialStem = addMesh(
+      new THREE.CylinderGeometry(0.035, 0.055, 0.30, 6),
+      materials.goldLight,
+      crown
+    );
+    finialStem.position.y = 2.72;
+
+    const finialCrystal = addMesh(
+      new THREE.OctahedronGeometry(0.13, 0),
+      materials.crystal,
+      crown
+    );
+    finialCrystal.position.y = 2.91;
+    finialCrystal.scale.y = 1.45;
+
+    const finialCore = addMesh(
+      new THREE.OctahedronGeometry(0.055, 0),
+      materials.crystalCore,
+      crown
+    );
+    finialCore.position.y = 2.91;
+
+    // -------------------------------------------------------------------------
+    // Six ornate fabric shade petals
+    // -------------------------------------------------------------------------
+
+    const shade = new THREE.Group();
+    shade.name = "Six_Petal_Lampshade";
+    root.add(shade);
+
+    const panelWidth = 0.52;
+    const panelHeight = 0.92;
+    const panelDepth = 0.055;
+
+    for (let i = 0; i < 6; i++) {
+      const panelGroup = new THREE.Group();
+      panelGroup.name = `Shade_Panel_${i + 1}`;
+      panelGroup.position.y = 2.88;
+      panelGroup.rotation.y = (i / 6) * Math.PI * 2;
+      shade.add(panelGroup);
+
+      const panelMaterial = i % 2 === 0
+        ? materials.ivory
+        : materials.ivoryShade;
+
+      const panel = addMesh(
+        createPanelGeometry(panelWidth, panelHeight, panelDepth),
+        panelMaterial,
+        panelGroup
+      );
+      panel.name = "Fabric_Petal";
+
+      // Gold vertical edging and a scalloped lower trim.
+      const topLeft = [-panelWidth * 0.62, 0, -panelDepth * 0.5];
+      const topLeft = [panelWidth * 0.62, 0, -panelDepth * 0.5];
+      const bottomLeft = [-panelWidth * 0.78, -panelHeight * 0.53, -panelDepth * 0.5];
+      const bottomRight = [panelWidth * 0.78, -panelHeight * 0.53, -panelDepth * 0.5];
+
+      cylinderBetween(topLeft, bottomLeft, 0.022, materials.goldLight, panelGroup, 5);
+      cylinderBetween(topLeft, bottomRight, 0.022, materials.goldLight, panelGroup, 5);
+
+      cylinderBetween(bottomLeft, bottomRight, 0.022, materials.goldLight, panelGroup, 5);
+
+      // Thin upper band.
+      const band = horizontalTorus(
+        panelWidth * 0.62,
+        0.018,
+        materials.gold,
+        panelGroup,
+        12
+      );
+      band.position.y = 0.015;
+    }
+
+    // Crimson inner band under the shade.
+    horizontalTorus(
+      0.52,
+      0.055,
+      materials.crimson,
+      shade,
+      32
+    ).position.y = 2.88;
+
+    // A second fine gold ring below the crimson trim.
+    horizontalTorus(
+      0.72,
+      0.022,
+      materials.goldLight,
+      shade,
+      32
+    ).position.y = 3.02;
+
+    // -------------------------------------------------------------------------
+    // Hanging central crystal and chain
+    // -------------------------------------------------------------------------
+
+    const tassel = new THREE.Group();
+    tassel.name = "Hanging_Crystal_Tassel";
+    root.add(tassel);
+
+    cylinderBetween(
+      [0, 3.30, 0],
+      [0, 3.10, 0],
+      0.018,
+      materials.gold,
+      tassel,
+      5
+    );
+
+    for (let i = 0; i < 5; i++) {
+      const link = addMesh(
+        new THREE.TorusGeometry(0.035, 0.009, 4, 8),
+        materials.goldLight,
+        tassel
+      );
+      link.position.set(
+        Math.sin(i * 0.7) * 0.035,
+        3.20 + i * 0.045,
+        Math.cos(i * 0.7) * 0.035
+      );
+      link.rotation.set(
+        i % 2 === 0 ? Math.PI / 2 : 0,
+        i * 0.8,
+        i % 2 === 0 ? 0 : Math.PI / 2
+      );
+    }
+
+    const tasselCrystal = addMesh(
+      new THREE.OctahedronGeometry(0.13, 0),
+      materials.crystal,
+      tassel
+    );
+    tasselCrystal.position.y = 2.98;
+    tasselCrystal.scale.y = 1.45;
+
+    const tasselCore = addMesh(
+      new THREE.OctahedronGeometry(0.055, 0),
+      materials.crystalCore,
+      tassel
+    );
+    tasselCore.position.y = 2.98;
+    tasselCore.scale.y = 1.3;
+
+    // -------------------------------------------------------------------------
+    // Small side ornaments
+    // -------------------------------------------------------------------------
+
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      const x = Math.cos(angle) * 0.89;
+      const z = Math.sin(angle) * 0.89;
+
+      const jewel = addMesh(
+        new THREE.OctahedronGeometry(0.09, 0),
+        materials.crystal,
+        root
+      );
+      jewel.position.set(x, 1.91, z);
+      jewel.scale.set(0.72, 1.35, 0.72);
+    }
+
+    // Low-poly shadow catcher / floor contact.
+    root.traverse((object) => {
+      if (object.isMesh) {
+        object.castShadow = true;
+        object.receiveShadow = true;
+      }
+    });
+
+    root.updateMatrixWorld(true);
+
+    // -------------------------------------------------------------------------
+    // Export
+    // -------------------------------------------------------------------------
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building binary GLB…";
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        root,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "village_illumination.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "Downloaded village_illumination.glb";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "GLB export failed — see console";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          includeCustomExtensions: false
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Resize and render loop
+    // -------------------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

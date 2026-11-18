@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Low Poly Police Officer</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        button {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #34495e; }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <h3>Police Officer Asset</h3>
+    <p>Low Poly GLB Model</p>
+    <button id="exportBtn">Export GLB</button>
+</div>
+
+<div id="canvas-container"></div>
+
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+    // --- Scene Setup ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe0e0e0);
+    scene.fog = new THREE.Fog(0xe0e0e0, 10, 50);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(5, 2, 5);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.05; // Prevent going under floor
+
+    // --- Lighting ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    dirLight.position.set(5, 10, 7);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
+
+    // --- Material Helpers ---
+    const matBlueUniform = new THREE.MeshStandardMaterial({ color: 0x1a2a40, roughness: 0.6, metalness: 0.1 });
+    const matBlack = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8, metalness: 0.2 });
+    const matSkin = new THREE.MeshStandardMaterial({ color: 0xe0ac69, roughness: 0.5 });
+    const matGold = new THREE.MeshStandardMaterial({ color: 0xd4af37, roughness: 0.4, metalness: 0.6 });
+    const matLeather = new THREE.MeshStandardMaterial({ color: 0x222222, roughness: 0.9 });
+
+    // --- Model Builder ---
+    const officerGroup = new THREE.Group();
+    scene.add(officerGroup);
+
+    // 1. Head
+    const headGroup = new THREE.Group();
+    headGroup.position.y = 1.4; // Raising head
+    officerGroup.add(headGroup);
+
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.6), matSkin);
+    head.position.y = 0.15;
+    head.castShadow = true;
+    headGroup.add(head);
+
+    // Face features (simple)
+    const faceRight = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.15), matSkin);
+    faceRight.position.set(0.18, 0.05, 0.05);
+    headGroup.add(faceRight);
+    const faceLeft = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.3, 0.15), matSkin);
+    faceLeft.position.set(-0.18, 0.05, 0.05);
+    headGroup.add(faceLeft);
+
+    // 2. Body (Torso)
+    const bodyGroup = new THREE.Group();
+    bodyGroup.position.y = 0.25;
+    officerGroup.add(bodyGroup);
+
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.7, 0.25), matBlueUniform);
+    torso.castShadow = true;
+    bodyGroup.add(torso);
+
+    // Shirt details (flaps)
+    const pocketL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.08, 0.1), matBlueUniform);
+    pocketL.position.set(0.05, 0.45, 0.13);
+    bodyGroup.add(pocketL);
+    const pocketR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.08, 0.1), matBlueUniform);
+    pocketR.position.set(-0.05, 0.45, 0.13);
+    bodyGroup.add(pocketR);
+
+    // Tie
+    const tie = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.5, 0.03), matBlack);
+    tie.position.set(0, 0.3, 0);
+    tie.castShadow = true;
+    bodyGroup.add(tie);
+
+    // Badge
+    const badgeChest = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.04, 8), matGold);
+    badgeChest.position.set(0.2, 0.6, 0.12);
+    bodyGroup.add(badgeChest);
+
+    // 3. Arms
+    const armL = new THREE.Group();
+    armL.position.set(0.4, 0.5, 0);
+    bodyGroup.add(armL);
+    const armR = new THREE.Group();
+    armR.position.set(-0.4, 0.5, 0);
+    bodyGroup.add(armR);
+
+    // Left Arm (visible)
+    const upperArmL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.5, 0.15), matSkin);
+    upperArmL.position.set(0, 0.25, 0);
+    armL.add(upperArmL);
+    const forearmL = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.5, 0.1), matSkin);
+    forearmL.position.set(0, -0.25, 0);
+    armL.add(forearmL);
+
+    // Shoulder Patch
+    const patchL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.05), matGold);
+    patchL.position.set(0.05, 0.1, -0.02);
+    armL.add(patchL);
+
+    // Radio on shoulder
+    const radioArm = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.3), matBlack);
+    radioArm.rotation.z = Math.PI/2;
+    radioArm.position.set(0.25, 0.35, 0.1);
+    bodyGroup.add(radioArm);
+    const radioHead = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.04), matBlack);
+    radioHead.rotation.z = Math.PI/2;
+    radioHead.position.set(0.3, 0.3, 0.12);
+    bodyGroup.add(radioHead);
+
+    // Right Arm (hidden but modeled)
+    const upperArmR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.5, 0.15), matSkin);
+    upperArmR.position.set(0, 0.25, 0);
+    armR.add(upperArmR);
+    const forearmR = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.5, 0.1), matSkin);
+    forearmR.position.set(0, -0.25, 0);
+    armR.add(forearmR);
+
+    // 4. Legs
+    const legGroup = new THREE.Group();
+    legGroup.position.y = 0.35;
+    officerGroup.add(legGroup);
+
+    const legL = new THREE.Group();
+    legL.position.set(0.15, 0, 0);
+    legGroup.add(legL);
+
+    const legR = new THREE.Group();
+    legR.position.set(-0.15, 0, 0);
+    legGroup.add(legR);
+
+    const upperLegL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), matBlueUniform);
+    upperLegL.castShadow = true;
+    legL.add(upperLegL);
+    const lowerLegL = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.5, 0.16), matBlueUniform);
+    lowerLegL.castShadow = true;
+    lowerLegL.position.y = -0.35;
+    legL.add(lowerLegL);
+
+    const upperLegR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.7, 0.18), matBlueUniform);
+    upperLegR.castShadow = true;
+    legR.add(upperLegR);
+    const lowerLegR = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.5, 0.16), matBlueUniform);
+    lowerLegR.castShadow = true;
+    lowerLegR.position.y = -0.35;
+    legR.add(lowerLegR);
+
+    // Boots
+    const bootL = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.4, 0.17), matBlack);
+    bootL.position.y = -0.45;
+    bootL.castShadow = true;
+    legL.add(bootL);
+    const bootR = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.4, 0.17), matBlack);
+    bootR.position.y = -0.45;
+    bootR.castShadow = true;
+    legR.add(bootR);
+
+    // 5. Belt & Gear
+    const beltGroup = new THREE.Group();
+    beltGroup.position.y = -0.05;
+    officerGroup.add(beltGroup);
+
+    // Belt Ring
+    const belt = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.02, 16, 100), matLeather);
+    belt.rotation.x = Math.PI / 2;
+    beltGroup.add(belt);
+
+    // Pouches
+    const pouch1 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.1), matLeather);
+    pouch1.position.set(0.2, -0.15, 0);
+    beltGroup.add(pouch1);
+    
+    const pouch2 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.1), matLeather);
+    pouch2.position.set(-0.2, -0.15, 0);
+    beltGroup.add(pouch2);
+
+    // 6. Hat
+    const hatGroup = new THREE.Group();
+    hatGroup.position.y = 1.58;
+    officerGroup.add(hatGroup);
+
+    const hatTop = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 0.05, 32), matBlueUniform);
+    hatTop.castShadow = true;
+    hatGroup.add(hatTop);
+
+    const hatBrim = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.02, 16, 32), matBlueUniform);
+    hatBrim.rotation.x = Math.PI / 2;
+    hatBrim.position.y = -0.02;
+    hatGroup.add(hatBrim);
+
+    const hatBadge = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.03, 8), matGold);
+    hatBadge.rotation.x = Math.PI / 2;
+    hatBadge.position.set(0, -0.05, 0.05);
+    hatGroup.add(hatBadge);
+
+    // --- Export Logic ---
+    const exportBtn = document.getElementById('exportBtn');
+    
+    exportBtn.addEventListener('click', () => {
+        const exporter = new GLTFExporter();
+        exporter.parse(
+            officerGroup,
+            undefined, // scene
+            undefined, // animation
+            (result) => {
+                const url = URL.createObjectURL(new Blob([result], { type: 'application/octet-stream' }));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'police_officer_lowpoly.glb';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
+            (error) => {
+                console.error(error);
+                alert("Failed to export model");
+            }
+        );
+    });
+
+    // --- Animation Loop ---
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+</script>
+</body>
+</html>

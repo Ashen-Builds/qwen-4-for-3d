@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crimson Wraith — Low-Poly Dragon</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #101722;
+    }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(12, 17, 25, 0.78);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .title-panel {
+      top: 24px;
+      left: 24px;
+      padding: 16px 18px;
+      border-radius: 14px;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: #d96b55;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #f4eee8;
+      font-size: clamp(20px, 3vw, 29px);
+      font-weight: 750;
+      letter-spacing: -0.035em;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: #98a5b5;
+      font-size: 12px;
+    }
+
+    .export-panel {
+      top: 24px;
+      right: 24px;
+      padding: 12px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #exportButton {
+      appearance: none;
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 16px;
+      background: linear-gradient(135deg, #c8382f, #941e2d);
+      box-shadow: 0 6px 20px rgba(142, 29, 38, 0.3);
+      color: white;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 140ms ease, filter 140ms ease, opacity 140ms ease;
+    }
+
+    #exportButton:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    #exportButton:active {
+      transform: translateY(1px);
+    }
+
+    #exportButton:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    #status {
+      min-width: 88px;
+      color: #aab5c3;
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .hint {
+      position: fixed;
+      z-index: 10;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 9px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      background: rgba(12, 17, 25, 0.66);
+      color: #8f9bad;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    @media (max-width: 640px) {
+      .title-panel {
+        top: 14px;
+        left: 14px;
+        padding: 12px 14px;
+      }
+
+      .export-panel {
+        top: 14px;
+        right: 14px;
+        padding: 9px;
+      }
+
+      #status {
+        display: none;
+      }
+
+      .hint {
+        bottom: 12px;
+        white-space: nowrap;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="stage"></div>
+
+  <section class="panel title-panel">
+    <div class="eyebrow">Low-poly creature asset</div>
+    <h1>Crimson Wraith</h1>
+    <div class="subtitle">Ember-lit dragon · static model · GLB ready</div>
+  </section>
+
+  <section class="panel export-panel">
+    <button id="exportButton" type="button">Export GLB</button>
+    <div id="status">Ready to export</div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const stage = document.getElementById("stage");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x101722);
+    scene.fog = new THREE.Fog(0x101722, 12, 28);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(7.4, 4.9, 8.4);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 2.45, -0.15);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 5;
+    controls.maxDistance = 18;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const hemisphere = new THREE.HemisphereLight(0x9ec7ff, 0x241116, 1.65);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffe2cc, 3.5);
+    keyLight.position.set(5, 9, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -7;
+    keyLight.shadow.camera.right = 7;
+    keyLight.shadow.camera.top = 8;
+    keyLight.shadow.camera.bottom = -5;
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const warmLight = new THREE.PointLight(0xff652c, 22, 13, 2);
+    warmLight.position.set(3.8, 4.2, 1.6);
+    scene.add(warmLight);
+
+    const rimLight = new THREE.PointLight(0x3c9cff, 18, 13, 2);
+    rimLight.position.set(-4.5, 4.4, -4.2);
+    scene.add(rimLight);
+
+    const groundMaterial = new THREE.MeshStandardMaterial({
+      color: 0x172334,
+      roughness: 0.93,
+      metalness: 0.04
+    });
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      groundMaterial
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(24, 48, 0x334559, 0x223040);
+    grid.position.y = 0.002;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.28;
+    scene.add(grid);
+
+    const dragon = new THREE.Group();
+    dragon.name = "CrimsonWraith";
+    scene.add(dragon);
+
+    const redMaterial = new THREE.MeshStandardMaterial({
+      color: 0x8f1d2c,
+      roughness: 0.72,
+      metalness: 0.06,
+      flatShading: true
+    });
+
+    const redLightMaterial = new THREE.MeshStandardMaterial({
+      color: 0xb82d34,
+      roughness: 0.67,
+      metalness: 0.05,
+      flatShading: true
+    });
+
+    const redDarkMaterial = new THREE.MeshStandardMaterial({
+      color: 0x4d111d,
+      roughness: 0.8,
+      metalness: 0.04,
+      flatShading: true
+    });
+
+    const hornMaterial = new THREE.MeshStandardMaterial({
+      color: 0xd3b27a,
+      roughness: 0.56,
+      metalness: 0.12,
+      flatShading: true
+    });
+
+    const wingMaterial = new THREE.MeshStandardMaterial({
+      color: 0xb83231,
+      roughness: 0.82,
+      metalness: 0.01,
+      side: THREE.DoubleSide,
+      flatShading: true
+    });
+
+    const eyeMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffd06b,
+      emissive: 0xff6a18,
+      emissiveIntensity: 2.6,
+      roughness: 0.24,
+      metalness: 0.05,
+      flatShading: true
+    });
+
+    const blackMaterial = new THREE.MeshStandardMaterial({
+      color: 0x08090b,
+      roughness: 0.96,
+      metalness: 0,
+      flatShading: true
+    });
+
+    const membraneGeometry = new THREE.BufferGeometry();
+    const membranePositions = new Float32Array([
+      0.44, 3.22, -0.14,
+      1.65, 4.16, -0.28,
+      2.95, 3.76, -0.36,
+      0.83, 2.52, -0.08,
+      2.12, 2.14, -0.32
+    ]);
+
+    membraneGeometry.setAttribute(
+      "position",
+      new THREE.BufferAttribute(membranePositions, 3)
+    );
+
+    membraneGeometry.setIndex([
+      0, 1, 2,
+      0, 2, 3,
+      2, 4, 3
+    ]);
+
+    membraneGeometry.computeVertexNormals();
+
+    function addMesh(parent, geometry, material, position = [0, 0, 0], scale = [1, 1, 1]) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...position);
+      mesh.scale.set(...scale);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addSegment(parent, start, end, radiusStart, radiusEnd, material, segments = 7) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radiusEnd,
+        radiusStart,
+        length,
+        segments,
+        1,
+        false
+      );
+
+      const mesh = addMesh(parent, geometry, material);
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    function addCone(parent, base, tip, radius, material, radialSegments = 6) {
+      const a = new THREE.Vector3(...base);
+      const b = new THREE.Vector3(...tip);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const geometry = new THREE.ConeGeometry(radius, length, radialSegments, 1, false);
+      const mesh = addMesh(parent, geometry, material);
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    // Torso and shoulders
+    addMesh(
+      dragon,
+      new THREE.IcosahedronGeometry(1, 1),
+      redMaterial,
+      [0, 2.62, 0],
+      [1.08, 0.91, 1.48]
+    );
+
+    addMesh(
+      dragon,
+      new THREE.IcosahedronGeometry(1, 1),
+      redLightMaterial,
+      [0, 2.18, 0.18],
+      [0.82, 0.72, 1.28]
+    );
+
+    addMesh(
+      dragon,
+      new THREE.IcosahedronGeometry(1, 1),
+      redMaterial,
+      [-0.83, 2.93, -0.13],
+      [0.38, 0.57, 0.72]
+    );
+
+    addMesh(
+      dragon,
+      new THREE.IcosahedronGeometry(1, 1),
+      redMaterial,
+      [0.83, 2.93, -0.13],
+      [0.38, 0.57, 0.72]
+    );
+
+    // Back ridges
+    const backSpines = [
+      [[0, 3.38, -1.03], [0, 3.91, -1.14], 0.17],
+      [[0, 3.52, -0.65], [0, 4.04, -0.76], 0.19],
+      [[0, 3.58, -0.23], [0, 4.12, -0.32], 0.20],
+      [[0, 3.57, 0.22], [0, 4.08, 0.12], 0.19],
+      [[0, 3.43, 0.68], [0, 3.91, 0.57], 0.16]
+    ];
+
+    for (const [base, tip, radius] of backSpines) {
+      addCone(dragon, base, tip, radius, redDarkMaterial, 5);
+    }
+
+    // Neck
+    addSegment(dragon, [0, 2.72, 0.61], [0, 3.12, 0.87], 0.58, 0.48, redMaterial, 7);
+    addSegment(dragon, [0, 3.12, 0.87], [0, 3.48, 1.05], 0.48, 0.40, redMaterial, 7);
+
+    // Head
+    addMesh(
+      dragon,
+      new THREE.IcosahedronGeometry(1, 1),
+      redMaterial,
+      [0, 3.70, 1.25],
+      [0.70, 0.63, 0.82]
+    );
+
+    addMesh(
+      dragon,
+      new THREE.IcosahedronGeometry(1, 1),
+      redLightMaterial,
+      [0, 3.50, 1.94],
+      [0.56, 0.36, 0.74]
+    );
+
+    addMesh(
+      dragon,
+      new THREE.IcosahedronGeometry(1, 1),
+      redDarkMaterial,
+      [0, 3.29, 1.91],
+      [0.54, 0.22, 0.67]
+    );
+
+    addMesh(
+      dragon,
+      new THREE.BoxGeometry(0.68, 0.055, 0.30),
+      blackMaterial,
+      [0, 3.43, 2.20]
+    );
+
+    // Nostrils and mouth
+    addMesh(
+      dragon,
+      new THREE.IcosahedronGeometry(1, 0),
+      blackMaterial,
+      [-0.24, 3.65, 2.31],
+      [0.07, 0.045, 0.035]
+    );
+
+    addMesh(
+      dragon,
+      new THREE.IcosahedronGeometry(1, 0),
+      blackMaterial,
+      [0.24, 3.65, 2.31],
+      [0.07, 0.045, 0.035]
+    );
+
+    // Eyes and brow accents
+    for (const side of [-1, 1]) {
+      addMesh(
+        dragon,
+        new THREE.IcosahedronGeometry(1, 1),
+        redDarkMaterial,
+        [side * 0.54, 3.78, 1.48],
+        [0.19, 0.15, 0.13]
+      );
+
+      addMesh(
+        dragon,
+        new THREE.IcosahedronGeometry(1, 1),
+        eyeMaterial,
+        [side * 0.62, 3.80, 1.54],
+        [0.085, 0.065, 0.055]
+      );
+    }
+
+    // Teeth and lower fangs
+    for (const x of [-0.22, 0.22]) {
+      for (const z of [1.90, 2.16]) {
+        addCone(
+          dragon,
+          [x, 3.43, z],
+          [x, 3.17, z + 0.025],
+          0.045,
+          hornMaterial,
+          5
+        );
+      }
+    }
+
+    for (const x of [-0.28, 0.28]) {
+      addCone(
+        dragon,
+        [x, 3.36, 2.05],
+        [x, 3.12, 2.11],
+        0.065,
+        hornMaterial,
+        5
+      );
+    }
+
+    // Tall swept horns
+    for (const side of [-1, 1]) {
+      addSegment(
+        dragon,
+        [side * 0.36, 4.10, 1.05],
+        [side * 0.54, 4.61, 0.92],
+        0.19,
+        0.14,
+        hornMaterial,
+        6
+      );
+
+      addSegment(
+        dragon,
+        [side * 0.54, 4.61, 0.92],
+        [side * 0.61, 4.94, 0.72],
+        0.14,
+        0.012,
+        hornMaterial,
+        6
+      );
+
+      addCone(
+        dragon,
+        [side * 0.58, 3.76, 1.15],
+        [side * 0.91, 4.00, 1.00],
+        0.22,
+        redDarkMaterial,
+        5
+      );
+    }
+
+    // Crest
+    addCone(
+      dragon,
+      [0, 4.02, 1.02],
+      [0, 4.53, 0.62],
+      0.16,
+      redDarkMaterial,
+      5
+    );
+
+    // Four legs
+    function createLeg(side, z, front) {
+      const x = side * 0.70;
+      const kneeX = side * 0.98;
+      const ankleX = side * 1.10;
+      const footX = side * 1.15;
+
+      const hip = [x, 2.42, z];
+      const knee = [kneeX, 1.43, z + (front ? 0.12 : -0.10)];
+      const ankle = [ankleX, 0.68, z + (front ? 0.20 : -0.10)];
+      const footZ = z + (front ? 0.36 : -0.27);
+
+      addSegment(dragon, hip, knee, 0.31, 0.24, redMaterial, 7);
+      addSegment(dragon, knee, ankle, 0.24, 0.17, redMaterial, 7);
+
+      addMesh(
+        dragon,
+        new THREE.IcosahedronGeometry(1, 1),
+        redLightMaterial,
+        knee,
+        [0.28, 0.26, 0.28]
+      );
+
+      addMesh(
+        dragon,
+        new THREE.IcosahedronGeometry(1, 1),
+        redMaterial,
+        [footX, 0.34, footZ],
+        [0.37, 0.25, 0.54]
+      );
+
+      for (let toe = -1; toe <= 1; toe++) {
+        const clawBase = [
+          footX + toe * 0.20,
+          0.25,
+          footZ + (front ? 0.38 : -0.38)
+        ];
+
+        const clawTip = [
+          footX + toe * 0.23,
+          0.12,
+          footZ + (front ? 0.71 : -0.71)
+        ];
+
+        addCone(
+          dragon,
+          clawBase,
+          clawTip,
+          0.085,
+          hornMaterial,
+          5
+        );
+      }
+    }
+
+    createLeg(-1, 0.62, true);
+    createLeg(1, 0.62, true);
+    createLeg(-1, -0.72, false);
+    createLeg(1, -0.72, false);
+
+    // Curved segmented tail
+    const tailPoints = [
+      [0.00, 2.45, -0.78],
+      [0.04, 2.22, -1.38],
+      [0.13, 1.94, -2.00],
+      [0.29, 1.66, -2.64],
+      [0.45, 1.38, -3.25],
+      [0.61, 1.08, -3.87]
+    ];
+
+    const tailRadii = [0.57, 0.51, 0.44, 0.36, 0.28, 0.20];
+
+    for (let i = 0; i < tailPoints.length - 1; i++) {
+      addSegment(
+        dragon,
+        tailPoints[i],
+        tailPoints[i + 1],
+        tailRadii[i],
+        tailRadii[i + 1],
+        redMaterial,
+        7
+      );
+    }
+
+    // Tail spikes
+    for (let i = 1; i < tailPoints.length - 1; i++) {
+      const base = tailPoints[i];
+      const tip = [
+        base[0] + 0.04,
+        base[1] + 0.10,
+        base[2] - 0.26
+      ];
+
+      addCone(
+        dragon,
+        base,
+        tip,
+        0.13,
+        redDarkMaterial,
+        5
+      );
+    }
+
+    const tailTipBase = tailPoints[5];
+    addCone(
+      dragon,
+      tailTipBase,
+      [0.77, 0.83, -4.48],
+      0.19,
+      redDarkMaterial,
+      6
+    );
+
+    // Large membrane
+    const wingGeometry = membraneGeometry.clone();
+    const wingMaterialCopy = wingMaterial.clone();
+    wingMaterialCopy.side = THREE.DoubleSide;
+
+    for (const side of [-1, 1]) {
+      const wing = addMesh(dragon, wingGeometry, wingMaterialCopy);
+      wing.name = side < 0 ? "LeftWingMembrane" : "RightWingMembrane";
+
+      const root = [0.44 * side, 3.22, -0.14];
+      const shoulder = [1.65 * side, 4.16, -0.28];
+      const tip = [2.95 * side, 3.76, -0.36];
+      const outer = [2.12 * side, 2.14, -0.32];
+      const inner = [0.83 * side, 2.52, -0.08];
+
+      addSegment(dragon, root, shoulder, 0.13, 0.10, redDarkMaterial, 7);
+      addSegment(dragon, shoulder, tip, 0.10, 0.065, redDarkMaterial, 7);
+      addSegment(dragon, root, outer, 0.075, 0.045, redDarkMaterial, 6);
+      addSegment(dragon, root, inner, 0.065, 0.035, redDarkMaterial, 6);
+      addSegment(dragon, shoulder, outer, 0.055, 0.04, redDarkMaterial, 6);
+      addSegment(dragon, tip, outer, 0.055, 0.04, redDarkMaterial, 6);
+
+      addMesh(
+        dragon,
+        new THREE.IcosahedronGeometry(1, 1),
+        redDarkMaterial,
+        shoulder,
+        [0.16, 0.16, 0.16]
+      );
+    }
+
+    // Small membrane edge markings
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 3; i++) {
+        const t = i / 2;
+        const edgeX = 0.83 + 1.29 * side * t;
+        const edgeY = 2.52 + (2.14 - 2.52) * side * t;
+
+        addCone(
+          dragon,
+          [edgeX, edgeY, -0.08],
+          [edgeX + side * 0.10, edgeY - 0.20, -0.37],
+          0.055,
+          redDarkMaterial,
+          5
+        );
+      }
+    }
+
+    dragon.updateMatrixWorld(true);
+
+    exportButton.addEventListener("click", async () => {
+      exportButton.disabled = true;
+      status.textContent = "Exporting…";
+
+      try {
+        const exporter = new GLTFExporter();
+        const result = await exporter.parseAsync(dragon, {
+          binary: true,
+          onlyVisible: true,
+          trs: true,
+          maxTextureSize: 4096
+        });
+
+        const blob = new Blob([result], {
+          type: "model/gltf-binary"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "crimson-wraith.glb";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        status.textContent = "GLB downloaded";
+      } catch (error) {
+        console.error(error);
+        status.textContent = "Export failed";
+      } finally {
+        exportButton.disabled = false;
+        setTimeout(() => {
+          status.textContent = "Ready to export";
+        }, 2500);
+      }
+    });
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

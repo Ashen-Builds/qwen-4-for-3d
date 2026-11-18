@@ -1,0 +1,12 @@
+{
+ "schema": 1,
+ "status": "page_error",
+ "page_errors": [
+  "Missing initializer in const declaration"
+ ],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "export_error": "locator.click: Timeout 10000ms exceeded."
+}

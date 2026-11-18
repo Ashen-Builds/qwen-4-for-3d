@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "green_van.glb",
+  "bytes": 305168,
+  "sha256": "2e1604ae672e7b9b4919dbd8a6dcdd51582c00b243bead0bf2e99d533b11c959",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 140,
+  "nodes": 141,
+  "materials": 12,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 2806,
+  "animations": [],
+  "size_xyz": [
+   2.389000000372529,
+   2.615000000298023,
+   3.4450000232458113
+  ]
+ }
+}

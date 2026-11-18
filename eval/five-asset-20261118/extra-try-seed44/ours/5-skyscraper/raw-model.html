@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ornate Tower — Low-poly GLB Asset</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #111820;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .ui {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(340px, calc(100vw - 44px));
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 14px;
+      background: linear-gradient(145deg, rgba(19, 27, 35, 0.92), rgba(9, 13, 18, 0.82));
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(14px);
+      color: #eef4f8;
+    }
+
+    .title {
+      margin: 0 0 5px;
+      font-size: 22px;
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: #aebbc8;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    button {
+      flex: 1;
+      padding: 11px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 8px;
+      background: #293642;
+      color: white;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 650;
+      transition: background 160ms ease, transform 160ms ease;
+    }
+
+    button:hover {
+      background: #354756;
+      transform: translateY(-1px);
+    }
+
+    #export {
+      border-color: rgba(190, 135, 47, 0.55);
+      background: linear-gradient(135deg, #c89a3f, #8e6423);
+      color: #17130b;
+    }
+
+    #export:hover {
+      background: linear-gradient(135deg, #e0b55d, #a3742d);
+    }
+
+    #export:disabled {
+      cursor: wait;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 12px;
+      color: #9eb0bf;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 10;
+      color: rgba(238, 244, 248, 0.62);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="ui">
+    <h1 class="title">Ornate Tower</h1>
+    <p class="subtitle">
+      Low-poly architectural asset with masonry, gilded trim,
+      windows, battlements, and a crowned spire.
+    </p>
+
+    <div class="buttons">
+      <button id="export">Export GLB</button>
+      <button id="reset">Reset View</button>
+    </div>
+
+    <div id="status">Ready to export.</div>
+  </section>
+
+  <div class="hint">DRAG TO ORBIT · SCROLL TO ZOOM · RIGHT-DRAG TO PAN</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("export");
+    const resetButton = document.getElementById("reset");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111820);
+    scene.fog = new THREE.Fog(0x111820, 22, 48);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const initialCameraPosition = new THREE.Vector3(11.5, 9.5, 13.5);
+    const initialTarget = new THREE.Vector3(0, 3.6, 0);
+
+    camera.position.copy(initialCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(initialTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 7;
+    controls.maxDistance = 30;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // Lighting is kept outside the exported asset.
+    scene.add(new THREE.HemisphereLight(0xbad9ff, 0x2b2418, 2.1));
+
+    const keyLight = new THREE.DirectionalLight(0xffe6bd, 4.2);
+    keyLight.position.set(7, 13, 8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -10;
+    keyLight.shadow.camera.right = 10;
+    keyLight.shadow.camera.top = 13;
+    keyLight.shadow.camera.bottom = -6;
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 35;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x86b8ff, 1.6);
+    fillLight.position.set(-8, 7, -6);
+    scene.add(fillLight);
+
+    const warmLight = new THREE.PointLight(0xff9b42, 12, 10, 2);
+    warmLight.position.set(0, 3.4, 2.6);
+    scene.add(warmLight);
+
+    // Display-only floor.
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(30, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x182129,
+        roughness: 0.92,
+        metalness: 0.05
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.025;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const grid = new THREE.GridHelper(40, 40, 0x40515d, 0x26313a);
+    grid.position.y = -0.018;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.2;
+    scene.add(grid);
+
+    // All exportable geometry lives under this group.
+    const tower = new THREE.Group();
+    tower.name = "OrnateTower";
+    scene.add(tower);
+
+    const materials = {
+      stone: new THREE.MeshStandardMaterial({
+        color: 0xd9c39a,
+        roughness: 0.82,
+        metalness: 0.05,
+        flatShading: true
+      }),
+      stoneLight: new THREE.MeshStandardMaterial({
+        color: 0xf0dfb9,
+        roughness: 0.76,
+        metalness: 0.05,
+        flatShading: true
+      }),
+      stoneDark: new THREE.MeshStandardMaterial({
+        color: 0x655443,
+        roughness: 0.88,
+        metalness: 0.04,
+        flatShading: true
+      }),
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xb9892f,
+        roughness: 0.28,
+        metalness: 0.78,
+        flatShading: true
+      }),
+      goldDark: new THREE.MeshStandardMaterial({
+        color: 0x75501d,
+        roughness: 0.36,
+        metalness: 0.72,
+        flatShading: true
+      }),
+      blueGlass: new THREE.MeshStandardMaterial({
+        color: 0x173c54,
+        emissive: 0x102c3d,
+        emissiveIntensity: 0.72,
+        roughness: 0.22,
+        metalness: 0.2,
+        flatShading: true
+      }),
+      amberGlass: new THREE.MeshStandardMaterial({
+        color: 0xf0a74e,
+        emissive: 0xb85b14,
+        emissiveIntensity: 0.8,
+        roughness: 0.25,
+        metalness: 0.12,
+        flatShading: true
+      }),
+      frame: new THREE.MeshStandardMaterial({
+        color: 0x2d251e,
+        roughness: 0.78,
+        metalness: 0.08,
+        flatShading: true
+      })
+    };
+
+    function addMesh(geometry, material, x, y, z, parent = tower) {
+      const object = new THREE.Mesh(geometry, material);
+      object.position.set(x, y, z);
+      object.castShadow = true;
+      object.receiveShadow = true;
+      parent.add(object);
+      return object;
+    }
+
+    function box(
+      width,
+      height,
+      depth,
+      material,
+      x,
+      y,
+      z,
+      parent = tower,
+      rotationY = 0
+    ) {
+      const group = new THREE.Group();
+      group.position.set(x, y, z);
+      group.rotation.y = rotationY;
+      parent.add(group);
+
+      const mesh = addMesh(
+        new THREE.BoxGeometry(width, height, depth),
+        material,
+        0,
+        0,
+        0,
+        group
+      );
+
+      return group;
+    }
+
+    function cylinder(
+      radiusTop,
+      radiusBottom,
+      height,
+      material,
+      x,
+      y,
+      z,
+      parent = tower,
+      segments = 8
+    ) {
+      return addMesh(
+        new THREE.CylinderGeometry(
+          radiusTop,
+          radiusBottom,
+          height,
+          segments,
+          1,
+          false
+        ),
+        material,
+        x,
+        y,
+        z,
+        parent
+      );
+    }
+
+    function ring(
+      radius,
+      tube,
+      material,
+      x,
+      y,
+      z,
+      parent = tower
+    ) {
+      const object = addMesh(
+        new THREE.TorusGeometry(radius, tube, 6, 16),
+        material,
+        x,
+        y,
+        z,
+        parent
+      );
+      object.rotation.x = Math.PI / 2;
+      return object;
+    }
+
+    function octahedron(
+      radius,
+      material,
+      x,
+      y,
+      z,
+      parent = tower
+    ) {
+      return addMesh(
+        new THREE.OctahedronGeometry(radius, 0),
+        material,
+        x,
+        y,
+        z,
+        parent
+      );
+    }
+
+    // Stepped masonry foundation.
+    box(5.55, 0.34, 5.55, materials.stoneDark, 0, 0.17, 0);
+    box(5.22, 0.34, 5.22, materials.stoneLight, 0, 0.5, 0);
+
+    // Main tower body.
+    box(4.7, 5.2, 4.7, materials.stone, 0, 3.15, 0);
+
+    // Structural corner buttresses.
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        const x = sx * 2.12;
+        const z = sz * 2.12;
+
+        const buttress = cylinder(
+          0.3,
+          0.45,
+          5.0,
+          materials.goldDark,
+          x,
+          3.1,
+          z,
+          tower,
+          4
+        );
+        buttress.rotation.y = Math.PI / 4;
+
+        box(0.82, 0.1, 0.82, materials.gold, x, 1.02, z);
+        box(0.82, 0.1, 0.82, materials.gold, x, 2.78, z);
+        box(0.82, 0.1, 0.82, materials.gold, x, 5.48, z);
+
+        octahedron(
+          0.19,
+          materials.gold,
+          sx * 1.82,
+          4.82,
+          sz * 1.82
+        );
+      }
+    }
+
+    // Lower and upper gold trim bands.
+    box(4.92, 0.13, 4.92, materials.gold, 0, 0.76, 0);
+    box(4.92, 0.13, 4.92, materials.gold, 0, 5.82, 0);
+
+    // Front and side window helpers.
+    function addWindow(x, y, z, rotationY, material, parent = tower) {
+      const group = new THREE.Group();
+      group.position.set(x, y, z);
+      group.rotation.y = rotationY;
+      parent.add(group);
+
+      box(1.08, 2.05, 0.16, materials.frame, 0, 0, 0, group);
+      box(0.88, 1.85, 0.06, material, 0, 0, 0.09, group);
+      box(0.07, 1.82, 0.04, materials.stoneLight, 0, 0, 0.125, group);
+      box(0.86, 0.07, 0.04, materials.stoneLight, 0, 0, 0.125, group);
+
+      return group;
+    }
+
+    // Front main window.
+    addWindow(0, 3.15, 2.38, 0, materials.amberGlass);
+
+    // Side main window.
+    addWindow(2.38, 3.15, 0, Math.PI / 2, materials.blueGlass);
+
+    // Rear main window.
+    addWindow(0, 3.15, -2.38, Math.PI, materials.blueGlass);
+
+    // Windows around the central crown drum.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const windowGroup = addWindow(
+        Math.cos(angle) * 1.53,
+        6.25,
+        Math.sin(angle) * 1.53,
+        Math.PI / 2 - angle,
+        materials.blueGlass
+      );
+    }
+
+    // Entrance and steps.
+    const door = new THREE.Group();
+    door.position.set(0, 0, 2.43);
+    tower.add(door);
+
+    box(1.35, 2.15, 0.16, materials.frame, 0, 1.08, 0, door);
+    box(1.08, 1.96, 0.05, materials.amberGlass, 0, 1.08, 0.105, door);
+    box(0.07, 1.84, 0.04, materials.stoneDark, 0, 1.08, 0.14, door);
+    box(0.86, 0.07, 0.04, materials.stoneDark, 0, 1.08, 0.14, door);
+    box(0.08, 1.88, 0.04, materials.gold, 0, 1.08, 0.17, door);
+    box(0.04, 0.28, 0.05, materials.gold, 0.45, 1.08, 0.18, door);
+
+    box(1.8, 0.18, 1.0, materials.stoneDark, 0, 0.09, 2.9);
+    box(1.55, 0.18, 0.85, materials.stoneLight, 0, 0.28, 2.57);
+
+    // Battlement ring.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const x = Math.cos(angle) * 2.18;
+      const z = Math.sin(angle) * 2.18;
+
+      box(
+        0.62,
+        0.68,
+        0.62,
+        materials.stoneLight,
+        x,
+        6.43,
+        z
+      );
+      box(
+        0.69,
+        0.1,
+        0.69,
+        materials.gold,
+        x,
+        6.8,
+        z
+      );
+    }
+
+    // Corner turrets.
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        cylinder(
+          0.34,
+          0.46,
+          1.0,
+          materials.goldDark,
+          sx * 2.13,
+          6.18,
+          sz * 2.13,
+          tower,
+          6
+        );
+        cylinder(
+          0.43,
+          0.43,
+          0.1,
+          materials.gold,
+          sx * 2.13,
+          6.73,
+          sz * 2.13,
+          tower,
+          6
+        );
+        box(
+          0.65,
+          0.56,
+          0.65,
+          materials.stone,
+          sx * 2.13,
+          6.45,
+          sz * 2.13
+        );
+        box(
+          0.56,
+          0.1,
+          0.56,
+          materials.gold,
+          sx * 2.13,
+          6.76,
+          sz * 2.13
+        );
+      }
+    }
+
+    // Central crown drum.
+    cylinder(1.55, 1.55, 0.72, materials.stoneLight, 0, 6.35, 0, tower, 8);
+    ring(1.57, 0.08, materials.gold, 0, 6.04, 0);
+    ring(1.57, 0.08, materials.gold, 0, 6.66, 0);
+
+    // Alternating crown leaves.
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const x = Math.cos(angle) * 1.48;
+      const z = Math.sin(angle) * 1.48;
+
+      box(
+        0.58,
+        0.64,
+        0.25,
+        materials.gold,
+        x,
+        6.36,
+        z,
+        tower,
+        -angle
+      );
+
+      box(
+        0.39,
+        0.35,
+        0.08,
+        materials.blueGlass,
+        x,
+        6.36,
+        z + Math.sin(angle) * 0.15,
+        tower,
+        -angle
+      );
+    }
+
+    // Spire and finial.
+    cylinder(0.64, 0.86, 0.2, materials.gold, 0, 7.02, 0, tower, 8);
+    ring(0.68, 0.07, materials.goldDark, 0, 7.08, 0);
+    cylinder(0.3, 0.55, 0.35, materials.gold, 0, 7.27, 0, tower, 8);
+    cylinder(
+      0.06,
+      0.56,
+      1.4,
+      materials.gold,
+      0,
+      8.18,
+      0,
+      tower,
+      4
+    );
+    cylinder(
+      0.18,
+      0.18,
+      0.16,
+      materials.goldDark,
+      0,
+      8.92,
+      0,
+      tower,
+      8
+    );
+    octahedron(0.19, materials.gold, 0, 9.08, 0);
+
+    // Small crown finials on the outer turret panels.
+    for (const sx of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        octahedron(
+          0.13,
+          materials.gold,
+          sx * 1.83,
+          6.38,
+          sz * 1.83
+        );
+      }
+    }
+
+    // Ensure all world transforms are current before export.
+    tower.updateMatrixWorld(true);
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(initialCameraPosition);
+      controls.target.copy(initialTarget);
+      controls.update();
+    });
+
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Exporting GLB...";
+
+      exporter.parse(
+        tower,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "ornate-tower.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "ornate-tower.glb exported successfully.";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false
+        }
+      );
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Green Utility Van</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #111820;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: absolute;
+      top: 22px;
+      left: 22px;
+      z-index: 2;
+      width: min(330px, calc(100vw - 44px));
+      padding: 18px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(16, 23, 30, 0.84);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    p {
+      margin: 0 0 15px;
+      color: #b9c4cc;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #102019;
+      background: #67d19a;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 140ms ease, transform 140ms ease;
+    }
+
+    button:hover {
+      background: #83e4b1;
+    }
+
+    button.secondary {
+      color: #eef5f6;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    button.secondary:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 10px;
+      color: #91a4ad;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: absolute;
+      right: 20px;
+      bottom: 18px;
+      z-index: 2;
+      color: rgba(220, 232, 238, 0.72);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+      }
+
+      .hint {
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="app">
+    <div class="panel">
+      <h1>Green Utility Van</h1>
+      <p>
+        Low-poly utility van with a green body, dark trim, tinted windows,
+        cargo doors, roof details, lights, and all-terrain wheels.
+      </p>
+
+      <div class="actions">
+        <button id="exportButton">Export GLB</button>
+        <button id="resetButton" class="secondary">Reset View</button>
+      </div>
+
+      <div id="status">Ready to export.</div>
+    </div>
+
+    <div class="hint">Drag to orbit · Scroll to zoom</div>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // ------------------------------------------------------------
+    // Renderer and scene
+    // ------------------------------------------------------------
+
+    const app = document.getElementById("app");
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    app.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111820);
+    scene.fog = new THREE.Fog(0x111820, 12, 26);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const defaultCameraPosition = new THREE.Vector3(5.8, 3.7, 6.4);
+    const defaultTarget = new THREE.Vector3(0, 1.05, 0.05);
+
+    camera.position.copy(defaultCameraPosition);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(defaultTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.enablePan = false;
+    controls.minDistance = 4.2;
+    controls.maxDistance = 12;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    const hemiLight = new THREE.HemisphereLight(
+      0xb9dded,
+      0x26352e,
+      2.1
+    );
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xfff3d8, 3.6);
+    keyLight.position.set(4.5, 8, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 6;
+    keyLight.shadow.camera.bottom = -6;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x8fc7ff, 1.4);
+    fillLight.position.set(-5, 4, -4);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xa7ffcc, 1.2);
+    rimLight.position.set(-3, 5, 6);
+    scene.add(rimLight);
+
+    // Studio floor; this is not included in the exported GLB.
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(40, 40),
+      new THREE.MeshStandardMaterial({
+        color: 0x1b262c,
+        roughness: 0.92,
+        metalness: 0.02
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.015;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    const floorRing = new THREE.Mesh(
+      new THREE.RingGeometry(3.35, 3.37, 64),
+      new THREE.MeshBasicMaterial({
+        color: 0x36515b,
+        transparent: true,
+        opacity: 0.55,
+        side: THREE.DoubleSide
+      })
+    );
+    floorRing.rotation.x = -Math.PI / 2;
+    floorRing.position.y = -0.008;
+    scene.add(floorRing);
+
+    // ------------------------------------------------------------
+    // Materials
+    // ------------------------------------------------------------
+
+    const materials = {
+      body: new THREE.MeshStandardMaterial({
+        color: 0x2f8140,
+        roughness: 0.34,
+        metalness: 0.18,
+        flatShading: true
+      }),
+      bodyDark: new THREE.MeshStandardMaterial({
+        color: 0x215f31,
+        roughness: 0.42,
+        metalness: 0.15,
+        flatShading: true
+      }),
+      trim: new THREE.MeshStandardMaterial({
+        color: 0x172620,
+        roughness: 0.58,
+        metalness: 0.12,
+        flatShading: true
+      }),
+      rubber: new THREE.MeshStandardMaterial({
+        color: 0x101414,
+        roughness: 0.94,
+        metalness: 0.0,
+        flatShading: true
+      }),
+      rim: new THREE.MeshStandardMaterial({
+        color: 0x9ba8aa,
+        roughness: 0.32,
+        metalness: 0.72,
+        flatShading: true
+      }),
+      glass: new THREE.MeshStandardMaterial({
+        color: 0x174853,
+        roughness: 0.18,
+        metalness: 0.18,
+        transparent: true,
+        opacity: 0.76,
+        side: THREE.DoubleSide,
+        depthWrite: false
+      }),
+      headlight: new THREE.MeshStandardMaterial({
+        color: 0xfff5c7,
+        emissive: 0xffd66d,
+        emissiveIntensity: 0.85,
+        roughness: 0.22,
+        metalness: 0.08
+      }),
+      amber: new THREE.MeshStandardMaterial({
+        color: 0xff9c28,
+        emissive: 0xff6500,
+        emissiveIntensity: 0.65,
+        roughness: 0.3,
+        metalness: 0.12
+      }),
+      red: new THREE.MeshStandardMaterial({
+        color: 0xc92d25,
+        emissive: 0x5d0804,
+        emissiveIntensity: 0.35,
+        roughness: 0.4,
+        metalness: 0.1
+      })
+    };
+
+    // ------------------------------------------------------------
+    // Geometry helpers
+    // ------------------------------------------------------------
+
+    const van = new THREE.Group();
+    van.name = "GreenUtilityVan";
+    scene.add(van);
+
+    function addBox(name, size, position, material, parent = van) {
+      const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(size[0], size[1], size[2]),
+        material
+      );
+
+      mesh.name = name;
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+
+      return mesh;
+    }
+
+    function addCylinder(
+      name,
+      radius,
+      depth,
+      position,
+      material,
+      rotation = null,
+      parent = van
+    ) {
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(radius, radius, depth, 12),
+        material
+      );
+
+      mesh.name = name;
+      mesh.position.set(position[0], position[1], position[2]);
+
+      if (rotation) {
+        mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      }
+
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+
+      return mesh;
+    }
+
+    function addQuad(name, points, material, parent = van) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(
+          points.flat(),
+          3
+        )
+      );
+      geometry.setIndex([0, 1, 2, 0, 2, 3]);
+      geometry.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Main van body
+    // ------------------------------------------------------------
+
+    addBox(
+      "LowerBody",
+      [2.18, 0.62, 3.85],
+      [0, 0.95, 0],
+      materials.body
+    );
+
+    addBox(
+      "Cabin",
+      [2.12, 1.55, 2.85],
+      [0, 1.65, -0.38],
+      materials.body
+    );
+
+    addBox(
+      "Hood",
+      [2.18, 0.60, 0.92],
+      [0, 1.85, 1.43],
+      materials.body
+    );
+
+    addBox(
+      "Roof",
+      [2.08, 0.13, 2.88],
+      [0, 2.50, -0.38],
+      materials.bodyDark
+    );
+
+    addBox(
+      "RoofHatch",
+      [1.25, 0.045, 0.58],
+      [0, 2.595, -0.45],
+      materials.trim
+    );
+
+    // Side cargo-door panels.
+    for (const side of [-1, 1]) {
+      addBox(
+        `CargoDoorPanel_${side}`,
+        [0.045, 1.22, 2.18],
+        [side * 1.085, 1.64, -0.38],
+        materials.bodyDark
+      );
+
+      addBox(
+        `CargoDoorHandle_${side}`,
+        [0.075, 0.34, 0.09],
+        [side * 1.135, 1.42, 0.18],
+        materials.trim
+      );
+
+      addBox(
+        `CargoDoorHandleTop_${side}`,
+        [0.075, 0.07, 0.13],
+        [side * 1.135, 1.57, 0.18],
+        materials.trim
+      );
+
+      addBox(
+        `CargoDoorSeam_${side}`,
+        [0.035, 1.10, 0.035],
+        [side * 1.115, 1.65, -0.98],
+        materials.trim
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Windshield and side windows
+    // ------------------------------------------------------------
+
+    addQuad(
+      "FrontWindshield",
+      [
+        [-0.91, 1.07, 1.985],
+        [0.91, 1.07, 1.985],
+        [0.91, 2.39, 1.735],
+        [-0.91, 2.39, 1.735]
+      ],
+      materials.glass
+    );
+
+    // Windshield center divider.
+    const windshieldDivider = addBox(
+      "WindshieldDivider",
+      [0.035, 1.31, 0.035],
+      [0, 1.735, 1.855],
+      materials.trim
+    );
+    windshieldDivider.rotation.x = -0.175;
+
+    for (const side of [-1, 1]) {
+      addQuad(
+        `SideWindow_${side}`,
+        [
+          [side * 1.078, 1.10, 0.82],
+          [side * 1.078, 1.10, -1.62],
+          [side * 1.078, 2.34, -1.62],
+          [side * 1.078, 2.34, 0.82]
+        ],
+        materials.glass
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Front and rear bumpers, grille, and lights
+    // ------------------------------------------------------------
+
+    addBox(
+      "FrontBumper",
+      [2.36, 0.19, 0.19],
+      [0, 0.72, 2.055],
+      materials.trim
+    );
+
+    addBox(
+      "RearBumper",
+      [2.34, 0.18, 0.18],
+      [0, 0.73, -2.055],
+      materials.trim
+    );
+
+    addBox(
+      "FrontStep",
+      [0.62, 0.11, 0.30],
+      [0, 0.59, 2.08],
+      materials.trim
+    );
+
+    addBox(
+      "FrontGrille",
+      [1.24, 0.36, 0.065],
+      [0, 1.56, 1.925],
+      materials.trim
+    );
+
+    for (let i = 0; i < 4; i++) {
+      addBox(
+        `GrilleBar_${i}`,
+        [1.13, 0.025, 0.035],
+        [0, 1.43 + i * 0.075, 1.967],
+        materials.rim
+      );
+    }
+
+    for (const side of [-1, 1]) {
+      addCylinder(
+        `Headlight_${side}`,
+        0.18,
+        0.075,
+        [side * 0.72, 1.85, 1.91],
+        materials.headlight,
+        [Math.PI / 2, 0, 0]
+      );
+
+      addCylinder(
+        `AmberLight_${side}`,
+        0.115,
+        0.055,
+        [side * 0.91, 1.72, 1.89],
+        materials.amber,
+        [Math.PI / 2, 0, 0]
+      );
+
+      addBox(
+        `FrontWiper_${side}`,
+        [0.24, 0.025, 0.035],
+        [side * 0.27, 1.28, 1.955],
+        materials.trim
+      );
+    }
+
+    // Rear lights.
+    for (const side of [-1, 1]) {
+      addBox(
+        `RearLight_${side}`,
+        [0.24, 0.13, 0.055],
+        [side * 0.83, 1.12, -1.945],
+        materials.red
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Wheels, hubs, and lug details
+    // ------------------------------------------------------------
+
+    function addWheel(side, z) {
+      const wheel = new THREE.Group();
+      wheel.name = `${side < 0 ? "Left" : "Right"}Wheel`;
+      wheel.position.set(side * 1.095, 0.54, z);
+      van.add(wheel);
+
+      addCylinder(
+        "Tire",
+        0.54,
+        0.34,
+        [0, 0, 0],
+        materials.rubber,
+        [0, 0, Math.PI / 2],
+        wheel
+      );
+
+      addCylinder(
+        "Hub",
+        0.29,
+        0.365,
+        [0, 0, 0],
+        materials.rim,
+        [0, 0, Math.PI / 2],
+        wheel
+      );
+
+      addCylinder(
+        "HubCap",
+        0.145,
+        0.035,
+        [side * 0.195, 0, 0],
+        materials.trim,
+        [0, 0, Math.PI / 2],
+        wheel
+      );
+
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+
+        addCylinder(
+          `LugBolt_${i}`,
+          0.035,
+          0.035,
+          [
+            side * 0.215,
+            Math.cos(angle) * 0.185,
+            Math.sin(angle) * 0.185
+          ],
+          materials.trim,
+          [0, 0, Math.PI / 2],
+          wheel
+        );
+      }
+
+      return wheel;
+    }
+
+    addWheel(-1, 1.42);
+    addWheel(1, 1.42);
+    addWheel(-1, -1.43);
+    addWheel(1, -1.43);
+
+    // ------------------------------------------------------------
+    // Mirrors and mirror arms
+    // ------------------------------------------------------------
+
+    for (const side of [-1, 1]) {
+      addBox(
+        `MirrorHousing_${side}`,
+        [0.20, 0.34, 0.25],
+        [side * 1.26, 1.86, 1.12],
+        materials.trim
+      );
+
+      addBox(
+        `MirrorGlass_${side}`,
+        [0.025, 0.255, 0.16],
+        [side * 1.375, 1.86, 1.12],
+        materials.rim
+      );
+
+      addCylinder(
+        `MirrorArm_${side}`,
+        0.035,
+        0.42,
+        [side * 1.13, 1.72, 1.12],
+        materials.trim,
+        [0, 0, Math.PI / 2]
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Export
+    // ------------------------------------------------------------
+
+    const exportButton = document.getElementById("exportButton");
+    const resetButton = document.getElementById("resetButton");
+    const status = document.getElementById("status");
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB...";
+
+      // Export only the van group. The floor, lights, camera, and controls
+      // are presentation-only and are not included in the GLB.
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        van,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "green-utility-van.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "Exported green-utility-van.glb";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 4096
+        }
+      );
+    });
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.copy(defaultTarget);
+      controls.update();
+    });
+
+    // ------------------------------------------------------------
+    // Resize and render loop
+    // ------------------------------------------------------------
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

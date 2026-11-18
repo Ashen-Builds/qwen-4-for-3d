@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Security Guard</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #111820;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(350px, calc(100vw - 44px));
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      background: rgba(12, 18, 25, 0.82);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(12px);
+    }
+
+    .eyebrow {
+      margin-bottom: 7px;
+      color: #e9b84b;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      color: #f5f7fa;
+      font-size: 24px;
+      line-height: 1.15;
+    }
+
+    p {
+      margin: 10px 0 16px;
+      color: #aeb9c5;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      min-height: 40px;
+      padding: 0 15px;
+      border: 0;
+      border-radius: 9px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: transform 120ms ease, filter 120ms ease, opacity 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active { transform: translateY(0); }
+    button:disabled { opacity: 0.6; cursor: wait; }
+
+    #exportButton {
+      color: #17202b;
+      background: #e9b84b;
+    }
+
+    #resetButton {
+      color: #e8eef3;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 12px;
+      color: #93a3b1;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 10;
+      color: rgba(230, 238, 245, 0.65);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 14px;
+      }
+
+      h1 { font-size: 20px; }
+      p { margin-bottom: 12px; }
+      .hint { display: none; }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.167.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.167.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <div class="eyebrow">Low-Poly Character</div>
+    <h1>Security Guard</h1>
+    <p>
+      A static, game-ready humanoid security guard with a helmet, uniform,
+      utility belt, gloves, and heavy boots.
+    </p>
+
+    <div class="actions">
+      <button id="exportButton" type="button">Export GLB</button>
+      <button id="resetButton" type="button">Reset View</button>
+    </div>
+
+    <div id="status">Ready to export.</div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("exportButton");
+    const resetButton = document.getElementById("resetButton");
+    const status = document.getElementById("status");
+
+    // ---------------------------------------------------------------------
+    // Renderer and presentation scene
+    // ---------------------------------------------------------------------
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111820);
+    scene.fog = new THREE.Fog(0x111820, 8, 18);
+
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+    const defaultCameraPosition = new THREE.Vector3(4.2, 3.15, 6.4);
+    const defaultTarget = new THREE.Vector3(0, 1.35, 0);
+    camera.position.copy(defaultCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(defaultTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 2.5;
+    controls.maxDistance = 12;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const hemiLight = new THREE.HemisphereLight(0xdbeeff, 0x27313a, 2.0);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xfff0d2, 3.6);
+    keyLight.position.set(4, 7, 5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 5;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 18;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0x78baff, 2.1);
+    rimLight.position.set(-4, 4, -5);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.PointLight(0xffd08a, 1.0, 10);
+    fillLight.position.set(-3, 2.5, 3);
+    scene.add(fillLight);
+
+    // Presentation-only ground, excluded from the exported GLB.
+    const groundMaterial = new THREE.MeshStandardMaterial({
+      color: 0x202a34,
+      roughness: 0.95,
+      metalness: 0.0
+    });
+
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(12, 64),
+      groundMaterial
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.012;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    const pedestal = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.55, 1.68, 0.12, 48),
+      new THREE.MeshStandardMaterial({
+        color: 0x2a3640,
+        roughness: 0.7,
+        metalness: 0.18
+      })
+    );
+    pedestal.position.y = -0.055;
+    pedestal.receiveShadow = true;
+    scene.add(pedestal);
+
+    // ---------------------------------------------------------------------
+    // Guard asset
+    // ---------------------------------------------------------------------
+    const guard = new THREE.Group();
+    guard.name = "LowPolySecurityGuard";
+    scene.add(guard);
+
+    const materials = {
+      skin: new THREE.MeshStandardMaterial({
+        color: 0xc98e67, roughness: 0.82, flatShading: true
+      }),
+      skinDark: new THREE.MeshStandardMaterial({
+        color: 0xa96b4e, roughness: 0.86, flatShading: true
+      }),
+      navy: new THREE.MeshStandardMaterial({
+        color: 0x17344d, roughness: 0.78, flatShading: true
+      }),
+      navyLight: new THREE.MeshStandardMaterial({
+        color: 0x24506c, roughness: 0.76, flatShading: true
+      }),
+      navyDark: new THREE.MeshStandardMaterial({
+        color: 0x0d2539, roughness: 0.82, flatShading: true
+      }),
+      coat: new THREE.MeshStandardMaterial({
+        color: 0x204c68, roughness: 0.82, flatShading: true
+      }),
+      leather: new THREE.MeshStandardMaterial({
+        color: 0x30241f, roughness: 0.88, flatShading: true
+      }),
+      leatherLight: new THREE.MeshStandardMaterial({
+        color: 0x4a372e, roughness: 0.82, flatShading: true
+      }),
+      pants: new THREE.MeshStandardMaterial({
+        color: 0x263847, roughness: 0.88, flatShading: true
+      }),
+      pantsLight: new THREE.MeshStandardMaterial({
+        color: 0x304b60, roughness: 0.86, flatShading: true
+      }),
+      steel: new THREE.MeshStandardMaterial({
+        color: 0xa8b3ba, roughness: 0.36, metalness: 0.72
+      }),
+      darkSteel: new THREE.MeshStandardMaterial({
+        color: 0x35414a, roughness: 0.42, metalness: 0.65
+      }),
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xd9aa3d, roughness: 0.32, metalness: 0.68
+      }),
+      black: new THREE.MeshStandardMaterial({
+        color: 0x0c1115, roughness: 0.62, flatShading: true
+      }),
+      white: new THREE.MeshStandardMaterial({
+        color: 0xe9eef0, roughness: 0.7, flatShading: true
+      })
+    };
+
+    function addMesh(geometry, material, name, parent = guard) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(width, height, depth, material, name, position, rotation = null, parent = guard) {
+      const mesh = addMesh(
+        new THREE.BoxGeometry(width, height, depth),
+        material,
+        name,
+        parent
+      );
+      mesh.position.set(...position);
+      if (rotation) mesh.rotation.set(...rotation);
+      return mesh;
+    }
+
+    function addCylinder(radiusTop, radiusBottom, height, material, name, position, segments = 8, parent = guard) {
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(radiusTop, radiusBottom, height, segments),
+        material,
+        name,
+        parent
+      );
+      mesh.position.set(...position);
+      return mesh;
+    }
+
+    function addSphere(radius, material, name, position, scale = [1, 1, 1], parent = guard) {
+      const mesh = addMesh(
+        new THREE.SphereGeometry(radius, 10, 7),
+        material,
+        name,
+        parent
+      );
+      mesh.position.set(...position);
+      mesh.scale.set(...scale);
+      return mesh;
+    }
+
+    function addCylinderBetween(start, end, radiusTop, radiusBottom, material, name, parent = guard) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const midpoint = a.clone().add(b).multiplyScalar(0.5);
+
+      const mesh = addMesh(
+        new THREE.CylinderGeometry(radiusTop, radiusBottom, direction.length(), 8),
+        material,
+        name,
+        parent
+      );
+      mesh.position.copy(midpoint);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      return mesh;
+    }
+
+    // Boots and soles.
+    for (const side of [-1, 1]) {
+      const x = side * 0.23;
+
+      addBox(0.40, 0.07, 0.62, materials.leather, `BootSole_${side}`, [x, 0.035, 0.08]);
+      addBox(0.34, 0.35, 0.34, materials.leather, `BootShaft_${side}`, [x, 0.27, 0]);
+      addBox(0.39, 0.18, 0.18, materials.leatherLight, `BootToe_${side}`, [x, 0.15, 0.34]);
+      addBox(0.31, 0.07, 0.30, materials.black, `BootCuff_${side}`, [x, 0.42, 0.005]);
+
+      // Small boot lace details.
+      for (let i = 0; i < 3; i++) {
+        addBox(
+          0.18,
+          0.018,
+          0.022,
+          materials.black,
+          `BootLace_${side}_${i}`,
+          [x, 0.19 + i * 0.055, 0.432]
+        );
+      }
+    }
+
+    // Trousers and cargo pockets.
+    for (const side of [-1, 1]) {
+      const x = side * 0.23;
+
+      addCylinder(0.155, 0.17, 0.86, materials.pants, `TrouserLeg_${side}`, [x, 0.92, 0], 8);
+      addBox(0.23, 0.17, 0.045, materials.pantsLight, `CargoPocket_${side}`, [x, 1.13, 0.155]);
+      addBox(0.20, 0.035, 0.025, materials.leather, `CargoPocketFlap_${side}`, [x, 1.20, 0.185]);
+      addSphere(0.024, materials.steel, `CargoPocketButton_${side}`, [x, 1.16, 0.195], [1, 1, 0.5]);
+      addBox(0.035, 0.44, 0.025, materials.pantsLight, `TrouserSeam_${side}`, [x, 0.92, 0.155]);
+    }
+
+    // Torso.
+    addCylinder(0.43, 0.34, 0.62, materials.navy, "UniformTorso", [0, 1.72, 0], 8);
+
+    // Angular shoulder yoke.
+    addCylinder(0.445, 0.35, 0.12, materials.navyDark, "ShoulderYoke", [0, 1.96, 0], 8);
+
+    // Chest panels.
+    addBox(0.16, 0.43, 0.055, materials.coat, "LeftChestPanel", [-0.145, 1.76, 0.345], [0, 0, -0.07]);
+    addBox(0.16, 0.43, 0.055, materials.coat, "RightChestPanel", [0.145, 1.76, 0.345], [0, 0, 0.07]);
+
+    // Lapels.
+    addBox(0.13, 0.18, 0.055, materials.navyDark, "LeftLapel", [-0.13, 2.035, 0.30], [0, 0, -0.36]);
+    addBox(0.13, 0.18, 0.055, materials.navyDark, "RightLapel", [0.13, 2.035, 0.30], [0, 0, 0.36]);
+
+    // Utility belt and buckle.
+    addBox(0.86, 0.115, 0.61, materials.leather, "UtilityBelt", [0, 1.47, 0]);
+    addBox(0.15, 0.13, 0.045, materials.steel, "BeltBuckle", [0, 1.47, 0.335]);
+    addBox(0.07, 0.065, 0.012, materials.leatherLight, "BuckleInset", [0, 1.47, 0.362]);
+
+    // Chest buttons.
+    for (let i = 0; i < 3; i++) {
+      addSphere(
+        0.028,
+        materials.gold,
+        `ChestButton_${i}`,
+        [0.075, 1.91 - i * 0.14, 0.376],
+        [1, 1, 0.45]
+      );
+    }
+
+    // Collar and neck.
+    addCylinder(0.135, 0.15, 0.17, materials.skinDark, "Neck", [0, 2.085, 0], 8);
+    addBox(0.43, 0.075, 0.12, materials.navyDark, "Collar", [0, 2.075, 0.05]);
+
+    // Arms hanging at a relaxed angle.
+    for (const side of [-1, 1]) {
+      const shoulder = [side * 0.42, 1.98, 0];
+      const elbow = [side * 0.57, 1.74, 0.025];
+      const wrist = [side * 0.59, 1.54, 0.08];
+
+      addCylinder(0.14, 0.13, 0.23, materials.navy, `UpperSleeve_${side}`, shoulder, 8);
+      addCylinderBetween(shoulder, elbow, 0.13, 0.115, materials.navy, `UpperArm_${side}`);
+
+      addSphere(0.13, materials.navy, `Elbow_${side}`, elbow, [1, 0.92, 1]);
+      addCylinderBetween(elbow, wrist, 0.115, 0.095, materials.navyLight, `Forearm_${side}`);
+
+      // Cuff.
+      addCylinder(0.105, 0.105, 0.065, materials.leather, `Cuff_${side}`, [side * 0.59, 1.57, 0.075], 8);
+
+      // Gloved hand and thumb.
+      addSphere(0.135, materials.leather, `Glove_${side}`, [side * 0.60, 1.48, 0.10], [0.82, 1.12, 0.78]);
+      addSphere(0.055, materials.leather, `Thumb_${side}`, [side * 0.50, 1.50, 0.17], [0.75, 1.05, 0.75]);
+    }
+
+    // Shoulder epaulettes.
+    for (const side of [-1, 1]) {
+      const epaulette = addCylinder(
+        0.14,
+        0.14,
+        0.055,
+        materials.leatherLight,
+        `ShoulderEpaulette_${side}`,
+        [side * 0.37, 2.005, 0],
+        8
+      );
+      epaulette.rotation.z = Math.PI / 2;
+    }
+
+    // Head and facial features.
+    addSphere(0.335, materials.skin, "Head", [0, 2.315, 0], [0.96, 1.08, 0.91]);
+    addSphere(0.075, materials.skinDark, "LeftEar", [-0.305, 2.29, 0.005], [0.55, 1, 0.72]);
+    addSphere(0.075, materials.skinDark, "RightEar", [0.305, 2.29, 0.005], [0.55, 1, 0.72]);
+
+    addBox(0.055, 0.035, 0.018, materials.black, "LeftEye", [-0.115, 2.37, 0.293], null);
+    addBox(0.055, 0.035, 0.018, materials.black, "RightEye", [0.115, 2.37, 0.293], null);
+
+    addBox(0.038, 0.095, 0.045, materials.skinDark, "Nose", [0, 2.30, 0.305], [0, 0, 0]);
+    addBox(0.075, 0.018, 0.018, materials.skinDark, "Mouth", [0, 2.205, 0.297], null);
+
+    // Hair visible below the helmet.
+    addBox(0.43, 0.055, 0.28, materials.navyDark, "HairBand", [0, 2.49, -0.015], null);
+
+    // Helmet.
+    addCylinder(0.43, 0.43, 0.055, materials.navyDark, "HelmetBrim", [0, 2.59, 0], 8);
+    addCylinder(0.365, 0.385, 0.11, materials.leather, "HelmetBase", [0, 2.625, 0], 8);
+    addSphere(0.365, materials.leather, "HelmetDome", [0, 2.65, 0], [1, 0.93, 1], [0, 0, Math.PI / 2]);
+
+    // Front helmet ridge.
+    addBox(0.045, 0.035, 0.50, materials.leatherLight, "HelmetRidge", [0, 2.72, 0.04]);
+    addBox(0.12, 0.075, 0.035, materials.gold, "HelmetBadge", [0, 2.60, 0.375]);
+
+    // ---------------------------------------------------------------------
+    // Export
+    // ---------------------------------------------------------------------
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Building GLB...";
+
+      guard.updateMatrixWorld(true);
+
+      exporter.parse(
+        guard,
+        (result) => {
+          const blob = new Blob([result], { type: "model/gltf-binary" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low_poly_security_guard.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "Exported low_poly_security_guard.glb";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console for details.";
+        },
+        {
+          binary: true,
+          trs: false,
+          onlyVisible: true
+        }
+      );
+    });
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.copy(defaultTarget);
+      controls.update();
+    });
+
+    // ---------------------------------------------------------------------
+    // Resize and render loop
+    // ---------------------------------------------------------------------
+    function onResize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", onResize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

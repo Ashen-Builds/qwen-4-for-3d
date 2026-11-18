@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "green-low-poly-van.glb",
+  "bytes": 1238332,
+  "sha256": "599e67a110650916d53e481ea73c432ac34769a1c899b71780ef16f1ceb1dcb6",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 178,
+  "nodes": 183,
+  "materials": 12,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 12000,
+  "animations": [],
+  "size_xyz": [
+   3.2239999427795407,
+   2.4649999975413084,
+   4.450000002235175
+  ]
+ }
+}

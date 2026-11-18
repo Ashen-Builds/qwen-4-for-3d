@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "brass-tower-museum.glb",
+  "bytes": 515564,
+  "sha256": "53a0880911770aa1f06d2d3dd06a06ad0957ff7dc735bfc8e760a330c78c8303",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 182,
+  "nodes": 204,
+  "materials": 6,
+  "skins": 0,
+  "textures": 1,
+  "triangles": 7142,
+  "animations": [],
+  "size_xyz": [
+   2.2799999713897705,
+   19.945000001788138,
+   2.318141165741752
+  ]
+ }
+}

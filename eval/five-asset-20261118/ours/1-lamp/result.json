@@ -1,0 +1,12 @@
+{
+ "schema": 1,
+ "status": "page_error",
+ "page_errors": [
+  "innerRight is not defined"
+ ],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "export_error": "page.waitForEvent: Timeout 45000ms exceeded while waiting for event \"download\""
+}

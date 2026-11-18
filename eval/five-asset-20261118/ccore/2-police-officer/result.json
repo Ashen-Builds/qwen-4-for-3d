@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "low-poly-polic-officer.glb",
+  "bytes": 261432,
+  "sha256": "1587067972fae76bcc0d6bcc8b9bc085905677064c6b1d7fc5963faf111b875c",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 92,
+  "nodes": 93,
+  "materials": 16,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 3996,
+  "animations": [],
+  "size_xyz": [
+   2.252803267510917,
+   3.617500003278255,
+   1.0914000052213668
+  ]
+ }
+}

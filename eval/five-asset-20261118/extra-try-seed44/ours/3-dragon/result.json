@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "crimson-wraith.glb",
+  "bytes": 340104,
+  "sha256": "195d36b10a6bdc5bc6035bcf89bcf9dc2e2dca00c27651fb7f82755418bcd072",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 93,
+  "nodes": 95,
+  "materials": 7,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 3113,
+  "animations": [],
+  "size_xyz": [
+   5.994340101423494,
+   4.998654687294677,
+   7.268544783114274
+  ]
+ }
+}

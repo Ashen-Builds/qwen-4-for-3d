@@ -22,7 +22,7 @@ for image in "$P"/images/*.png; do
     echo "[$(date +%T)] $ARM/$name: waiting for GPU slot"
     "$SLOT" capture --label "five-asset-image-$ARM-$name" --json "$ROOT/$ARM/$name-gpu.json" -- \
       python3 "$REPO/scripts/generate_asset_llama_image.py" --binary "$BIN" --model "$MODEL" --mmproj "$MMPROJ" \
-      --image "$image" --out "$run" --prompt "$P/image-instruction.txt" --system "$P/system.txt" > "$ROOT/$ARM/$name.log" 2>&1
+      --image "$image" --out "$run" --prompt "$P/image-instruction.txt" --system "$P/system.txt" --seed "${FIVE_ASSET_SEED:-42}" > "$ROOT/$ARM/$name.log" 2>&1
     code=$?
     echo "[$(date +%T)] $ARM/$name: generation exit $code"
     if [ "$code" -eq 75 ]; then echo "GPU slot not granted; stopping this arm"; exit 75; fi

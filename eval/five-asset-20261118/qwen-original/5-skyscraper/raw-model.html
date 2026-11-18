@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Deco Skyscraper - Godot GLB Export</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f0f0f0; font-family: sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; }
+        #ui-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover { background-color: #45a049; }
+        #loading { color: #333; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="ui-container">
+    <h3>Godot GLB Exporter</h3>
+    <div id="loading">Generating low-poly building...</div>
+    <button id="exportBtn">Export GLB</button>
+</div>
+
+<div id="canvas-container"></div>
+
+<!-- Import Map for Three.js modules -->
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+    // --- Configuration ---
+    const COLORS = {
+        stone: 0xc2b280,      // Beige stone
+        stoneDark: 0x8c856e,  // Darker stone for corners
+        glass: 0x4da6ff,      // Blue glass
+        gold: 0xd4af37,       // Gold trim
+        door: 0x5d4037,       // Wood door
+        roof: 0x3e2723        // Dark roof
+    };
+
+    // --- Scene Setup ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf0f0f0);
+    scene.fog = new THREE.Fog(0xf0f0f0, 50, 200);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(30, 25, 40);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.5;
+
+    // --- Lighting ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(20, 50, 20);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    scene.add(dirLight);
+
+    // --- Helper: Create Textures ---
+    // We use canvas textures to generate glass patterns procedurally
+    function createGlassTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const context = canvas.getContext('2d');
+        
+        // Base glass color
+        context.fillStyle = '#3498db';
+        context.fillRect(0, 0, 256, 256);
+        
+        // Add reflection/grid pattern
+        context.strokeStyle = 'rgba(255,255,255,0.1)';
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(0, 0); context.lineTo(256, 256);
+        context.stroke();
+        
+        context.fillStyle = 'rgba(255,255,255,0.05)';
+        context.fillRect(0,0,256,10); // Top reflection strip
+        context.fillRect(0,246,256,10); // Bottom reflection strip
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.magFilter = THREE.NearestFilter;
+        return texture;
+    }
+
+    function createStoneTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#c2b280';
+        context.fillRect(0,0,64,64);
+        // Add noise
+        for(let i=0; i<100; i++) {
+            context.fillStyle = Math.random() > 0.5 ? '#e0dcb3' : '#9c9470';
+            context.fillRect(Math.random()*64, Math.random()*64, Math.random()*2, Math.random()*2);
+        }
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
+
+    function createGoldTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 64;
+        canvas.height = 64;
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#d4af37';
+        context.fillRect(0,0,64,64);
+        context.fillStyle = '#b5952f';
+        context.fillRect(1,1,62,62);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+    }
+
+    // --- Helper: Build Geometry ---
+    function createBoxGeometry(w, h, d) { return new THREE.BoxGeometry(w, h, d); }
+    function createCylinderGeometry(r, rTop, h) { return new THREE.CylinderGeometry(r, rTop, h, 6); }
+
+    // --- Main Building Construction ---
+    const buildingGroup = new THREE.Group();
+    scene.add(buildingGroup);
+
+    // Materials
+    const matStone = new THREE.MeshStandardMaterial({ 
+        color: COLORS.stone, 
+        roughness: 0.8, 
+        map: createStoneTexture() 
+    });
+    const matStoneDark = new THREE.MeshStandardMaterial({ 
+        color: COLORS.stoneDark, 
+        roughness: 0.8 
+    });
+    const matGold = new THREE.MeshStandardMaterial({ 
+        color: COLORS.gold, 
+        metalness: 0.8, 
+        roughness: 0.2, 
+        map: createGoldTexture() 
+    });
+    const matGlass = new THREE.MeshStandardMaterial({ 
+        color: COLORS.glass, 
+        roughness: 0.2, 
+        metalness: 0.4, 
+        map: createGlassTexture() 
+    });
+    const matDoor = new THREE.MeshStandardMaterial({ color: COLORS.door, roughness: 0.7 });
+    const matRoof = new THREE.MeshStandardMaterial({ color: COLORS.roof });
+
+    // 1. The Base (Foundation)
+    const baseSize = { w: 18, h: 4, d: 18 };
+    const baseGeo = createBoxGeometry(baseSize.w, baseSize.h, baseSize.d);
+    const baseMesh = new THREE.Mesh(baseGeo, matStoneDark);
+    baseMesh.receiveShadow = true;
+    baseMesh.castShadow = true;
+    baseMesh.position.y = -0.5; // Sit below ground
+    buildingGroup.add(baseMesh);
+
+    // Steps
+    const stepsGeo = createBoxGeometry(16, 1, 16);
+    const stepsMesh = new THREE.Mesh(stepsGeo, matStone);
+    stepsMesh.position.y = -2.5;
+    stepsMesh.castShadow = true;
+    stepsMesh.receiveShadow = true;
+    buildingGroup.add(stepsMesh);
+
+    // Entrance Area
+    const entranceGroup = new THREE.Group();
+    entranceGroup.position.set(0, 0, 5);
+    
+    // Side pillars
+    const pillarGeo = createBoxGeometry(1, 12, 1);
+    const p1 = new THREE.Mesh(pillarGeo, matGold); p1.position.set(-4, 6, 6);
+    const p2 = new THREE.Mesh(pillarGeo, matGold); p2.position.set(4, 6, 6);
+    entranceGroup.add(p1, p2);
+
+    // Arched Doorway (approximated by geometry)
+    const doorFrameGeo = createBoxGeometry(5, 8, 1.5);
+    const doorFrame = new THREE.Mesh(doorFrameGeo, matGold);
+    doorFrame.position.set(0, 4, 7);
+    doorFrame.castShadow = true;
+    entranceGroup.add(doorFrame);
+
+    // Glass Door
+    const doorGeo = createBoxGeometry(4, 6, 0.8);
+    const doorMesh = new THREE.Mesh(doorGeo, matDoor);
+    doorMesh.position.set(0, 3, 7.4);
+    entranceGroup.add(doorMesh);
+
+    // Entrance Lights
+    const lightGeo = createBoxGeometry(0.2, 0.5, 0.2);
+    const light1 = new THREE.Mesh(lightGeo, new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
+    light1.position.set(-3.5, 4, 6);
+    light1.castShadow = true;
+    const light2 = new THREE.Mesh(lightGeo, new THREE.MeshBasicMaterial({ color: 0xffaa00 }));
+    light2.position.set(3.5, 4, 6);
+    light2.castShadow = true;
+    entranceGroup.add(light1, light2);
+
+    buildingGroup.add(entranceGroup);
+
+    // 2. Main Structure (The "Stacks")
+    // We will create "floors" stacked up. Each floor has a base, trim, and glass.
+    const floors = [
+        { w: 16, h: 10, d: 16, offset: 0.5, scale: 1, glassRows: 10, goldTrim: true },
+        { w: 14, h: 8, d: 14, offset: 1, scale: 0.9, glassRows: 8, goldTrim: true },
+        { w: 12, h: 9, d: 12, offset: 1.5, scale: 0.8, glassRows: 10, goldTrim: true },
+        { w: 10, h: 7, d: 10, offset: 2, scale: 0.7, glassRows: 8, goldTrim: true },
+        { w: 8, h: 6, d: 8, offset: 2.5, scale: 0.6, glassRows: 6, goldTrim: true },
+        { w: 6, h: 5, d: 6, offset: 3, scale: 0.5, glassRows: 5, goldTrim: true },
+        { w: 4, h: 4, d: 4, offset: 3.5, scale: 0.4, glassRows: 4, goldTrim: true },
+        { w: 2, h: 3, d: 2, offset: 4, scale: 0.3, glassRows: 3, goldTrim: true }
+    ];
+
+    let currentY = -1; // Start height
+
+    floors.forEach((floor, index) => {
+        currentY += floor.h;
+
+        // Main Body
+        const bodyGeo = createBoxGeometry(floor.w, floor.h, floor.d);
+        const bodyMesh = new THREE.Mesh(bodyGeo, matStone);
+        bodyMesh.position.y = currentY + (floor.h/2);
+        bodyMesh.castShadow = true;
+        bodyMesh.receiveShadow = true;
+        buildingGroup.add(bodyMesh);
+
+        // Vertical Gold Trim (Art Deco style)
+        const trimGeo = createBoxGeometry(floor.w + 0.2, floor.h + 0.2, floor.d + 0.2);
+        const trimMesh = new THREE.Mesh(trimGeo, matGold);
+        trimMesh.position.y = currentY + (floor.h/2);
+        trimMesh.position.x += 0.1;
+        trimMesh.position.z += 0.1;
+        buildingGroup.add(trimMesh);
+
+        // Horizontal Gold Band (if enabled)
+        if(floor.goldTrim) {
+            const bandGeo = createBoxGeometry(floor.w + 0.5, 0.5, floor.d);
+            const bandMesh = new THREE.Mesh(bandGeo, matGold);
+            bandMesh.position.y = currentY + (floor.h/2) + (floor.h*0.4);
+            buildingGroup.add(bandMesh);
+        }
+
+        // Windows (Grid)
+        // We create a single plane for windows and apply a grid texture via canvas
+        const winW = floor.w - 2; // Skip trim
+        const winD = floor.d - 2;
+        const winH = 0.5;
+        const cols = Math.floor(winW / (winW / floor.glassRows));
+        const rows = 2; // Keep it simple with 2 rows of windows for this low poly look
+        
+        const texture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/lawnchair.png'); // placeholder, we'll do better
+        // Actually, let's stick to the procedural CanvasTexture we defined above but scaled down
+        
+        const winCanvas = document.createElement('canvas');
+        winCanvas.width = 64;
+        winCanvas.height = 64;
+        const ctx = winCanvas.getContext('2d');
+        ctx.fillStyle = '#2980b9';
+        ctx.fillRect(0,0,64,64);
+        // Simple grid
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1;
+        for(let x=0; x<4; x++) { ctx.beginPath(); ctx.moveTo(x*16,0); ctx.lineTo(x*16, 64); ctx.stroke(); }
+        for(let y=0; y<4; y++) { ctx.beginPath(); ctx.moveTo(0,y*16); ctx.lineTo(64, y*16); ctx.stroke(); }
+        const winMat = new THREE.MeshStandardMaterial({ 
+            map: new THREE.CanvasTexture(winCanvas), 
+            transparent: true,
+            opacity: 0.9
+        });
+
+        // Create individual window meshes for better lighting interaction
+        const winGeo = createBoxGeometry(1, winH, 1);
+        const winGroup = new THREE.Group();
+        winGroup.position.set(0, currentY + (floor.h/2), 0);
+
+        for(let c=0; c<cols; c++) {
+            for(let r=0; r<rows; r++) {
+                const wX = (c * (winW/cols)) + 0.1;
+                const wY = (r * (winH*rows)) + (winH*rows/2);
+                const mesh = new THREE.Mesh(winGeo, winMat);
+                mesh.position.set(wX, wY, 0.05);
+                winGroup.add(mesh);
+            }
+        }
+        buildingGroup.add(winGroup);
+    });
+
+    // 3. The Spire
+    const spireGroup = new THREE.Group();
+    
+    // Lower Spire Block
+    const spireBaseGeo = createBoxGeometry(3, 2, 3);
+    const spireBase = new THREE.Mesh(spireBaseGeo, matGold);
+    spireBase.position.y = currentY + 5.5;
+    spireBase.castShadow = true;
+    spireGroup.add(spireBase);
+
+    // Upper Spire Needle
+    const needleHeight = 8;
+    const needleGeo = createCylinderGeometry(0.8, 0.4, needleHeight, 8);
+    const needle = new THREE.Mesh(needleGeo, matGold);
+    needle.position.y = currentY + 5.5 + (needleHeight/2);
+    spireGroup.add(needle);
+
+    // The Point
+    const pointGeo = createBoxGeometry(0.3, 0.3, 0.3);
+    const point = new THREE.Mesh(pointGeo, matGold);
+    point.position.y = currentY + 5.5 + needleHeight + 0.15;
+    spireGroup.add(point);
+
+    // Add spire to building (offset x to center it on the previous top blocks)
+    // The last floor was width 2, so center is 1.
+    spireGroup.position.set(0, currentY + 1, 0);
+    buildingGroup.add(spireGroup);
+
+    // --- Export Logic ---
+    const exportBtn = document.getElementById('exportBtn');
+    
+    exportBtn.addEventListener('click', () => {
+        const exporter = new GLTFExporter();
+        
+        exporter.parse(
+            scene,
+            (gltf) => {
+                // Create a download link
+                const blob = new Blob([gltf], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'art_deco_building.glb';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            },
+            (error) => {
+                console.error('Animation serialization error:', error);
+                document.getElementById('loading').innerText = "Export failed: " + JSON.stringify(error);
+            },
+            { binary: true }
+        );
+    });
+
+    // --- Animation Loop ---
+    const clock = new THREE.Clock();
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // Handle Resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+
+</script>
+</body>
+</html>

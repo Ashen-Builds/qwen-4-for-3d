@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Low-Poly Museum Building</title>
+
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e8e5df;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      top: 22px;
+      left: 22px;
+      padding: 15px 17px;
+      border: 1px solid rgba(65, 56, 46, 0.14);
+      border-radius: 12px;
+      background: rgba(250, 249, 244, 0.88);
+      box-shadow: 0 10px 35px rgba(43, 38, 31, 0.12);
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .title {
+      margin: 0;
+      color: #393632;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      margin-top: 5px;
+      color: #77726a;
+      font-size: 12px;
+    }
+
+    .actions {
+      position: fixed;
+      z-index: 10;
+      top: 22px;
+      right: 22px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    button {
+      min-width: 142px;
+      padding: 11px 16px;
+      border: 1px solid #9a7131;
+      border-radius: 9px;
+      background: #c89a48;
+      color: #272116;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      letter-spacing: 0.015em;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(77, 56, 24, 0.18);
+      transition:
+        transform 150ms ease,
+        background 150ms ease,
+        opacity 150ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      background: #d5a655;
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    #status {
+      min-width: 106px;
+      color: #676158;
+      font-size: 11px;
+      text-align: right;
+    }
+
+    .hint {
+      position: fixed;
+      z-index: 10;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(250, 249, 244, 0.74);
+      color: #77726a;
+      font-size: 11px;
+      pointer-events: none;
+      backdrop-filter: blur(8px);
+    }
+
+    @media (max-width: 620px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+      }
+
+      .actions {
+        top: 12px;
+        right: 12px;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+
+      .hint {
+        bottom: 10px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div class="panel">
+    <h1 class="title">Museum Building</h1>
+    <div class="subtitle">Procedural low-poly asset · GLB 2.0 · Y-up</div>
+  </div>
+
+  <div class="actions">
+    <div id="status">Ready to export</div>
+    <button id="exportButton" type="button">Export GLB</button>
+  </div>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // ---------------------------------------------------------------------
+    // Renderer and presentation
+    // ---------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe8e5df);
+    scene.fog = new THREE.Fog(0xe8e5df, 24, 55);
+
+    const camera = new THREE.PerspectiveCamera(
+      34,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(10.8, 7.6, 12.8);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 3.9, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.055;
+    controls.minDistance = 8;
+    controls.maxDistance = 25;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // Presentation geometry is deliberately excluded from the exported GLB.
+    const stage = new THREE.Group();
+    stage.name = "PresentationOnly";
+    scene.add(stage);
+
+    const asset = new THREE.Group();
+    asset.name = "MuseumBuilding";
+    scene.add(asset);
+
+    // ---------------------------------------------------------------------
+    // Lighting and neutral studio ground
+    // ---------------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(0xfff8eb, 0x777267, 1.8);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xfff3d8, 3.1);
+    keyLight.position.set(7, 12, 8);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 30;
+    keyLight.shadow.camera.left = -11;
+    keyLight.shadow.camera.right = 11;
+    keyLight.shadow.camera.top = 13;
+    keyLight.shadow.camera.bottom = -9;
+    keyLight.shadow.bias = -0.00035;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xc8dcff, 1.15);
+    fillLight.position.set(-8, 7, 4);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffffff, 0.85);
+    rimLight.position.set(3, 9, -10);
+    scene.add(rimLight);
+
+    const floorMaterial = new THREE.MeshStandardMaterial({
+      color: 0xd8d5cf,
+      roughness: 0.96,
+      metalness: 0
+    });
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(100, 100),
+      floorMaterial
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.025;
+    floor.receiveShadow = true;
+    stage.add(floor);
+
+    // ---------------------------------------------------------------------
+    // Materials
+    // ---------------------------------------------------------------------
+
+    const stone = new THREE.MeshStandardMaterial({
+      color: 0xd9d5cc,
+      roughness: 0.78,
+      metalness: 0.015
+    });
+
+    const stoneLight = new THREE.MeshStandardMaterial({
+      color: 0xe7e2d8,
+      roughness: 0.72,
+      metalness: 0.015
+    });
+
+    const stoneDark = new THREE.MeshStandardMaterial({
+      color: 0xb8b4aa,
+      roughness: 0.84,
+      metalness: 0.015
+    });
+
+    const gold = new THREE.MeshStandardMaterial({
+      color: 0xc89a43,
+      roughness: 0.27,
+      metalness: 0.78
+    });
+
+    const goldLight = new THREE.MeshStandardMaterial({
+      color: 0xe2b960,
+      roughness: 0.25,
+      metalness: 0.72
+    });
+
+    const darkMetal = new THREE.MeshStandardMaterial({
+      color: 0x252c32,
+      roughness: 0.34,
+      metalness: 0.5
+    });
+
+    const glass = new THREE.MeshStandardMaterial({
+      color: 0x173f50,
+      roughness: 0.22,
+      metalness: 0.2,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false
+    });
+
+    const warmGlass = new THREE.MeshStandardMaterial({
+      color: 0xffc976,
+      emissive: 0xff9a32,
+      emissiveIntensity: 0.45,
+      roughness: 0.35,
+      metalness: 0.1
+    });
+
+    // ---------------------------------------------------------------------
+    // Geometry helpers
+    // ---------------------------------------------------------------------
+
+    function addMesh(parent, geometry, material, x = 0, y = 0, z = 0) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addBox(parent, width, height, depth, material, x = 0, y = 0, z = 0) {
+      return addMesh(
+        parent,
+        new THREE.BoxGeometry(width, height, depth),
+        material,
+        x,
+        y,
+        z
+      );
+    }
+
+    function addRoundedBox(
+      parent,
+      width,
+      height,
+      depth,
+      material,
+      x = 0,
+      y = 0,
+      z = 0,
+      radius = 0.06,
+      segments = 2
+    ) {
+      const safeRadius = Math.min(
+        radius,
+        width * 0.45,
+        height * 0.45,
+        depth * 0.45
+      );
+
+      return addMesh(
+        parent,
+        new RoundedBoxGeometry(
+          width,
+          height,
+          depth,
+          segments,
+          safeRadius
+        ),
+        material,
+        x,
+        y,
+        z
+      );
+    }
+
+    function addCylinder(
+      parent,
+      radius,
+      height,
+      material,
+      x = 0,
+      y = 0,
+      z = 0,
+      segments = 16
+    ) {
+      return addMesh(
+        parent,
+        new THREE.CylinderGeometry(
+          radius,
+          radius,
+          height,
+          segments
+        ),
+        material,
+        x,
+        y,
+        z
+      );
+    }
+
+    function addCylinderBetween(
+      parent,
+      start,
+      end,
+      radius,
+      material,
+      segments = 10
+    ) {
+      const direction = new THREE.Vector3().subVectors(end, start);
+      const midpoint = new THREE.Vector3()
+        .addVectors(start, end)
+        .multiplyScalar(0.5);
+
+      const mesh = addCylinder(
+        parent,
+        radius,
+        direction.length(),
+        material,
+        midpoint.x,
+        midpoint.y,
+        midpoint.z,
+        segments
+      );
+
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+
+      return mesh;
+    }
+
+    // ---------------------------------------------------------------------
+    // Stepped museum plinth
+    // ---------------------------------------------------------------------
+
+    addRoundedBox(
+      asset,
+      8.8,
+      0.46,
+      8.8,
+      stone,
+      0,
+      0.23,
+      0,
+      0.1
+    );
+
+    addRoundedBox(
+      asset,
+      7.4,
+      0.44,
+      7.4,
+      stoneLight,
+      0,
+      0.68,
+      0,
+      0.085
+    );
+
+    // Gold inlay around the raised plinth.
+    addBox(asset, 7.0, 0.026, 0.035, gold, 0, 0.911, 3.47);
+    addBox(asset, 7.0, 0.026, 0.035, gold, 0, 0.911, -3.47);
+    addBox(asset, 0.035, 0.026, 6.9, gold, 3.47, 0.911, 0);
+    addBox(asset, 0.035, 0.026, 6.9, gold, -3.47, 0.911, 0);
+
+    // Recessed plaque on the front of the lower plinth.
+    addRoundedBox(
+      asset,
+      2.5,
+      0.28,
+      0.045,
+      stoneDark,
+      0,
+      0.23,
+      4.412,
+      0.035
+    );
+
+    addBox(
+      asset,
+      2.65,
+      0.025,
+      0.032,
+      goldLight,
+      0,
+      0.105,
+      4.43
+    );
+
+    // ---------------------------------------------------------------------
+    // Main tower body
+    // ---------------------------------------------------------------------
+
+    addRoundedBox(
+      asset,
+      5.6,
+      5.9,
+      5.6,
+      stone,
+      0,
+      3.85,
+      0,
+      0.12,
+      3
+    );
+
+    // Corner pilasters.
+    for (const x of [-2.7, 2.7]) {
+      for (const z of [-2.7, 2.7]) {
+        addBox(
+          asset,
+          0.16,
+          5.95,
+          0.16,
+          gold,
+          x,
+          3.85,
+          z
+        );
+      }
+    }
+
+    // Horizontal gold trim.
+    for (const z of [-2.79, 2.79]) {
+      addBox(asset, 5.35, 0.045, 0.045, gold, 0, 1.0, z);
+      addBox(asset, 5.35, 0.045, 0.045, gold, 0, 6.68, z);
+    }
+
+    for (const x of [-2.79, 2.79]) {
+      addBox(asset, 0.045, 0.045, 5.35, gold, x, 1.0, 0);
+      addBox(asset, 0.045, 0.045, 5.35, gold, x, 6.68, 0);
+    }
+
+    // ---------------------------------------------------------------------
+    // Arched window generator
+    // ---------------------------------------------------------------------
+
+    function addArchWindow(parent, width, height, material = glass) {
+      const group = new THREE.Group();
+      group.name = "ArchedWindow";
+      parent.add(group);
+
+      const r = width / 2;
+      const archRadius = width / 2 - 0.12;
+      const archHeight = height - archRadius;
+
+      const outerShape = new THREE.Shape();
+      outerShape.moveTo(-r, 0);
+      outerShape.lineTo(r, 0);
+      outerShape.lineTo(r, archHeight);
+      outerShape.absarc(0, archHeight, r, 0, Math.PI, false);
+      outerShape.closePath();
+
+      const innerShape = new THREE.Path();
+      innerShape.moveTo(-archRadius, 0);
+      innerShape.lineTo(-archRadius, archHeight);
+      innerShape.absarc(0, archHeight, archRadius, Math.PI, 0, true);
+      innerShape.lineTo(archRadius, 0);
+      innerShape.closePath();
+      outerShape.holes.push(innerShape);
+
+      const geometry = new THREE.ExtrudeGeometry(outerShape, {
+        depth: 0.1,
+        bevelEnabled: false,
+        curveSegments: 12
+      });
+      geometry.translate(0, 0, -0.05);
+
+      const glassMesh = addMesh(group, geometry, material);
+      glassMesh.castShadow = false;
+
+      // Gold window frame.
+      addBox(
+        group,
+        0.1,
+        height,
+        0.14,
+        gold,
+        -r,
+        height / 2,
+        0
+      );
+      addBox(
+        group,
+        0.1,
+        height,
+        0.14,
+        gold,
+        r,
+        height / 2,
+        0
+      );
+      addBox(
+        group,
+        width,
+        0.1,
+        0.14,
+        gold,
+        0,
+        archHeight,
+        0
+      );
+      addBox(
+        group,
+        width,
+        0.09,
+        0.14,
+        gold,
+        0,
+        0.045,
+        0
+      );
+
+      const semicircle = addMesh(
+        group,
+        new THREE.TorusGeometry(
+          r - 0.045,
+          0.055,
+          6,
+          20,
+          Math.PI
+        ),
+        gold,
+        0,
+        archHeight,
+        0.015
+      );
+      semicircle.castShadow = true;
+
+      return group;
+    }
+
+    const frontWindows = [
+      { name: "Entrance", x: 0, y: 2.12, z: 2.82, width: 2.35, height: 2.72 },
+      { name: "FrontLeft", x: -1.58, y: 2.25, z: 2.82, width: 0.6, height: 1.35 },
+      { name: "FrontRight", x: 1.58, y: 2.25, z: 2.82, width: 0.6, height: 1.35 },
+      { name: "FrontLeftUpper", x: -1.55, y: 4.3, z: 2.82, width: 0.58, height: 0.78 },
+      { name: "FrontRightUpper", x: 1.55, y: 4.3, z: 2.82, width: 0.58, height: 0.78 }
+    ];
+
+    frontWindows.forEach((window) => {
+      addArchWindow(asset, window.width, window.height, window.name);
+    });
+
+    // Side windows, with mirrored local X positions.
+    for (const side of [-1, 1]) {
+      const sideName = side > 0 ? "Right" : "Left";
+
+      for (let i = -1; i <= 1; i++) {
+        const group = new THREE.Group();
+        group.name = `${sideName}${i < 0 ? "Rear" : i === 0 ? "Center" : "Front"}`;
+        group.position.set(side * 2.82, 2.25, 0);
+        group.rotation.y = side * Math.PI / 2;
+        asset.add(group);
+        addArchWindow(group, 1.95, 1.48);
+      }
+
+      for (const z of [-1.45, 1.45]) {
+        const group = new THREE.Group();
+        group.name = `${sideName}${z < 0 ? "Rear" : "Front"}`;
+        group.position.set(side * 2.82, 4.3, z);
+        group.rotation.y = side * Math.PI / 2;
+        asset.add(group);
+        addArchWindow(group, 1.45, 0.76, warmGlass);
+      }
+    }
+
+    // ---------------------------------------------------------------------
+    // Museum sign
+    // ---------------------------------------------------------------------
+
+    function createMuseumSignTexture() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 128;
+
+      const context = canvas.getContext("2d");
+
+      context.fillStyle = "#203d50";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+
+      context.strokeStyle = "#d8ad57";
+      context.lineWidth = 8;
+      context.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+
+      context.fillStyle = "#f3dfae";
+      context.font = "bold 64px Georgia, serif";
+      context.textAlign = "center";
+      context.textBaseline = "middle";
+      context.fillText("MUSEUM", 256, 64);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.anisotropy = Math.min(
+        8,
+        renderer.capabilities.getMaxAnisotropy()
+      );
+
+      return texture;
+    }
+
+    const museumSign = new THREE.Group();
+    museumSign.name = "MuseumSign";
+    museumSign.position.set(0, 6.08, 2.86);
+    asset.add(museumSign);
+
+    addBox(
+      museumSign,
+      2.46,
+      0.065,
+      0.1,
+      gold,
+      0,
+      0.235,
+      0
+    );
+    addBox(
+      museumSign,
+      2.46,
+      0.065,
+      0.1,
+      gold,
+      0,
+      -0.235,
+      0
+    );
+    addBox(
+      museumSign,
+      0.065,
+      0.5,
+      0.1,
+      gold,
+      -1.2,
+      0,
+      0
+    );
+    addBox(
+      museumSign,
+      0.065,
+      0.5,
+      0.1,
+      gold,
+      1.2,
+      0,
+      0
+    );
+
+    const signMaterial = new THREE.MeshBasicMaterial({
+      map: createMuseumSignTexture(),
+      toneMapped: false
+    });
+
+    const signPanel = addMesh(
+      museumSign,
+      new THREE.PlaneGeometry(2.23, 0.4),
+      signMaterial,
+      0,
+      0,
+      0.056
+    );
+    signPanel.castShadow = false;
+
+    // ---------------------------------------------------------------------
+    // Roof cap and rooftop equipment
+    // ---------------------------------------------------------------------
+
+    addRoundedBox(
+      asset,
+      6.4,
+      0.42,
+      6.4,
+      stoneDark,
+      0,
+      7.0,
+      0,
+      0.085
+    );
+
+    addRoundedBox(
+      asset,
+      6.05,
+      0.52,
+      6.05,
+      stoneLight,
+      0,
+      7.44,
+      0,
+      0.085,
+      3
+    );
+
+    // Thin gold roof perimeter.
+    addBox(asset, 6.08, 0.035, 0.04, gold, 0, 7.16, 3.0);
+    addBox(asset, 6.08, 0.035, 0.04, gold, 0, 7.16, -3.0);
+    addBox(asset, 0.04, 0.035, 6.08, gold, 3.0, 7.16, 0);
+    addBox(asset, 0.04, 0.035, 6.08, gold, -3.0, 7.16, 0);
+
+    addRoundedBox(
+      asset,
+      5.72,
+      0.035,
+      5.72,
+      goldLight,
+      0,
+      7.69,
+      0,
+      0.01,
+      2
+    );
+
+    // HVAC unit.
+    const hvac = new THREE.Group();
+    hvac.name = "HVACEquipment";
+    hvac.position.set(1.75, 7.68, -0.9);
+    asset.add(hvac);
+
+    addRoundedBox(
+      hvac,
+      1.75,
+      1.0,
+      1.35,
+      stoneLight,
+      0,
+      0.5,
+      0,
+      0.09
+    );
+
+    addRoundedBox(
+      hvac,
+      1.82,
+      0.1,
+      1.42,
+      stone,
+      0,
+      1.02,
+      0,
+      0.05
+    );
+
+    // Fan housing.
+    addCylinder(
+      hvac,
+      0.43,
+      0.15,
+      darkMetal,
+      0,
+      1.11,
+      0,
+      16
+    );
+
+    addCylinder(
+      hvac,
+      0.29,
+      0.17,
+      stoneDark,
+      0,
+      1.11,
+      0,
+      16
+    );
+
+    // Fan blades.
+    for (let i = 0; i < 4; i++) {
+      const blade = addBox(
+        hvac,
+        0.075,
+        0.72,
+        0.17,
+        darkMetal,
+        0,
+        1.11,
+        0
+      );
+      blade.rotation.y = i * Math.PI / 2;
+    }
+
+    addCylinder(
+      hvac,
+      0.09,
+      0.08,
+      goldLight,
+      0,
+      1.11,
+      0,
+      12
+    );
+
+    // Right-side ventilation louvers.
+    for (let i = 0; i < 6; i++) {
+      addBox(
+        hvac,
+        0.035,
+        0.58,
+        0.095,
+        darkMetal,
+        0.895,
+        0.55,
+        -0.48 + i * 0.19
+      );
+    }
+
+    // Antenna.
+    const antenna = new THREE.Group();
+    antenna.name = "AntennaEquipment";
+    antenna.position.set(-1.65, 7.68, -1.45);
+    asset.add(antenna);
+
+    addCylinder(
+      antenna,
+      0.2,
+      0.12,
+      stoneDark,
+      0,
+      0.06,
+      0,
+      12
+    );
+
+    addCylinder(
+      antenna,
+      0.035,
+      2.45,
+      gold,
+      0,
+      1.35,
+      0,
+      10
+    );
+
+    addCylinderBetween(
+      antenna,
+      new THREE.Vector3(-0.72, 2.4, 0),
+      new THREE.Vector3(0.72, 2.4, 0),
+      0.024,
+      goldLight,
+      8
+    );
+
+    addCylinderBetween(
+      antenna,
+      new THREE.Vector3(0, 2.68, -0.28),
+      new THREE.Vector3(0, 2.68, 0.28),
+      0.024,
+      goldLight,
+      8
+    );
+
+    addCylinder(
+      antenna,
+      0.065,
+      0.1,
+      warmGlass,
+      0,
+      2.66,
+      0,
+      10
+    );
+
+    // Compact roof pod.
+    const pod = new THREE.Group();
+    pod.name = "RoofEquipmentPod";
+    pod.position.set(-1.55, 7.68, 1.05);
+    asset.add(pod);
+
+    addRoundedBox(
+      pod,
+      1.2,
+      0.7,
+      0.85,
+      stoneLight,
+      0,
+      0.35,
+      0,
+      0.075
+    );
+
+    addRoundedBox(
+      pod,
+      1.28,
+      0.1,
+      0.91,
+      stone,
+      0,
+      0.73,
+      0,
+      0.04
+    );
+
+    for (let i = 0; i < 4; i++) {
+      addBox(
+        pod,
+        0.62,
+        0.045,
+        0.07,
+        darkMetal,
+        0,
+        0.79,
+        -0.27 + i * 0.18
+      );
+    }
+
+    // Conduit connecting the pod and HVAC unit.
+    addCylinderBetween(
+      asset,
+      new THREE.Vector3(-1.55, 7.76, 1.05),
+      new THREE.Vector3(1.4, 7.76, -0.55),
+      0.04,
+      darkMetal,
+      8
+    );
+
+    // ---------------------------------------------------------------------
+    // Export GLB
+    // ---------------------------------------------------------------------
+
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Exporting…";
+
+      asset.updateMatrixWorld(true);
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "museum-building.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          exportButton.disabled = false;
+          status.textContent = "GLB downloaded";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 2048
+        }
+      );
+    });
+
+    // ---------------------------------------------------------------------
+    // Animation loop and resize handling
+    // ---------------------------------------------------------------------
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Van GLB Export</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: sans-serif; background-color: #f0f0f0; }
+        #canvas-container { width: 100vw; height: 100vh; display: block; }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #2d9e4e;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #207a3d; }
+        h1 { margin: 0 0 10px 0; font-size: 18px; color: #333; }
+        p { margin: 0; font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <h1>Green Delivery Van</h1>
+    <p>Low-Poly / Clean Style</p>
+    <button id="export-btn">Export GLB</button>
+</div>
+
+<div id="canvas-container"></div>
+
+<!-- Import Three.js as an ES module from a CDN -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+    // --- Scene Setup ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xeeeeee);
+    scene.fog = new THREE.Fog(0xeeeeee, 20, 100);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(5, 3, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 1.0;
+
+    // --- Lighting ---
+    const hemiLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+    hemiLight.position.set(0, 20, 0);
+    scene.add(hemiLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(5, 10, 7);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 50;
+    dirLight.shadow.camera.left = -10;
+    dirLight.shadow.camera.right = 10;
+    dirLight.shadow.camera.top = 10;
+    dirLight.shadow.camera.bottom = -10;
+    scene.add(dirLight);
+
+    // Floor
+    const gridHelper = new THREE.GridHelper(50, 50, 0x999999, 0xcccccc);
+    scene.add(gridHelper);
+    const floorGeo = new THREE.PlaneGeometry(50, 50);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.8 });
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.1;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // --- Asset Creation ---
+    // We build the van as a group
+    const vanGroup = new THREE.Group();
+    scene.add(vanGroup);
+
+    // --- Materials ---
+    const bodyMat = new THREE.MeshStandardMaterial({ 
+        color: 0x2d9e4e, 
+        roughness: 0.2, 
+        metalness: 0.1,
+        flatShading: true 
+    });
+    const plasticMat = new THREE.MeshStandardMaterial({ 
+        color: 0x333333, 
+        roughness: 0.6, 
+        metalness: 0.1,
+        flatShading: true 
+    });
+    const chromeMat = new THREE.MeshStandardMaterial({ 
+        color: 0xaaaaaa, 
+        roughness: 0.1, 
+        metalness: 0.8,
+        flatShading: true 
+    });
+    const windowMat = new THREE.MeshPhongMaterial({ 
+        color: 0x111111, 
+        transparent: true, 
+        opacity: 0.2,
+        flatShading: false // Smooth windows
+    });
+    const tireMat = new THREE.MeshStandardMaterial({ 
+        color: 0x111111, 
+        roughness: 0.9, 
+        metalness: 0.1,
+        flatShading: true 
+    });
+    const rimMat = new THREE.MeshStandardMaterial({ 
+        color: 0xdddddd, 
+        roughness: 0.2, 
+        metalness: 0.6,
+        flatShading: true 
+    });
+
+    // --- Helper Function to create Rounded Rect Mesh ---
+    function createRoundedRect(width, height, radius, segments = 4) {
+        const geometry = new THREE.BufferGeometry();
+        const vertices = [];
+        const colors = [];
+
+        const width2 = width / 2;
+        const height2 = height / 2;
+        const radius2 = radius / 2;
+
+        for (let i = 0; i < segments; i++) {
+            const theta1 = (i * 2 * Math.PI) / segments;
+            const theta2 = ((i + 1) * 2 * Math.PI) / segments;
+            const r = radius2;
+
+            for (let j = 0; j < segments; j++) {
+                const phi1 = (j * 2 * Math.PI) / segments;
+                const phi2 = ((j + 1) * 2 * Math.PI) / segments;
+
+                // Normal calculation for flat shading
+                const n1 = new THREE.Vector3(Math.cos(phi1), Math.sin(phi1), 0).normalize();
+                const n2 = new THREE.Vector3(Math.cos(phi2), Math.sin(phi2), 0).normalize();
+
+                // Vertices order: Bottom-Left, Bottom-Right, Top-Right, Top-Left
+                // Center of the segment
+                const c = (phi1 + phi2) / 2;
+                const x = r * Math.cos(c);
+                const y = r * Math.sin(c);
+
+                const bottomLeft = new THREE.Vector3(x, y, width2);
+                const bottomRight = new THREE.Vector3(x, y, -width2);
+                const topLeft = new THREE.Vector3(x, height - height2 - y, width2);
+                const topRight = new THREE.Vector3(x, height - height2 - y, -width2);
+
+                vertices.push(...bottomLeft, ...bottomRight, ...topRight, ...topLeft);
+                
+                colors.push(
+                    n1.x, n1.y, n1.z,
+                    n1.x, n1.y, n1.z,
+                    n1.x, n1.y, n1.z,
+                    n1.x, n1.y, n1.z
+                );
+            }
+        }
+
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+        geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+        geometry.setIndex(segments * segments);
+        return geometry;
+    }
+
+    // --- Build the Van ---
+
+    // 1. Main Body (Cab + Cargo)
+    // We'll use a few boxes and a rounded rect for the bottom trim
+    
+    // Main Cargo Box (Green)
+    const cargoGeo = new THREE.BoxGeometry(4.5, 3.5, 2.8);
+    const cargo = new THREE.Mesh(cargoGeo, bodyMat);
+    cargo.position.set(0, 1.75, -1.4);
+    cargo.castShadow = true;
+    cargo.receiveShadow = true;
+    vanGroup.add(cargo);
+
+    // Cab Body (Green)
+    const cabGeo = new THREE.BoxGeometry(2.4, 2.8, 3.2);
+    const cab = new THREE.Mesh(cabGeo, bodyMat);
+    cab.position.set(0, 1.4, 0);
+    cab.castShadow = true;
+    cab.receiveShadow = true;
+    vanGroup.add(cab);
+
+    // Roof (Green)
+    const roofGeo = new THREE.BoxGeometry(3.2, 0.15, 3.2); // Slightly smaller than cab
+    const roof = new THREE.Mesh(roofGeo, bodyMat);
+    roof.position.set(0, 3.5, 0);
+    roof.castShadow = true;
+    roof.receiveShadow = true;
+    vanGroup.add(roof);
+
+    // Lower Chassis / Bumper Line (Dark Grey)
+    // Using the custom rounded rect mesh for a nice look
+    const chassisGeo = createRoundedRect(6.5, 0.8, 0.15, 6);
+    const chassis = new THREE.Mesh(chassisGeo, plasticMat);
+    chassis.position.set(0, 0.6, 0);
+    chassis.rotation.x = Math.PI / 2;
+    chassis.castShadow = true;
+    vanGroup.add(chassis);
+
+    // 2. Wheels
+    const wheelGeo = new THREE.CylinderGeometry(0.45, 0.45, 0.4, 32);
+    wheelGeo.rotateZ(Math.PI / 2);
+    
+    // Tire
+    const tire = new THREE.Mesh(wheelGeo, tireMat);
+    tire.castShadow = true;
+    
+    // Rim (using the custom rounded rect for a spoke pattern)
+    const rimGeo = createRoundedRect(1.2, 1.2, 0.3, 12);
+    const rim = new THREE.Mesh(rimGeo, rimMat);
+    rim.position.z = 0.22; // Offset from tire center
+    rim.castShadow = true;
+    
+    function createWheel(x, z) {
+        const wheelGroup = new THREE.Group();
+        wheelGroup.position.set(x, 0.45, z);
+        wheelGroup.add(tire);
+        wheelGroup.add(rim);
+        wheelGroup.castShadow = true;
+        vanGroup.add(wheelGroup);
+    }
+
+    createWheel(1.5, -1.5); // Front Left
+    createWheel(1.5, 1.5); // Rear Left
+    createWheel(-1.5, -1.5); // Front Right
+    createWheel(-1.5, 1.5); // Rear Right
+
+    // 3. Windows (Glass)
+    function createWindow(x, y, z, w, h, d) {
+        const winGeo = new THREE.BoxGeometry(w, h, d);
+        const win = new THREE.Mesh(winGeo, windowMat);
+        win.position.set(x, y, z);
+        win.castShadow = true;
+        return win;
+    }
+
+    // Cab Windows
+    const windshield = createWindow(0, 3.3, 1.2, 2.0, 1.2, 1.5);
+    const sideWindows = createWindow(0, 2.5, 1.2, 0.6, 1.4, 0.01); // Small strip on side
+    const doorWindow = createWindow(0, 2.1, 0.2, 0.8, 1.2, 0.5); // Door window
+    const rearWindow = createWindow(0, 2.5, -1.2, 4.5, 1.4, 0.01); // Back strip
+
+    vanGroup.add(windshield);
+    vanGroup.add(sideWindows);
+    vanGroup.add(doorWindow);
+    vanGroup.add(rearWindow);
+
+    // 4. Details (Mirrors, Lights, Grille)
+
+    // Side Mirrors
+    const mirrorBaseGeo = new THREE.BoxGeometry(0.2, 0.2, 0.8);
+    const mirrorBase = new THREE.Mesh(mirrorBaseGeo, plasticMat);
+    mirrorBase.position.set(1.5, 1.6, 1.4);
+    mirrorBase.castShadow = true;
+    vanGroup.add(mirrorBase);
+
+    const mirrorCapGeo = new THREE.BoxGeometry(0.25, 0.25, 0.1);
+    const mirrorCap = new THREE.Mesh(mirrorCapGeo, plasticMat);
+    mirrorCap.position.set(0, 0.4, 0.4);
+    vanGroup.add(mirrorCap);
+
+    const mirrorRight = mirrorBase.clone();
+    mirrorRight.position.set(-1.5, 1.6, 1.4);
+    vanGroup.add(mirrorRight);
+
+    // Headlights (Plastic clear)
+    const headLightGeo = new THREE.BoxGeometry(0.4, 0.3, 0.1);
+    const headLightMat = new THREE.MeshStandardMaterial({ color: 0xffffee, roughness: 0.1, metalness: 0.1 });
+    const headLightL = new THREE.Mesh(headLightGeo, headLightMat);
+    headLightL.position.set(1.3, 1.5, 1.2);
+    vanGroup.add(headLightL);
+    const headLightR = headLightL.clone();
+    headLightR.position.set(-1.3, 1.5, 1.2);
+    vanGroup.add(headLightR);
+
+    // Fog Lights (Clear/White)
+    const fogLightGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.1, 16);
+    fogLightGeo.rotateX(Math.PI / 2);
+    const fogLightL = new THREE.Mesh(fogLightGeo, windowMat);
+    fogLightL.position.set(1.2, 0.8, 0.6);
+    vanGroup.add(fogLightL);
+    const fogLightR = fogLightL.clone();
+    fogLightR.position.set(-1.2, 0.8, 0.6);
+    vanGroup.add(fogLightR);
+
+    // Grille (Black plastic with texture)
+    const grilleGeo = new THREE.BoxGeometry(1.6, 0.4, 0.1);
+    const grille = new THREE.Mesh(grilleGeo, plasticMat);
+    grille.position.set(0, 1.25, 1.2);
+    grille.castShadow = true;
+    vanGroup.add(grille);
+
+    // Add some "slats" to the grille procedurally
+    const slatGeo = new THREE.PlaneGeometry(1.6, 0.05);
+    for(let i=0; i<3; i++) {
+        const slat = new THREE.Mesh(slatGeo, plasticMat);
+        slat.position.set(0, 1.25 + 0.04 + (i*0.08), 1.21);
+        vanGroup.add(slat);
+    }
+
+    // Door Handles (Simple black cylinders)
+    const handleGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.15, 16);
+    handleGeo.rotateZ(Math.PI / 2);
+    const handleL = new THREE.Mesh(handleGeo, plasticMat);
+    handleL.position.set(0.6, 1.0, 0.1);
+    vanGroup.add(handleL);
+    const handleR = handleL.clone();
+    handleR.position.set(-0.6, 1.0, 0.1);
+    vanGroup.add(handleR);
+
+    // --- Export Logic ---
+    const exportBtn = document.getElementById('export-btn');
+    
+    exportBtn.addEventListener('click', () => {
+        const exporter = new GLTFExporter();
+        
+        exporter.parse(
+            vanGroup,
+            function( glb ) {
+                // Write the GLB file
+                const blob = new Blob([ glb ], { type: 'model/gltf-binary' });
+                const url = URL.createObjectURL( blob );
+                
+                const link = document.createElement( 'a' );
+                link.href = url;
+                link.download = 'green_van.glb';
+                document.body.appendChild( link );
+                link.click();
+                document.body.removeChild( link );
+            },
+            function( error ) {
+                console.log( 'An error happened during export:', error );
+                alert("Export failed. Check console.");
+            },
+            { binary: true } // Export as GLB
+        );
+    });
+
+    // --- Animation Loop ---
+    function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    // Handle Resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    animate();
+
+</script>
+</body>
+</html>

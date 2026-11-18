@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "low-poly-dragon.glb",
+  "bytes": 285424,
+  "sha256": "f98dbd401e6be937429d4063ed5873cb96be59c17bb31fd130bb797a965761d3",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 89,
+  "nodes": 97,
+  "materials": 9,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 2630,
+  "animations": [],
+  "size_xyz": [
+   7.4728755369709585,
+   3.352847764348927,
+   5.435938633167143
+  ]
+ }
+}

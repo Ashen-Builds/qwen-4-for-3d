@@ -1,0 +1,29 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 ()",
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "art_deco_building.glb",
+  "bytes": 85880,
+  "sha256": "10dd375896d1a59d4b9ea461b3bf3ce2a9418ec1c35a34b0adeead77dc578a37",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 41,
+  "nodes": 150,
+  "materials": 13,
+  "skins": 0,
+  "textures": 9,
+  "triangles": 504,
+  "animations": [],
+  "size_xyz": [
+   22.2,
+   119.80000000596047,
+   21.800000005960463
+  ]
+ }
+}

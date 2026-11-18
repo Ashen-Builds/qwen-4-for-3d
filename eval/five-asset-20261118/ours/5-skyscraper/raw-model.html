@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brass Tower — Museum Asset</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 38%, #252a34 0%, #14161c 48%, #0b0c10 100%);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      outline: none;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      top: 22px;
+      right: 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 14px;
+      background: rgba(15, 17, 22, 0.78);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(14px);
+    }
+
+    .title {
+      padding-left: 4px;
+      color: #f2ead7;
+      font-size: 13px;
+      font-weight: 650;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 9px;
+      padding: 10px 15px;
+      color: #20180e;
+      background: linear-gradient(180deg, #e8c679, #bd8c3d);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.45),
+        0 5px 14px rgba(0, 0, 0, 0.25);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+
+    button:hover {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      cursor: wait;
+      filter: saturate(0.5);
+      opacity: 0.7;
+      transform: none;
+    }
+
+    #hint {
+      position: fixed;
+      z-index: 5;
+      left: 22px;
+      bottom: 20px;
+      color: rgba(237, 231, 215, 0.55);
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    @media (max-width: 640px) {
+      .panel {
+        top: 12px;
+        right: 12px;
+        left: 12px;
+        justify-content: space-between;
+      }
+
+      #hint {
+        left: 14px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div class="panel">
+    <div class="title">Brass Tower Museum</div>
+    <button id="exportButton" type="button">Export GLB</button>
+  </div>
+
+  <div id="hint">Drag to orbit · Scroll to zoom</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+    import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+    const exportButton = document.querySelector("#exportButton");
+
+    // ------------------------------------------------------------
+    // Renderer and scene
+    // ------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(
+      34,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(8.8, 5.7, 9.8);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.domElement.setAttribute("aria-label", "Interactive 3D brass tower model");
+    document.body.prepend(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 3.65, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 6;
+    controls.maxDistance = 19;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // Museum lighting and a neutral backdrop.
+    scene.add(new THREE.HemisphereLight(0xdce7f4, 0x392716, 1.75));
+
+    const keyLight = new THREE.DirectionalLight(0xffe5b4, 3.2);
+    keyLight.position.set(6, 9, 7);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 11;
+    keyLight.shadow.camera.bottom = -2;
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.bias = -0.00025;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.PointLight(0x91b9df, 38, 22, 2);
+    fillLight.position.set(-5, 4.5, 4);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.PointLight(0xffb65c, 34, 18, 2);
+    rimLight.position.set(3, 6, -5);
+    scene.add(rimLight);
+
+    const pmremGenerator = new THREE.PMREMGenerator(renderer);
+    const environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = environment.texture;
+    pmremGenerator.dispose();
+
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(60, 60),
+      new THREE.MeshStandardMaterial({
+        color: 0x11141a,
+        roughness: 0.92,
+        metalness: 0.05
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.015;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // ------------------------------------------------------------
+    // Procedural weathered brass texture
+    // ------------------------------------------------------------
+
+    function createBrassTexture() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 512;
+
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#b68a4c";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      let seed = 1739;
+      function random() {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      }
+
+      // Fine surface variation.
+      for (let i = 0; i < 1700; i++) {
+        const x = random() * canvas.width;
+        const y = random() * canvas.height;
+        const size = 0.5 + random() * 2.2;
+        const light = random() > 0.52;
+
+        ctx.globalAlpha = 0.025 + random() * 0.065;
+        ctx.fillStyle = light ? "#fff2c6" : "#4b2d15";
+        ctx.fillRect(x, y, size, size * (0.5 + random()));
+      }
+
+      // Vertical oxidation streaks.
+      for (let i = 0; i < 42; i++) {
+        const x = random() * canvas.width;
+        const y = random() * canvas.height;
+        const width = 1 + random() * 5;
+        const height = 20 + random() * 110;
+
+        ctx.globalAlpha = 0.035 + random() * 0.08;
+        ctx.fillStyle = random() > 0.45 ? "#684320" : "#b47935";
+        ctx.fillRect(x, y, width, height);
+      }
+
+      // Small exposed-metal chips.
+      for (let i = 0; i < 65; i++) {
+        const x = random() * canvas.width;
+        const y = random() * canvas.height;
+        const radius = 1 + random() * 2.5;
+
+        ctx.globalAlpha = 0.12 + random() * 0.2;
+        ctx.fillStyle = random() > 0.5 ? "#d4aa61" : "#392514";
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 1;
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.wrapS = THREE.RepeatWrapping;
+      texture.wrapT = THREE.RepeatWrapping;
+      texture.repeat.set(2, 1.5);
+      texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      return texture;
+    }
+
+    const brassTexture = createBrassTexture();
+
+    const brassMaterial = new THREE.MeshStandardMaterial({
+      color: 0xd0a35a,
+      map: brassTexture,
+      color: 0xffffff,
+      roughness: 0.34,
+      metalness: 0.58
+    });
+
+    const darkBrassMaterial = new THREE.MeshStandardMaterial({
+      color: 0x775026,
+      map: brassTexture,
+      roughness: 0.4,
+      metalness: 0.62
+    });
+
+    const brightBrassMaterial = new THREE.MeshStandardMaterial({
+      color: 0xe0b86b,
+      map: brassTexture,
+      roughness: 0.29,
+      metalness: 0.66
+    });
+
+    const darkBronzeMaterial = new THREE.MeshStandardMaterial({
+      color: 0x49331f,
+      map: brassTexture,
+      roughness: 0.52,
+      metalness: 0.42
+    });
+
+    const glassMaterial = new THREE.MeshStandardMaterial({
+      color: 0x173541,
+      emissive: 0x07131a,
+      emissiveIntensity: 0.35,
+      roughness: 0.16,
+      metalness: 0.38
+    });
+
+    const doorGlassMaterial = new THREE.MeshStandardMaterial({
+      color: 0x426b70,
+      emissive: 0x4b2810,
+      emissiveIntensity: 0.9,
+      roughness: 0.2,
+      metalness: 0.2
+    });
+
+    // This group contains only the exported asset.
+    const asset = new THREE.Group();
+    asset.name = "Brass Tower Museum Asset";
+    scene.add(asset);
+
+    function addMesh(geometry, material, parent = asset) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addHorizontalBand(radius, tube, y, material = brassMaterial) {
+      const band = addMesh(
+        new THREE.TorusGeometry(radius, tube, 6, 24),
+        material
+      );
+      band.rotation.x = Math.PI / 2;
+      band.position.y = y;
+      return band;
+    }
+
+    function bodyRadiusAt(y) {
+      const t = THREE.MathUtils.clamp((y - 1.04) / 4.25, 0, 1);
+      return THREE.MathUtils.lerp(1.02, 0.78, t);
+    }
+
+    // ------------------------------------------------------------
+    // Museum pedestal — excluded from the GLB
+    // ------------------------------------------------------------
+
+    const pedestal = new THREE.Group();
+    pedestal.name = "Museum Display Pedestal";
+    scene.add(pedestal);
+
+    const pedestalDark = new THREE.MeshStandardMaterial({
+      color: 0x24272b,
+      roughness: 0.72,
+      metalness: 0.22
+    });
+
+    const pedestalEdge = new THREE.MeshStandardMaterial({
+      color: 0x51442d,
+      roughness: 0.42,
+      metalness: 0.72
+    });
+
+    const pedestalBase = addMesh(
+      new THREE.CylinderGeometry(1.82, 1.92, 0.3, 12),
+      pedestalDark,
+      pedestal
+    );
+    pedestalBase.position.y = 0.15;
+
+    const pedestalTop = addMesh(
+      new THREE.CylinderGeometry(1.56, 1.72, 0.25, 12),
+      pedestalEdge,
+      pedestal
+    );
+    pedestalTop.position.y = 0.425;
+
+    const pedestalStep = addMesh(
+      new THREE.CylinderGeometry(1.17, 1.28, 0.17, 12),
+      pedestalDark,
+      pedestal
+    );
+    pedestalStep.position.y = 0.76;
+
+    // ------------------------------------------------------------
+    // Tower plinth and main body
+    // ------------------------------------------------------------
+
+    const towerPlinth = addMesh(
+      new THREE.CylinderGeometry(1.08, 1.14, 0.18, 12),
+      darkBronzeMaterial
+    );
+    towerPlinth.position.y = 1.02;
+
+    const body = addMesh(
+      new THREE.CylinderGeometry(0.78, 1.02, 4.25, 12, 1, false),
+      brassMaterial
+    );
+    body.position.y = 3.17;
+
+    // Raised flutes around the tapered shaft.
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const rib = addMesh(
+        new THREE.CylinderGeometry(0.038, 0.052, 4.02, 6),
+        darkBronzeMaterial
+      );
+      rib.position.set(
+        Math.sin(angle) * bodyRadiusAt(3.08),
+        3.08,
+        Math.cos(angle) * bodyRadiusAt(3.08)
+      );
+    }
+
+    // Horizontal structural bands.
+    addHorizontalBand(1.01, 0.035, 1.12);
+    addHorizontalBand(0.96, 0.03, 2.08);
+    addHorizontalBand(0.88, 0.034, 4.25);
+    addHorizontalBand(0.83, 0.032, 5.18);
+
+    // ------------------------------------------------------------
+    // Windows
+    // ------------------------------------------------------------
+
+    function addWindow(angle, y, index) {
+      const group = new THREE.Group();
+      group.name = `Window ${index + 1}`;
+      group.position.set(
+        Math.sin(angle) * (bodyRadiusAt(y) + 0.025),
+        y,
+        Math.cos(angle) * (bodyRadiusAt(y) + 0.025)
+      );
+      group.rotation.y = angle;
+      asset.add(group);
+
+      const glass = addMesh(
+        new THREE.BoxGeometry(0.285, 0.84, 0.032),
+        glassMaterial,
+        group
+      );
+      glass.position.z = 0.025;
+
+      const frameX = 0.165;
+      const frameY = 0.45;
+
+      [-frameX, frameX].forEach((x) => {
+        const frame = addMesh(
+          new THREE.BoxGeometry(0.035, 0.91, 0.065),
+          brightBrassMaterial,
+          group
+        );
+        frame.position.set(x, 0, 0.005);
+      });
+
+      [-frameY, frameY].forEach((y) => {
+        const frame = addMesh(
+          new THREE.BoxGeometry(0.355, 0.045, 0.065),
+          brightBrassMaterial,
+          group
+        );
+        frame.position.set(0, y, 0.005);
+      });
+
+      const innerMullion = addMesh(
+        new THREE.BoxGeometry(0.018, 0.82, 0.025),
+        darkBrassMaterial,
+        group
+      );
+      innerMullion.position.set(0, 0, 0.047);
+    }
+
+    let windowIndex = 0;
+    for (let level = 0; level < 2; level++) {
+      for (let i = 0; i < 10; i++) {
+        const angle = (i / 10) * Math.PI * 2 + (level === 0 ? 0 : Math.PI / 10);
+        addWindow(level === 0 ? 1.72 : 3.35, windowIndex++);
+      }
+    }
+
+    // ------------------------------------------------------------
+    // Front door
+    // ------------------------------------------------------------
+
+    const door = new THREE.Group();
+    door.name = "Front Door";
+    door.position.set(
+      0,
+      1.04,
+      bodyRadiusAt(1.25) + 0.045
+    );
+    asset.add(door);
+
+    const doorPanel = addMesh(
+      new THREE.BoxGeometry(0.76, 1.45, 0.09),
+      darkBronzeMaterial,
+      door
+    );
+    doorPanel.position.y = 0.725;
+
+    const doorGlass = addMesh(
+      new THREE.BoxGeometry(0.62, 1.17, 0.025),
+      doorGlassMaterial,
+      door
+    );
+    doorGlass.position.set(0, 0.73, 0.057);
+
+    [-0.385, 0.385].forEach((x) => {
+      const rail = addMesh(
+        new THREE.BoxGeometry(0.045, 1.47, 0.075),
+        brightBrassMaterial,
+        door
+      );
+      rail.position.set(x, 0.725, 0.055);
+    });
+
+    const arch = addMesh(
+      new THREE.TorusGeometry(0.385, 0.043, 6, 18, Math.PI),
+      brightBrassMaterial,
+      door
+    );
+    arch.position.set(0, 1.455, 0.06);
+
+    const doorThreshold = addMesh(
+      new THREE.BoxGeometry(0.9, 0.08, 0.18),
+      brightBrassMaterial,
+      door
+    );
+    doorThreshold.position.set(0, 0.045, 0.035);
+
+    // ------------------------------------------------------------
+    // Capital and stepped crown
+    // ------------------------------------------------------------
+
+    const lowerCapital = addMesh(
+      new THREE.CylinderGeometry(0.91, 0.94, 0.18, 12),
+      brightBrassMaterial
+    );
+    lowerCapital.position.y = 5.36;
+
+    addHorizontalBand(0.93, 0.035, 5.45);
+
+    const upperCapital = addMesh(
+      new THREE.CylinderGeometry(0.82, 0.86, 0.22, 12),
+      brassMaterial
+    );
+    upperCapital.position.y = 5.59;
+
+    addHorizontalBand(0.84, 0.032, 5.49);
+    addHorizontalBand(0.84, 0.032, 5.68);
+
+    const flutedDrum = addMesh(
+      new THREE.CylinderGeometry(0.88, 0.83, 0.54, 12),
+      darkBronzeMaterial
+    );
+    flutedDrum.position.y = 5.98;
+
+    addHorizontalBand(0.87, 0.035, 5.82);
+    addHorizontalBand(0.875, 0.03, 6.01);
+    addHorizontalBand(0.88, 0.03, 6.11);
+
+    // ------------------------------------------------------------
+    // Faceted dome
+    // ------------------------------------------------------------
+
+    const domeProfile = [
+      new THREE.Vector2(0.72, 0),
+      new THREE.Vector2(0.81, 0.11),
+      new THREE.Vector2(0.78, 0.32),
+      new THREE.Vector2(0.69, 0.56),
+      new THREE.Vector2(0.5, 0.8),
+      new THREE.Vector2(0.29, 1.0),
+      new THREE.Vector2(0.09, 1.12),
+      new THREE.Vector2(0.0, 1.16)
+    ];
+
+    const dome = addMesh(
+      new THREE.LatheGeometry(domeProfile, 12),
+      brightBrassMaterial
+    );
+    dome.position.y = 6.13;
+
+    addHorizontalBand(0.77, 0.035, 6.18);
+
+    // Raised ribs following the dome profile.
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const curve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(
+          Math.sin(angle) * 0.78,
+          6.16,
+          Math.cos(angle) * 0.78
+        ),
+        new THREE.Vector3(
+          Math.sin(angle) * 0.64,
+          6.48,
+          Math.cos(angle) * 0.64
+        ),
+        new THREE.Vector3(
+          Math.sin(angle) * 0.36,
+          6.95,
+          Math.cos(angle) * 0.36
+        )
+      ]);
+
+      const rib = addMesh(
+        new THREE.TubeGeometry(curve, 8, 0.025, 5, false),
+        brassMaterial
+      );
+      rib.castShadow = true;
+    }
+
+    // ------------------------------------------------------------
+    // Finial and fluted spire
+    // ------------------------------------------------------------
+
+    const spine = addMesh(
+      new THREE.ConeGeometry(0.34, 1.1, 10),
+      darkBronzeMaterial
+    );
+    spine.position.y = 7.49;
+    spine.rotation.y = Math.PI / 10;
+
+    const spineRing = addMesh(
+      new THREE.TorusGeometry(0.33, 0.035, 6, 18),
+      brightBrassMaterial
+    );
+    spineRing.rotation.x = Math.PI / 2;
+    spineRing.position.y = 7.01;
+
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2 + Math.PI / 10;
+      const ridge = addMesh(
+        new THREE.CylinderGeometry(0.018, 0.024, 0.92, 5),
+        brassMaterial
+      );
+      ridge.position.set(
+        Math.sin(angle) * 0.32,
+        7.49,
+        Math.cos(angle) * 0.32
+      );
+    }
+
+    const finialStem = addMesh(
+      new THREE.CylinderGeometry(0.035, 0.05, 0.19, 8),
+      brightBrassMaterial
+    );
+    finialStem.position.y = 8.16;
+
+    const finialBall = addMesh(
+      new THREE.SphereGeometry(0.1, 10, 6),
+      brassMaterial
+    );
+    finialBall.position.y = 8.31;
+
+    const finialTip = addMesh(
+      new THREE.ConeGeometry(0.15, 0.34, 8),
+      brightBrassMaterial
+    );
+    finialTip.position.y = 8.56;
+
+    // ------------------------------------------------------------
+    // Interaction and export
+    // ------------------------------------------------------------
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Exporting...";
+
+      // Give the browser a frame to update the button state.
+      requestAnimationFrame(() => {
+        const exporter = new GLTFExporter();
+        exporter.parse(
+          asset,
+          (result) => {
+            const blob = new Blob([result], {
+              type: "model/gltf-binary"
+            });
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "brass-tower-museum.glb";
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+            exportButton.disabled = false;
+            exportButton.textContent = "Export GLB";
+          },
+          (error) => {
+            console.error("GLB export failed:", error);
+            exportButton.disabled = false;
+            exportButton.textContent = "Export GLB";
+            alert("The GLB could not be exported. Please try again.");
+          },
+          {
+            binary: true,
+            onlyVisible: true,
+            embedImages: true
+          }
+        );
+      });
+    });
+  </script>
+</body>
+</html>

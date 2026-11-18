@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Art Deco Tower — Three.js Asset Creator</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #e9e5dc;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    #viewport canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .panel {
+      position: fixed;
+      z-index: 10;
+      top: 22px;
+      left: 22px;
+      padding: 17px 19px;
+      color: #292722;
+      background: rgba(250, 248, 242, 0.88);
+      border: 1px solid rgba(79, 69, 54, 0.18);
+      border-radius: 12px;
+      box-shadow: 0 12px 35px rgba(49, 43, 32, 0.12);
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .title {
+      margin: 0 0 4px;
+      font-size: 18px;
+      font-weight: 750;
+      letter-spacing: 0.025em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #777164;
+      font-size: 12px;
+    }
+
+    #export-button {
+      position: fixed;
+      z-index: 20;
+      right: 24px;
+      bottom: 24px;
+      min-width: 170px;
+      padding: 14px 20px;
+      color: #fffaf0;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 750;
+      letter-spacing: 0.035em;
+      background: linear-gradient(135deg, #a97525, #d2a344);
+      border: 1px solid #81571d;
+      border-radius: 10px;
+      box-shadow: 0 9px 25px rgba(81, 52, 14, 0.28);
+      cursor: pointer;
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+
+    #export-button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+    }
+
+    #export-button:active {
+      transform: translateY(0);
+    }
+
+    #export-button:disabled {
+      cursor: wait;
+      filter: grayscale(0.25);
+      opacity: 0.75;
+    }
+
+    #status {
+      position: fixed;
+      z-index: 20;
+      right: 25px;
+      bottom: 78px;
+      max-width: 320px;
+      color: #514c43;
+      font-size: 12px;
+      text-align: right;
+      pointer-events: none;
+    }
+
+    .hint {
+      position: fixed;
+      z-index: 10;
+      left: 22px;
+      bottom: 22px;
+      color: rgba(54, 49, 42, 0.65);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        padding: 13px 15px;
+      }
+
+      #export-button {
+        right: 12px;
+        bottom: 12px;
+      }
+
+      #status {
+        right: 13px;
+        bottom: 66px;
+      }
+
+      .hint {
+        display: none;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div class="panel">
+    <h1 class="title">Art Deco Tower</h1>
+    <p class="subtitle">Low-poly architectural asset · static GLB</p>
+  </div>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+  <div id="status">Ready to export</div>
+  <button id="export-button" type="button">Export GLB</button>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("export-button");
+    const status = document.getElementById("status");
+
+    // ------------------------------------------------------------
+    // Renderer and preview
+    // ------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xe9e5dc);
+    scene.fog = new THREE.Fog(0xe9e5dc, 19, 34);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(11.5, 8.2, 13.5);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 4.35, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.075;
+    controls.minDistance = 8;
+    controls.maxDistance = 28;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const hemiLight = new THREE.HemisphereLight(0xfff8e8, 0x5e574c, 2.15);
+    scene.add(hemiLight);
+
+    const keyLight = new THREE.DirectionalLight(0xfff0cf, 4.2);
+    keyLight.position.set(7, 13, 9);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -10;
+    keyLight.shadow.camera.right = 10;
+    keyLight.shadow.camera.top = 14;
+    keyLight.shadow.camera.bottom = -6;
+    keyLight.shadow.camera.near = 1;
+    keyLight.shadow.camera.far = 35;
+    keyLight.shadow.bias = -0.0004;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0x9eb9d6, 1.35);
+    fillLight.position.set(-9, 7, 5);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffd38b, 1.8);
+    rimLight.position.set(1, 8, -10);
+    scene.add(rimLight);
+
+    // Preview-only ground plane. It is intentionally not exported.
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(18, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0xd7d1c4,
+        roughness: 0.96,
+        metalness: 0
+      })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.015;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // ------------------------------------------------------------
+    // Materials
+    // ------------------------------------------------------------
+
+    const materials = {
+      stone: new THREE.MeshStandardMaterial({
+        color: 0xcbbb9d,
+        roughness: 0.84,
+        metalness: 0.03,
+        flatShading: true
+      }),
+      stoneLight: new THREE.MeshStandardMaterial({
+        color: 0xded1b3,
+        roughness: 0.78,
+        metalness: 0.025,
+        flatShading: true
+      }),
+      stoneDark: new THREE.MeshStandardMaterial({
+        color: 0x625b4d,
+        roughness: 0.9,
+        metalness: 0.02,
+        flatShading: true
+      }),
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xb7832e,
+        roughness: 0.3,
+        metalness: 0.78,
+        flatShading: true
+      }),
+      goldLight: new THREE.MeshStandardMaterial({
+        color: 0xe1b653,
+        roughness: 0.25,
+        metalness: 0.8,
+        flatShading: true
+      }),
+      charcoal: new THREE.MeshStandardMaterial({
+        color: 0x292b2c,
+        roughness: 0.72,
+        metalness: 0.18,
+        flatShading: true
+      }),
+      glass: new THREE.MeshPhysicalMaterial({
+        color: 0x173b53,
+        emissive: 0x0b1d2a,
+        emissiveIntensity: 0.5,
+        roughness: 0.18,
+        metalness: 0.12,
+        transparent: true,
+        opacity: 0.9,
+        flatShading: true
+      }),
+      lamp: new THREE.MeshStandardMaterial({
+        color: 0xffd77b,
+        emissive: 0xffa62b,
+        emissiveIntensity: 2.3,
+        roughness: 0.35,
+        metalness: 0.05,
+        flatShading: true
+      }),
+      blueJewel: new THREE.MeshPhysicalMaterial({
+        color: 0x245c87,
+        emissive: 0x082b45,
+        emissiveIntensity: 0.7,
+        roughness: 0.15,
+        metalness: 0.1,
+        flatShading: true
+      })
+    };
+
+    // Double-sided custom geometry keeps the low-poly silhouette clean.
+    materials.stoneDark.side = THREE.DoubleSide;
+    materials.stone.side = THREE.DoubleSide;
+
+    // ------------------------------------------------------------
+    // Model root
+    // ------------------------------------------------------------
+
+    const modelRoot = new THREE.Group();
+    modelRoot.name = "ArtDecoTower";
+    scene.add(modelRoot);
+
+    function enableShadows(mesh) {
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    function addBox(parent, size, position, material, name = "") {
+      const mesh = enableShadows(
+        new THREE.Mesh(
+          new THREE.BoxGeometry(size[0], size[1], size[2]),
+          material
+        )
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+      mesh.name = name;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addCylinder(
+      parent,
+      radiusTop,
+      radiusBottom,
+      height,
+      position,
+      material,
+      segments = 8,
+      rotation = null,
+      name = ""
+    ) {
+      const mesh = enableShadows(
+        new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            radiusTop,
+            radiusBottom,
+            height,
+            segments,
+            1,
+            false
+          ),
+          material
+        )
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+
+      if (rotation) {
+        mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      }
+
+      mesh.name = name;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addCone(
+      parent,
+      radius,
+      height,
+      position,
+      material,
+      segments = 4,
+      rotation = null,
+      name = ""
+    ) {
+      const mesh = enableShadows(
+        new THREE.Mesh(
+          new THREE.ConeGeometry(radius, height, segments),
+          material
+        )
+      );
+      mesh.position.set(position[0], position[1], position[2]);
+
+      if (rotation) {
+        mesh.rotation.set(rotation[0], rotation[1], rotation[2]);
+      }
+
+      mesh.name = name;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    // Builds a low-poly tapered solid from an octagonal footprint.
+    function createTaperedPrismGeometry(bottom, top) {
+      const positions = [];
+      const n = bottom.length;
+
+      function triangle(a, b, c) {
+        positions.push(...a, ...b, ...c);
+      }
+
+      for (let i = 0; i < n; i++) {
+        const j = (i + 1) % n;
+
+        // Side walls.
+        triangle(bottom[i], top[j], bottom[j]);
+        triangle(bottom[i], top[i], top[j]);
+
+        // Top, with reversed winding.
+        triangle(top[i], top[j], top[(i + 2) % n]);
+        triangle(top[i], top[(i + 3) % n], top[(i + 4) % n]);
+
+        // Bottom.
+        triangle(bottom[i], bottom[(i + 2) % n], bottom[j]);
+        triangle(bottom[i], bottom[(i + 3) % n], bottom[(i + 4) % n]);
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.computeVertexNormals();
+      geometry.computeBoundingBox();
+      geometry.computeBoundingSphere();
+
+      return geometry;
+    }
+
+    function taperedSolid(parent, bottom, top, height, material, name) {
+      const mesh = enableShadows(
+        new THREE.Mesh(
+          createTaperedPrismGeometry(bottom, top),
+          material
+        )
+      );
+      mesh.name = name;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Stepped foundation
+    // ------------------------------------------------------------
+
+    const foundation = new THREE.Group();
+    foundation.name = "Foundation";
+    modelRoot.add(foundation);
+
+    addBox(
+      foundation,
+      [5.75, 0.28, 5.15],
+      [0, 0.14, 0],
+      materials.charcoal,
+      "FoundationPlinth"
+    );
+
+    addBox(
+      foundation,
+      [5.42, 0.25, 4.84],
+      [0, 0.405, 0],
+      materials.stoneDark,
+      "LowerStep"
+    );
+
+    addBox(
+      foundation,
+      [5.08, 0.42, 4.5],
+      [0, 0.705, 0],
+      materials.stone,
+      "MainPlinth"
+    );
+
+    addBox(
+      foundation,
+      [4.82, 0.12, 4.25],
+      [0, 0.96, 0],
+      materials.stoneLight,
+      "PlinthCap"
+    );
+
+    // Gold trim around the foundation.
+    addBox(
+      foundation,
+      [5.35, 0.075, 4.9],
+      [0, 0.31, 0],
+      materials.gold,
+      "FoundationGoldTrim"
+    );
+
+    // Small decorative diamonds on the front plinth.
+    for (const x of [-1.35, -0.9, 0.9, 1.35]) {
+      const diamond = enableShadows(
+        new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.13, 0),
+          materials.goldLight
+        )
+      );
+      diamond.scale.z = 0.35;
+      diamond.position.set(x, 0.72, 2.27);
+      foundation.add(diamond);
+    }
+
+    // ------------------------------------------------------------
+    // Central tower body
+    // ------------------------------------------------------------
+
+    const bodyGroup = new THREE.Group();
+    bodyGroup.name = "TowerBody";
+    modelRoot.add(bodyGroup);
+
+    addBox(
+      bodyGroup,
+      [3.7, 5, 3.0],
+      [0, 3.45, 0],
+      materials.stone,
+      "CentralWall"
+    );
+
+    const pierDefinitions = [
+      {
+        bottom: [
+          [-2.02, 1.68],
+          [-1.68, 1.48]
+        ],
+        top: [
+          [-1.72, 1.58],
+          [-1.48, 1.42]
+        ]
+      },
+      {
+        bottom: [
+          [1.68, 1.68],
+          [2.02, 1.68]
+        ],
+        top: [
+          [1.48, 1.58],
+          [1.72, 1.42]
+        ]
+      },
+      {
+        bottom: [
+          [2.02, -1.68],
+          [1.68, -1.68]
+        ],
+        top: [
+          [1.48, -1.42],
+          [1.72, -1.58]
+        ]
+      },
+      {
+        bottom: [
+          [-2.02, -1.68],
+          [-1.68, -1.68]
+        ],
+        top: [
+          [-1.72, -1.58],
+          [-1.48, -1.42]
+        ]
+      }
+    ];
+
+    pierDefinitions.forEach((definition, index) => {
+      taperedSolid(
+        bodyGroup,
+        definition.bottom,
+        definition.top,
+        5.05,
+        materials.stoneLight,
+        `CornerPier_${index}`
+      );
+    });
+
+    // Main tapered footprint.
+    const bodyBottom = [
+      [-1.85, 1.5],
+      [1.85, 1.5],
+      [1.85, -1.5],
+      [-1.85, -1.5]
+    ];
+
+    const bodyTop = [
+      [-1.55, 1.42],
+      [1.55, 1.42],
+      [1.55, -1.42],
+      [-1.55, -1.42]
+    ];
+
+    taperedSolid(
+      bodyGroup,
+      bodyBottom,
+      bodyTop,
+      5,
+      materials.stone,
+      "TaperedTowerShell"
+    );
+
+    // Front and back structural ribs.
+    for (const z of [1.57, -1.57]) {
+      for (const x of [-1.72, 1.72]) {
+        addBox(
+          bodyGroup,
+          [0.11, 4.62, 0.11],
+          [x, 3.45, z],
+          materials.gold,
+          "VerticalGoldRib"
+        );
+      }
+
+      for (const y of [1.17, 2.48, 3.78, 5.25]) {
+        addBox(
+          bodyGroup,
+          [3.42, 0.105, 0.11],
+          [0, y, z],
+          materials.gold,
+          "HorizontalGoldBand"
+        );
+      }
+    }
+
+    // Side structural ribs.
+    for (const x of [-1.84, 1.84]) {
+      for (const y of [1.17, 2.48, 3.78, 5.25]) {
+        addBox(
+          bodyGroup,
+          [0.11, 0.105, 2.78],
+          [x, y, 0],
+          materials.gold,
+          "SideGoldBand"
+        );
+      }
+    }
+
+    // Lower and upper body cornices.
+    addBox(
+      bodyGroup,
+      [3.95, 0.25, 3.25],
+      [0, 1.08, 0],
+      materials.stoneDark,
+      "LowerCornice"
+    );
+
+    addBox(
+      bodyGroup,
+      [3.85, 0.16, 3.15],
+      [0, 5.98, 0],
+      materials.gold,
+      "UpperGoldCornice"
+    );
+
+    addBox(
+      bodyGroup,
+      [3.72, 0.14, 3.05],
+      [0, 1.22, 0],
+      materials.gold,
+      "LowerGoldCornice"
+    );
+
+    // ------------------------------------------------------------
+    // Windows
+    // ------------------------------------------------------------
+
+    function addWindow(surfacePoint, normal, width, height, name) {
+      const group = new THREE.Group();
+      group.name = name;
+
+      const surfaceNormal = normal.clone().normalize();
+      const up = new THREE.Vector3(0, 1, 0);
+      const tangent = up.projectOnPlane(surfaceNormal).normalize();
+      const basis = new THREE.Vector3()
+        .crossVectors(tangent, surfaceNormal)
+        .normalize();
+
+      const rotation = new THREE.Matrix4().makeBasis(
+        basis,
+        tangent,
+        surfaceNormal
+      );
+
+      group.rotation.setFromRotationMatrix(rotation);
+      group.position.copy(surfacePoint).addScaledVector(surfaceNormal, 0.075);
+
+      const frame = addBox(
+        group,
+        [width + 0.15, height + 0.15, 0.14],
+        [0, 0, 0],
+        materials.gold,
+        "WindowFrame"
+      );
+
+      const glass = addBox(
+        group,
+        [width, height, 0.075],
+        [0, 0, 0.095],
+        materials.glass,
+        "WindowGlass"
+      );
+
+      addBox(
+        group,
+        [0.055, height, 0.055],
+        [0, 0, 0.145],
+        materials.goldLight,
+        "WindowMullionV"
+      );
+
+      addBox(
+        group,
+        [width, 0.055, 0.055],
+        [0, 0, 0.145],
+        materials.goldLight,
+        "WindowMullionH"
+      );
+
+      bodyGroup.add(group);
+      return group;
+    }
+
+    function frontSurfaceZ(y) {
+      const t = THREE.MathUtils.clamp(
+        (y - 0.95) / 5,
+        0,
+        1
+      );
+      return THREE.MathUtils.lerp(1.65, 1.42, t);
+    }
+
+    function sideSurfaceX(y) {
+      const t = THREE.MathUtils.clamp(
+        (y - 0.95) / 5,
+        0,
+        1
+      );
+      return THREE.MathUtils.lerp(1.825, 1.65, t);
+    }
+
+    // Front window rows. The lowest center opening is reserved
+    // for the entrance.
+    const frontWindowRows = [
+      { y: 2.38, widths: [1.12, 1.12] },
+      { y: 3.55, widths: [1.12, 1.12, 1.12] },
+      { y: 4.82, widths: [1.12, 1.12, 1.12] }
+    ];
+
+    frontWindowRows.forEach((row, rowIndex) => {
+      const xPositions = rowIndex === 0
+        ? [-1.15, 1.15]
+        : [-1.15, 0, 1.15];
+
+      xPositions.forEach((x, columnIndex) => {
+        addWindow(
+          new THREE.Vector3(x, row.y, frontSurfaceZ(row.y)),
+          new THREE.Vector3(0, -0.055, 1),
+          row.widths[columnIndex],
+          0.82,
+          `FrontWindow_${rowIndex}_${columnIndex}`
+        );
+      });
+    });
+
+    // Side windows.
+    addWindow(
+      new THREE.Vector3(sideSurfaceX(3.55), 3.55, -0.85),
+      new THREE.Vector3(1, 0, 0),
+      1.05,
+      0.86,
+      "RightSideWindow_A"
+    );
+
+    addWindow(
+      new THREE.Vector3(sideSurfaceX(3.55), 3.55, 0.85),
+      new THREE.Vector3(1, 0, 0),
+      1.05,
+      0.86,
+      "RightSideWindow_B"
+    );
+
+    addWindow(
+      new THREE.Vector3(sideSurfaceX(4.82), 4.82, 0.72),
+      new THREE.Vector3(1, 0, 0),
+      0.95,
+      0.8,
+      "RightSideWindow_C"
+    );
+
+    addWindow(
+      new THREE.Vector3(-sideSurfaceX(3.55), 3.55, 0.85),
+      new THREE.Vector3(-1, 0, 0),
+      1.05,
+      0.86,
+      "LeftSideWindow_A"
+    );
+
+    addWindow(
+      new THREE.Vector3(-sideSurfaceX(3.55), 3.55, -0.85),
+      new THREE.Vector3(-1, 0, 0),
+      1.05,
+      0.86,
+      "LeftSideWindow_B"
+    );
+
+    addWindow(
+      new THREE.Vector3(-sideSurfaceX(4.82), 4.82, 0.72),
+      new THREE.Vector3(-1, 0, 0),
+      0.95,
+      0.8,
+      "LeftSideWindow_C"
+    );
+
+    // ------------------------------------------------------------
+    // Entrance and steps
+    // ------------------------------------------------------------
+
+    const entrance = new THREE.Group();
+    entrance.name = "Entrance";
+    bodyGroup.add(entrance);
+
+    // Gold arched frame.
+    const arch = enableShadows(
+      new THREE.Mesh(
+        new THREE.TorusGeometry(0.74, 0.105, 6, 20, Math.PI),
+        materials.goldLight
+      )
+    );
+    arch.position.set(0, 1.7, 1.76);
+    entrance.add(arch);
+
+    addBox(
+      entrance,
+      [0.23, 0.77, 0.18],
+      [-0.66, 1.38, 1.7],
+      materials.goldLight,
+      "DoorFrameLeft"
+    );
+
+    addBox(
+      entrance,
+      [0.23, 0.77, 0.18],
+      [0.66, 1.38, 1.7],
+      materials.goldLight,
+      "DoorFrameRight"
+    );
+
+    const doorPanel = addBox(
+      entrance,
+      [1.18, 1.1, 0.09],
+      [0, 1.47, 1.65],
+      materials.glass,
+      "ArchedDoorPanel"
+    );
+    doorPanel.name = "ArchedDoorPanel";
+
+    addBox(
+      entrance,
+      [0.07, 1.08, 0.1],
+      [0, 1.47, 1.71],
+      materials.goldLight,
+      "DoorCenterMullion"
+    );
+
+    // Three broad entrance steps.
+    for (let i = 0; i < 3; i++) {
+      addBox(
+        entrance,
+        [1.9 - i * 0.12, 0.18, 0.48],
+        [0, 0.98 - i * 0.24, 1.78 + i * 0.42],
+        i === 1 ? materials.stoneLight : materials.stone,
+        `EntranceStep_${i}`
+      );
+    }
+
+    // Lanterns beside the entrance.
+    for (const x of [-1.08, 1.08]) {
+      addBox(
+        entrance,
+        [0.25, 0.43, 0.2],
+        [x, 1.75, 1.73],
+        materials.gold,
+        "LanternHousing"
+      );
+
+      addBox(
+        entrance,
+        [0.15, 0.27, 0.22],
+        [x, 1.75, 1.82],
+        materials.lamp,
+        "LanternGlow"
+      );
+
+      addBox(
+        entrance,
+        [0.31, 0.07, 0.27],
+        [x, 2.0, 1.75],
+        materials.goldLight,
+        "LanternCap"
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Decorative wings
+    // ------------------------------------------------------------
+
+    const wingDefinitions = [
+      {
+        y: 1.35,
+        bottom: [
+          [0.02, 0.62],
+          [1.45, 1.12],
+          [3.22, 0.62],
+          [2.78, -0.65],
+          [0.02, -0.34]
+        ],
+        top: [
+          [0.16, 0.72],
+          [1.42, 0.98],
+          [2.72, 0.62],
+          [2.46, -0.54],
+          [0.16, -0.42]
+        ]
+      },
+      {
+        y: 4.55,
+        bottom: [
+          [0.02, 0.48],
+          [1.12, 0.78],
+          [2.02, 0.42],
+          [1.7, -0.55],
+          [0.02, -0.25]
+        ],
+        top: [
+          [0.14, 0.58],
+          [1.08, 0.74],
+          [1.88, 0.43],
+          [1.62, -0.46],
+          [0.14, -0.34]
+        ]
+      }
+    ];
+
+    wingDefinitions.forEach((definition, index) => {
+      const rightWing = taperedSolid(
+        bodyGroup,
+        definition.bottom,
+        definition.top,
+        definition.y,
+        materials.stoneLight,
+        `RightWing_${index}`
+      );
+      rightWing.position.y = definition.y;
+
+      const leftWing = taperedSolid(
+        bodyGroup,
+        definition.bottom.map(([x, z]) => [-x, z]),
+        definition.top.map(([x, z]) => [-x, z]),
+        definition.y,
+        materials.stoneLight,
+        `LeftWing_${index}`
+      );
+      leftWing.position.y = definition.y;
+
+      // Gold cap along the outer wing edge.
+      addBox(
+        bodyGroup,
+        [1.55, 0.095, 0.15],
+        [index === 0 ? 2.48 : 1.91, definition.y + 0.07, 0.59],
+        materials.gold,
+        "WingGoldTrim"
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Upper crown and spire
+    // ------------------------------------------------------------
+
+    const crown = new THREE.Group();
+    crown.name = "Crown";
+    modelRoot.add(crown);
+
+    addBox(
+      crown,
+      [4.0, 0.3, 3.3],
+      [0, 6.13, 0],
+      materials.stoneDark,
+      "CrownBase"
+    );
+
+    addBox(
+      crown,
+      [3.85, 0.095, 3.14],
+      [0, 6.32, 0],
+      materials.gold,
+      "CrownGoldTrim"
+    );
+
+    addBox(
+      crown,
+      [3.48, 0.3, 2.9],
+      [0, 6.52, 0],
+      materials.stone,
+      "CrownPlinth"
+    );
+
+    // Four crown columns.
+    for (const x of [-1.35, 1.35]) {
+      for (const z of [-1.02, 1.02]) {
+        addCylinder(
+          crown,
+          0.18,
+          0.23,
+          0.56,
+          [x, 6.85, z],
+          materials.stoneDark,
+          8,
+          null,
+          "CrownColumn"
+        );
+
+        addCylinder(
+          crown,
+          0.25,
+          0.25,
+          0.1,
+          [x, 7.16, z],
+          materials.gold,
+          8,
+          null,
+          "CrownColumnCap"
+        );
+      }
+    }
+
+    addCylinder(
+      crown,
+      0.18,
+      0.3,
+      1.28,
+      [0, 7.72, 0],
+      materials.stoneLight,
+      6,
+      null,
+      "CrownMast"
+    );
+
+    addCylinder(
+      crown,
+      0.32,
+      0.32,
+      0.11,
+      [0, 7.1, 0],
+      materials.gold,
+      6,
+      null,
+      "MastLowerRing"
+    );
+
+    addCylinder(
+      crown,
+      0.25,
+      0.25,
+      0.1,
+      [0, 8.17, 0],
+      materials.gold,
+      6,
+      null,
+      "MastUpperRing"
+    );
+
+    addCone(
+      crown,
+      0.63,
+      1.55,
+      [0, 8.95, 0],
+      materials.stoneDark,
+      4,
+      [0, Math.PI / 4, 0],
+      "FourSidedSpire"
+    );
+
+    addCylinder(
+      crown,
+      0.67,
+      0.67,
+      0.12,
+      [0, 8.21, 0],
+      materials.gold,
+      4,
+      [0, Math.PI / 4, 0],
+      "SpireGoldBand"
+    );
+
+    addCylinder(
+      crown,
+      0.1,
+      0.16,
+      0.28,
+      [0, 9.82, 0],
+      materials.gold,
+      6,
+      null,
+      "FinialStem"
+    );
+
+    const finial = enableShadows(
+      new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.21, 0),
+        materials.goldLight
+      )
+    );
+    finial.position.set(0, 10.05, 0);
+    crown.add(finial);
+
+    const jewel = enableShadows(
+      new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.115, 0),
+        materials.blueJewel
+      )
+    );
+    jewel.scale.z = 0.72;
+    jewel.position.set(0, 10.08, 0.17);
+    crown.add(jewel);
+
+    // Crown front crest.
+    addCylinder(
+      crown,
+      0.26,
+      0.26,
+      0.1,
+      [0, 6.53, 1.47],
+      materials.goldLight,
+      8,
+      [Math.PI / 2, 0, 0],
+      "CrownCrest"
+    );
+
+    const crestJewel = enableShadows(
+      new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.105, 0),
+        materials.blueJewel
+      )
+    );
+    crestJewel.scale.z = 0.55;
+    crestJewel.position.set(0, 6.53, 1.54);
+    crown.add(crestJewel);
+
+    // ------------------------------------------------------------
+    // Export GLB
+    // ------------------------------------------------------------
+
+    exportButton.addEventListener("click", async () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB…";
+
+      try {
+        modelRoot.updateMatrixWorld(true);
+
+        const exporter = new GLTFExporter();
+        const result = await exporter.parseAsync(modelRoot, {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 4096
+        });
+
+        const blob = new Blob([result], {
+          type: "model/gltf-binary"
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "art-deco-tower.glb";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+
+        status.textContent = "GLB exported successfully";
+      } catch (error) {
+        console.error(error);
+        status.textContent = "Export failed — see browser console";
+      } finally {
+        exportButton.disabled = false;
+      }
+    });
+
+    // ------------------------------------------------------------
+    // Resize and render loop
+    // ------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+  </script>
+</body>
+</html>

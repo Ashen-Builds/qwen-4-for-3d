@@ -1,0 +1,11 @@
+{
+ "schema": 1,
+ "status": "no_export",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)",
+  "TypeError: Cannot read properties of undefined (reading 'toArray')\n    at GLTFWriter.processMaterial (http://127.0.0.1:60989/vendor/three/examples/jsm/exporters/GLTFExporter.js:1444:32)\n    at GLTFWriter.processMesh (http://127.0.0.1:60989/vendor/three/examples/jsm/exporters/GLTFExporter.js:1895:26)\n    at GLTFWriter.processNode (http://127.0.0.1:60989/vendor/three/examples/jsm/exporters/GLTFExporter.js:2250:27)\n    at GLTFWriter.processNode (http://127.0.0.1:60989/vendor/three/examples/jsm/expo"
+ ],
+ "export_buttons": 1,
+ "export_error": "page.waitForEvent: Timeout 45000ms exceeded while waiting for event \"download\""
+}

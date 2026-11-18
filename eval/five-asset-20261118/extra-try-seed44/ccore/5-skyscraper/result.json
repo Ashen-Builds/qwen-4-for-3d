@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "invalid_glb",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "art-deco-tower.glb",
+  "bytes": 228900,
+  "sha256": "edb2dc51f46e94cd9955fd06553e2d91d56744e8efe462e90d7057f83261bf56",
+  "validator_errors": 72,
+  "validator_warnings": 0,
+  "meshes": 117,
+  "nodes": 131,
+  "materials": 8,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 1688,
+  "animations": [],
+  "size_xyz": [
+   null,
+   null,
+   null
+  ]
+ }
+}

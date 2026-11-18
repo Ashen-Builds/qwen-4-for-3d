@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Dragon</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #080a12;
+    }
+
+    #viewport {
+      position: absolute;
+      inset: 0;
+    }
+
+    #ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+      width: min(340px, calc(100vw - 40px));
+      padding: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 14px;
+      background: rgba(10, 12, 22, 0.82);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      margin: 0 0 5px;
+      font-size: 19px;
+      letter-spacing: 0.04em;
+      color: #ff8765;
+    }
+
+    p {
+      margin: 0 0 15px;
+      color: #aeb8c8;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      transition: transform 0.15s ease, filter 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    #export {
+      flex: 1;
+      color: #1d0b11;
+      background: linear-gradient(135deg, #ff9a70, #dc4d31);
+    }
+
+    #reset {
+      color: #e7edf7;
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    #status {
+      min-height: 18px;
+      margin-top: 12px;
+      color: #d6c7b5;
+      font-size: 12px;
+    }
+
+    .hint {
+      position: absolute;
+      right: 20px;
+      bottom: 16px;
+      z-index: 10;
+      color: rgba(220, 225, 235, 0.58);
+      font-size: 12px;
+      pointer-events: none;
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <div id="ui">
+    <h1>Low-Poly Dragon</h1>
+    <p>
+      A stylized quadruped dragon with faceted armor, layered wings,
+      glowing eyes, horns, and a segmented tail.
+    </p>
+
+    <div class="actions">
+      <button id="export">Export GLB</button>
+      <button id="reset">Reset View</button>
+    </div>
+
+    <div id="status">Ready to export.</div>
+  </div>
+
+  <div class="hint">Drag to orbit · Scroll to zoom · Right-drag to pan</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const viewport = document.getElementById("viewport");
+    const exportButton = document.getElementById("export");
+    const resetButton = document.getElementById("reset");
+    const status = document.getElementById("status");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x080a12);
+    scene.fog = new THREE.Fog(0x080a12, 13, 29);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+
+    const defaultCameraPosition = new THREE.Vector3(7.2, 4.7, 8.4);
+    const defaultTarget = new THREE.Vector3(0, 1.65, 0);
+
+    camera.position.copy(defaultCameraPosition);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.copy(defaultTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 4.5;
+    controls.maxDistance = 18;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    // Lighting
+    const ambient = new THREE.HemisphereLight(0x8ea7d8, 0x21111b, 1.8);
+    scene.add(ambient);
+
+    const key = new THREE.DirectionalLight(0xffc0a5, 3.3);
+    key.position.set(5, 9, 6);
+    key.castShadow = true;
+    key.shadow.mapSize.set(2048, 2048);
+    key.shadow.camera.left = -8;
+    key.shadow.camera.right = 8;
+    key.shadow.camera.top = 8;
+    key.shadow.camera.bottom = -8;
+    key.shadow.camera.near = 0.5;
+    key.shadow.camera.far = 30;
+    scene.add(key);
+
+    const rim = new THREE.DirectionalLight(0x4e78ff, 2.3);
+    rim.position.set(-6, 4, -6);
+    scene.add(rim);
+
+    const fill = new THREE.PointLight(0xff3d22, 2.0, 12, 2);
+    fill.position.set(0, 3, 3);
+    scene.add(fill);
+
+    // All exportable geometry is placed under this group.
+    const dragon = new THREE.Group();
+    dragon.name = "LowPolyDragon";
+    scene.add(dragon);
+
+    const materials = {
+      body: new THREE.MeshStandardMaterial({
+        color: 0x741b2c,
+        roughness: 0.82,
+        metalness: 0.04,
+        flatShading: true
+      }),
+      bodyDark: new THREE.MeshStandardMaterial({
+        color: 0x32101c,
+        roughness: 0.9,
+        metalness: 0.02,
+        flatShading: true
+      }),
+      belly: new THREE.MeshStandardMaterial({
+        color: 0xc45b36,
+        roughness: 0.86,
+        metalness: 0.02,
+        flatShading: true
+      }),
+      wing: new THREE.MeshStandardMaterial({
+        color: 0x8f1c3a,
+        roughness: 0.78,
+        metalness: 0.02,
+        flatShading: true,
+        side: THREE.DoubleSide
+      }),
+      wingDark: new THREE.MeshStandardMaterial({
+        color: 0x4a1028,
+        roughness: 0.86,
+        metalness: 0.02,
+        flatShading: true,
+        side: THREE.DoubleSide
+      }),
+      horn: new THREE.MeshStandardMaterial({
+        color: 0xd5b166,
+        roughness: 0.62,
+        metalness: 0.08,
+        flatShading: true
+      }),
+      claw: new THREE.MeshStandardMaterial({
+        color: 0xe8d094,
+        roughness: 0.55,
+        metalness: 0.12,
+        flatShading: true
+      }),
+      eye: new THREE.MeshStandardMaterial({
+        color: 0xff4d23,
+        emissive: 0xff2608,
+        emissiveIntensity: 2.4,
+        roughness: 0.28,
+        metalness: 0.05,
+        flatShading: true
+      }),
+      nostril: new THREE.MeshStandardMaterial({
+        color: 0x120b10,
+        roughness: 0.95,
+        flatShading: true
+      })
+    };
+
+    function addMesh(geometry, material, position, scale = [1, 1, 1], rotation = [0, 0, 0]) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.set(...position);
+      mesh.scale.set(...scale);
+      mesh.rotation.set(...rotation);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      dragon.add(mesh);
+      return mesh;
+    }
+
+    function addIco(
+      radius,
+      detail,
+      material,
+      position,
+      scale = [1, 1, 1],
+      rotation = [0, 0, 0]
+    ) {
+      return addMesh(
+        new THREE.IcosahedronGeometry(radius, detail),
+        material,
+        position,
+        scale,
+        rotation
+      );
+    }
+
+    // Creates a triangular faceted mesh from three points.
+    function addTriangle(points, material) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(points.flat(), 3)
+      );
+      geometry.setIndex([0, 1, 2]);
+      geometry.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      dragon.add(mesh);
+      return mesh;
+    }
+
+    // Creates a rectangular faceted wing panel.
+    function addQuad(points, material) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(points.flat(), 3)
+      );
+      geometry.setIndex([0, 1, 2, 0, 2, 3]);
+      geometry.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      dragon.add(mesh);
+      return mesh;
+    }
+
+    // Directional cylinder helper.
+    function addTaperedCylinder(
+      base,
+      tip,
+      radiusBase,
+      radiusTip,
+      material,
+      radialSegments = 6
+    ) {
+      const a = new THREE.Vector3(...base);
+      const b = new THREE.Vector3(...tip);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radiusTip,
+        radiusBase,
+        length,
+        radialSegments,
+        1,
+        false
+      );
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      dragon.add(mesh);
+      return mesh;
+    }
+
+    // Creates a tapered cone from base to tip.
+    function addTaperedCone(base, tip, radius, material, radialSegments = 6) {
+      const a = new THREE.Vector3(...base);
+      const b = new THREE.Vector3(...tip);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const geometry = new THREE.ConeGeometry(
+        radius,
+        length,
+        radialSegments,
+        1,
+        false
+      );
+
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        direction.normalize()
+      );
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      dragon.add(mesh);
+      return mesh;
+    }
+
+    // Torso and neck
+    addIco(1, 0, materials.body, [0, 1.65, -0.05], [1.02, 0.82, 1.48]);
+    addIco(1, 0, materials.body, [0, 2.15, 0.75], [0.76, 0.83, 0.72]);
+    addIco(1, 0, materials.belly, [0, 1.52, 0.62], [0.78, 0.58, 0.86]);
+
+    // Head and jaw
+    addIco(1, 0, materials.body, [0, 2.55, 1.75], [0.59, 0.51, 0.72]);
+    addIco(1, 0, materials.bodyDark, [0, 2.42, 2.04], [0.45, 0.37, 0.61]);
+    addIco(1, 0, materials.belly, [0, 2.12, 2.02], [0.39, 0.24, 0.55]);
+
+    // Dark mouth gap
+    addMesh(
+      new THREE.BoxGeometry(0.52, 0.065, 0.66),
+      materials.nostril,
+      [0, 2.285, 2.02]
+    );
+
+    // Eyes and dark eye sockets
+    for (const side of [-1, 1]) {
+      addIco(
+        0.16,
+        0,
+        materials.bodyDark,
+        [side * 0.39, 2.65, 1.78],
+        [1, 0.85, 0.75]
+      );
+      addIco(
+        0.105,
+        0,
+        materials.eye,
+        [side * 0.46, 2.66, 1.82],
+        [0.85, 0.72, 0.62]
+      );
+    }
+
+    // Nostrils
+    for (const side of [-1, 1]) {
+      addIco(
+        0.055,
+        0,
+        materials.nostril,
+        [side * 0.18, 2.51, 2.42],
+        [1, 0.65, 0.55]
+      );
+    }
+
+    // Head horns
+    for (const side of [-1, 1]) {
+      addTaperedCone(
+        [side * 0.34, 2.94, 1.62],
+        [side * 0.88, 3.77, 1.10],
+        0.18,
+        materials.horn
+      );
+
+      addTaperedCone(
+        [side * 0.49, 2.78, 1.68],
+        [side * 0.76, 3.20, 1.38],
+        0.095,
+        materials.horn
+      );
+    }
+
+    // Dorsal spines
+    const spinePositions = [-1.08, -0.72, -0.35, 0.02, 0.39];
+
+    spinePositions.forEach((z, index) => {
+      addTaperedCone(
+        [0, 2.38, z],
+        [0, 3.12 - Math.abs(index - 2) * 0.035, z - 0.08],
+        0.14 - index * 0.008,
+        index % 2 === 0 ? materials.bodyDark : materials.body
+      );
+    });
+
+    // Side armor scales
+    for (const side of [-1, 1]) {
+      addIco(
+        1,
+        0,
+        materials.bodyDark,
+        [side * 0.77, 1.90, -0.45],
+        [0.18, 0.31, 0.50]
+      );
+      addIco(
+        1,
+        0,
+        materials.body,
+        [side * 0.88, 1.85, 0.10],
+        [0.17, 0.28, 0.48]
+      );
+      addIco(
+        1,
+        0,
+        materials.bodyDark,
+        [side * 0.72, 1.65, 0.78],
+        [0.17, 0.28, 0.42]
+      );
+    }
+
+    // Four legs
+    for (const side of [-1, 1]) {
+      for (const z of [-0.57, 0.57]) {
+        const prefix = `${side < 0 ? "L" : "R"}${z < 0 ? "Rear" : "Front"}`;
+
+        const shoulder = [side * 0.66, 1.48, z];
+        const knee = [side * 0.77, 0.78, z + (z < 0 ? -0.03 : 0.02)];
+        const ankle = [side * 0.76, 0.22, z + (z < 0 ? -0.06 : 0.03)];
+
+        addTaperedCylinder(
+          shoulder,
+          knee,
+          0.25,
+          0.18,
+          materials.bodyDark
+        );
+
+        addTaperedCylinder(
+          knee,
+          ankle,
+          0.18,
+          0.12,
+          materials.body
+        );
+
+        addIco(
+          1,
+          0,
+          materials.bodyDark,
+          knee,
+          [0.21, 0.20, 0.21]
+        );
+
+        addIco(
+          1,
+          0,
+          materials.body,
+          [ankle[0], 0.13, ankle[2]],
+          [0.30, 0.19, 0.43]
+        );
+
+        // Three toes and hooked claws
+        for (let toe = -1; toe <= 1; toe++) {
+          const toeBase = [
+            ankle[0] + toe * 0.12,
+            0.10,
+            ankle[2] + (toe === 0 ? 0.13 : 0)
+          ];
+
+          const clawTip = [
+            ankle[0] + toe * 0.17,
+            0.075,
+            ankle[2] + 0.30
+          ];
+
+          addTaperedCone(
+            toeBase,
+            clawTip,
+            0.07,
+            materials.claw
+          );
+        }
+      }
+    }
+
+    // Layered wing construction
+    function createWing(side) {
+      const s = side;
+
+      const A = [0.72 * s, 2.28, 0.00];
+      const B = [1.75 * s, 2.72, -0.05];
+      const C = [3.55 * s, 2.35, -0.55];
+      const D = [3.30 * s, 1.50, -0.85];
+      const E = [1.00 * s, 1.42, 0.15];
+      const F = [2.65 * s, 1.55, -0.45];
+
+      // Main membrane panels
+      addQuad([A, B, C, D], materials.wing);
+      addQuad([B, D, C, E], materials.wingDark);
+      addQuad([B, E, D, F], materials.wing);
+      addQuad([A, E, D, F], materials.wing);
+      addQuad([A, F, C, D], materials.wingDark);
+      addQuad([A, D, C, E], materials.wing);
+
+      // Faceted wing-tip accent
+      addTriangle([D, C, F], materials.bodyDark);
+
+      // Wing bones
+      addTaperedCylinder(A, B, 0.10, 0.07, materials.horn);
+      addTaperedCylinder(B, C, 0.08, 0.035, materials.horn);
+      addTaperedCylinder(B, D, 0.075, 0.035, materials.horn);
+      addTaperedCylinder(B, E, 0.065, 0.03, materials.horn);
+      addTaperedCylinder(A, E, 0.09, 0.05, materials.horn);
+      addTaperedCylinder(A, F, 0.065, 0.03, materials.horn);
+      addTaperedCylinder(A, D, 0.06, 0.025, materials.horn);
+
+      // Wing joints
+      for (const point of [A, B, C, D, E]) {
+        addIco(
+          1,
+          0,
+          materials.bodyDark,
+          point,
+          [0.13, 0.13, 0.13]
+        );
+      }
+    }
+
+    createWing(-1);
+    createWing(1);
+
+    // Segmented tail
+    const tailPoints = [
+      [0, 1.55, -1.15],
+      [0, 1.36, -1.85],
+      [0, 1.18, -2.48],
+      [0, 1.02, -3.08],
+      [0, 0.88, -3.60],
+      [0, 0.74, -4.02]
+    ];
+
+    for (let i = 0; i < tailPoints.length - 1; i++) {
+      const t = i / (tailPoints.length - 1);
+      const radius = 0.42 * (1 - t) + 0.09;
+      const nextRadius = 0.42 * (1 - (i + 1) / (tailPoints.length - 1)) + 0.09;
+
+      addTaperedCylinder(
+        tailPoints[i],
+        tailPoints[i + 1],
+        radius,
+        nextRadius,
+        i % 2 === 0 ? materials.body : materials.bodyDark
+      );
+    }
+
+    // Tail spikes
+    for (let i = 1; i < tailPoints.length - 1; i++) {
+      const p = tailPoints[i];
+      addTaperedCone(
+        [0, p[1] + 0.10, p[2]],
+        [0, p[1] + 0.42, p[2] - 0.16],
+        0.13 - i * 0.008,
+        i % 2 === 0 ? materials.bodyDark : materials.body
+      );
+    }
+
+    // Tail tip
+    addTaperedCone(
+      tailPoints[tailPoints.length - 1],
+      [0, 0.61, -4.45],
+      0.11,
+      materials.bodyDark
+    );
+
+    // Small tail ridges
+    addIco(
+      1,
+      0,
+      materials.body,
+      [0, 1.28, -2.30],
+      [0.38, 0.38, 0.55]
+    );
+    addIco(
+      1,
+      0,
+      materials.body,
+      [0, 1.08, -3.05],
+      [0.32, 0.32, 0.48]
+    );
+
+    // Keep the dragon visually centered.
+    dragon.rotation.y = -0.08;
+
+    function resize() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    resetButton.addEventListener("click", () => {
+      camera.position.copy(defaultCameraPosition);
+      controls.target.copy(defaultTarget);
+      controls.update();
+    });
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Preparing GLB...";
+
+      dragon.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        dragon,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "low-poly-dragon.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+          exportButton.disabled = false;
+          status.textContent = "Exported low-poly-dragon.glb";
+        },
+        (error) => {
+          console.error(error);
+          exportButton.disabled = false;
+          status.textContent = "Export failed. See the browser console.";
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          includeCustomExtensions: false
+        }
+      );
+    });
+  </script>
+</body>
+</html>

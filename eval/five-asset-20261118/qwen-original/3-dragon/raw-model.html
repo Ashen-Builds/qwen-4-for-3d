@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Low Poly Dragon for Godot</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #f0f0f0; font-family: sans-serif; }
+        #canvas-container { width: 100vw; height: 100vh; display: block; }
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            background-color: #8b3a3a;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #a64b4b; }
+        h1 { margin: 0 0 5px 0; font-size: 18px; color: #333; }
+        p { margin: 0; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <h1>Low Poly Dragon</h1>
+    <p>Export to GLB for Godot</p>
+    <button id="export-btn">Export .GLB</button>
+</div>
+
+<div id="canvas-container"></div>
+
+<!-- Import Three.js and GLTFExporter from CDN -->
+<script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+    // --- Scene Setup ---
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xdddddd); // Light grey background
+    scene.fog = new THREE.Fog(0xdddddd, 20, 100);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(5, 4, 6);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxPolarAngle = Math.PI / 2 - 0.05; // Don't go below ground
+    controls.minDistance = 3;
+    controls.maxDistance = 15;
+
+    // --- Lighting ---
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    dirLight.position.set(5, 10, 7);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 2048;
+    dirLight.shadow.mapSize.height = 2048;
+    dirLight.shadow.camera.near = 0.1;
+    dirLight.shadow.camera.far = 50;
+    dirLight.shadow.camera.left = -10;
+    dirLight.shadow.camera.right = 10;
+    dirLight.shadow.camera.top = 10;
+    dirLight.shadow.camera.bottom = -10;
+    scene.add(dirLight);
+
+    // --- Materials ---
+    // We use a custom shader-like approach using Vertex Colors and Standard Material
+    // to handle the red/orange/yellow gradient on scales efficiently.
+    
+    const dragonGroup = new THREE.Group();
+    scene.add(dragonGroup);
+
+    // Materials
+    const materialRed = new THREE.MeshStandardMaterial({ 
+        color: 0x8b3a3a, 
+        roughness: 0.8, 
+        metalness: 0.1,
+        flatShading: true
+    });
+    const materialOrange = new THREE.MeshStandardMaterial({ 
+        color: 0xd67d28, 
+        roughness: 0.8, 
+        metalness: 0.1,
+        flatShading: true
+    });
+    const materialLight = new THREE.MeshStandardMaterial({ 
+        color: 0xe6c288, 
+        roughness: 0.7, 
+        metalness: 0.1,
+        flatShading: true
+    });
+    const materialWhite = new THREE.MeshStandardMaterial({ 
+        color: 0xffffff, 
+        roughness: 0.7, 
+        metalness: 0.1,
+        flatShading: true
+    });
+    const materialGold = new THREE.MeshStandardMaterial({ 
+        color: 0xffd700, 
+        roughness: 0.4, 
+        metalness: 0.8,
+        flatShading: true
+    });
+
+    // Helper to create mesh with specific colors
+    function createMesh(geometry, material) {
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        return mesh;
+    }
+
+    // --- 1. Head Construction ---
+    const headGroup = new THREE.Group();
+    
+    // Main Head Body
+    const headShape = new THREE.SphereGeometry(1.2, 16, 16);
+    headShape.scale(1, 0.9, 0.7);
+    const headMesh = createMesh(new THREE.Mesh(headShape), materialRed);
+    headMesh.position.set(0, 0, 0.5);
+    headGroup.add(headMesh);
+
+    // Snout
+    const snoutShape = new THREE.ConeGeometry(0.8, 1.5, 8);
+    snoutShape.rotateX(Math.PI / 2);
+    const snoutMesh = createMesh(new THREE.Mesh(snoutShape), materialGold);
+    snoutMesh.position.set(1.2, 0.2, 0.8);
+    headGroup.add(snoutMesh);
+
+    // Mouth / Teeth
+    const mouthShape = new THREE.BufferGeometry();
+    const mouthVertices = [];
+    const positions = [];
+    
+    // Simple jagged mouth
+    for(let i=0; i<30; i++) {
+        const x = 1.1 + (i - 15) * 0.02;
+        const y = -0.2 + Math.sin(i) * 0.1;
+        const z = 1.2;
+        mouthVertices.push(x, y, z);
+        positions.push(x, y, z);
+    }
+    mouthShape.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+    mouthShape.computeVertexNormals();
+    
+    const mouthMesh = createMesh(new THREE.Mesh(mouthShape), materialWhite);
+    mouthMesh.position.set(1.2, -0.1, 1.1);
+    mouthMesh.rotation.z = -Math.PI / 2;
+    headGroup.add(mouthMesh);
+
+    // Horns
+    const hornShape = new THREE.CylinderGeometry(0.02, 0.02, 1.2, 6);
+    hornShape.rotateZ(Math.PI / 4);
+    
+    const hornL = createMesh(new THREE.Mesh(hornShape), materialRed);
+    hornL.position.set(-0.6, 1.0, -0.2);
+    hornL.scale.set(1, 0.8, 0.8);
+    headGroup.add(hornL);
+
+    const hornR = createMesh(new THREE.Mesh(hornShape), materialRed);
+    hornR.position.set(0.6, 1.0, -0.2);
+    hornR.scale.set(1, 0.8, 0.8);
+    headGroup.add(hornR);
+
+    // Spikes on neck
+    const neckSpikes = [];
+    const spikeShape = new THREE.ConeGeometry(0.1, 0.4, 4);
+    spikeShape.rotateX(-Math.PI / 2);
+    for(let i=-1; i<=2; i++) {
+        const spike = createMesh(new THREE.Mesh(spikeShape), materialRed);
+        spike.position.set(0, i * 0.3, 0.1);
+        headGroup.add(spike);
+    }
+
+    dragonGroup.add(headGroup);
+
+
+    // --- 2. Body Construction ---
+    const bodyGroup = new THREE.Group();
+    dragonGroup.add(bodyGroup);
+
+    // Torso
+    const torsoShape = new THREE.SphereGeometry(1.1, 16, 16);
+    const torsoMesh = createMesh(new THREE.Mesh(torsoShape), materialRed);
+    torsoMesh.scale.set(1, 0.9, 0.5);
+    torsoMesh.position.set(-0.5, 0, 0);
+    bodyGroup.add(torsoMesh);
+
+    // White Belly Strip
+    const bellyShape = new THREE.SphereGeometry(1.1, 16, 16);
+    const bellyMesh = createMesh(new THREE.Mesh(bellyShape), materialWhite);
+    bellyMesh.scale.set(1, 0.7, 0.3);
+    bellyMesh.position.set(-0.5, -0.2, 0.2);
+    bodyGroup.add(bellyMesh);
+
+    // Back Spikes
+    const backSpikes = [];
+    const spikeBodyShape = new THREE.CylinderGeometry(0.05, 0.05, 0.5, 6);
+    spikeBodyShape.rotateX(Math.PI / 2);
+    for(let i=0; i<12; i++) {
+        const spike = createMesh(new THREE.Mesh(spikeBodyShape), materialRed);
+        spike.position.set(i * 0.15, 0.8, -0.2);
+        bodyGroup.add(spike);
+    }
+
+    // --- 3. Legs ---
+    const legPositions = [
+        { x: -0.5, z: 0.5 }, { x: 0.5, z: 0.5 },
+        { x: -0.6, z: -0.5 }, { x: 0.6, z: -0.5 }
+    ];
+
+    legPositions.forEach(pos => {
+        const legGroup = new THREE.Group();
+        bodyGroup.add(legGroup);
+        
+        // Thigh
+        const thighShape = new THREE.CylinderGeometry(0.3, 0.35, 1.5, 8);
+        thighShape.rotateX(Math.PI / 2);
+        const thigh = createMesh(new THREE.Mesh(thighShape), materialRed);
+        thigh.position.set(pos.x, 0.5, pos.z);
+        legGroup.add(thigh);
+
+        // Lower Leg / Foot
+        const footShape = new THREE.CylinderGeometry(0.2, 0.25, 0.8, 8);
+        footShape.rotateX(Math.PI / 2);
+        const foot = createMesh(new THREE.Mesh(footShape), materialRed);
+        foot.position.set(pos.x, -0.5, pos.z);
+        legGroup.add(foot);
+
+        // Claws
+        const clawShape = new THREE.ConeGeometry(0.08, 0.3, 4);
+        clawShape.rotateX(-Math.PI / 2);
+        
+        for(let i=0; i<3; i++) {
+            const claw = createMesh(new THREE.Mesh(clawShape), materialGold);
+            claw.position.set((i-1)*0.05, -0.4, 0.4);
+            claw.rotation.z = Math.random() * 0.5 - 0.25;
+            foot.add(claw);
+        }
+    });
+
+    // --- 4. Tail ---
+    const tailGroup = new THREE.Group();
+    tailGroup.position.set(-1.2, -0.2, 0);
+    bodyGroup.add(tailGroup);
+
+    // Main Tail Body
+    const tailShape = new THREE.CylinderGeometry(0.4, 0.2, 4, 8);
+    tailShape.rotateX(-Math.PI / 2);
+    const tailMesh = createMesh(new THREE.Mesh(tailShape), materialRed);
+    tailMesh.position.z = 1.5;
+    tailGroup.add(tailMesh);
+
+    // Tail Spikes (Segmented)
+    const tailSpikes = [];
+    const spikeTailShape = new THREE.CylinderGeometry(0.05, 0.05, 0.4, 6);
+    spikeTailShape.rotateX(-Math.PI / 2);
+
+    for(let i=0; i<8; i++) {
+        const spike = createMesh(new THREE.Mesh(spikeTailShape), materialRed);
+        spike.position.z = 1.5 - (i * 0.4);
+        spike.position.x = (i - 4) * 0.25; // Curve out
+        spike.position.y = (i < 4) ? 0.2 : -0.2; // Curve up/down
+        tailGroup.add(spike);
+        
+        // Spikes on spikes
+        const spikeTipShape = new THREE.CylinderGeometry(0.02, 0.02, 0.1, 4);
+        const tip = createMesh(new THREE.Mesh(spikeTipShape), materialRed);
+        tip.position.set(0, 0.1, 0.3);
+        tailGroup.add(tip);
+    }
+
+    // --- 5. Wings (Complex) ---
+    const wings = [];
+    const wingPositions = [
+        { x: 0.2, y: 0.5, z: 1.2, rotX: -0.5, rotY: 0.5 }, // Right wing
+        { x: -0.2, y: 0.5, z: 1.2, rotX: 0.5, rotY: -0.5 } // Left wing
+    ];
+
+    wingPositions.forEach(pos => {
+        const wingGroup = new THREE.Group();
+        wingGroup.position.set(pos.x, pos.y, pos.z);
+        wingGroup.rotation.set(pos.rotX, pos.rotY, 0);
+        bodyGroup.add(wingGroup);
+
+        // Wing Bone Structure (Red/Orange)
+        const boneShape = new THREE.BoxGeometry(0.2, 0.2, 2.5);
+        boneShape.rotateX(Math.PI / 2);
+        
+        const boneMesh = createMesh(new THREE.Mesh(boneShape), materialRed);
+        boneMesh.position.set(0, 0, 0);
+        wingGroup.add(boneMesh);
+
+        // Wing Membrane (Orange/Gold gradient simulated with multiple planes)
+        // We create a mesh and color vertices manually to look like a gradient
+        
+        const membraneShape = new THREE.PlaneGeometry(3, 1.8);
+        membraneShape.rotateX(Math.PI / 2);
+        membraneShape.rotateY(0.3); // Angle out
+        
+        const membraneGeo = membraneShape;
+        const membraneMat = new THREE.MeshBasicMaterial({ color: 0xffaa00, side: THREE.DoubleSide }); // Helper color for vertex color generation
+        // Note: Real vertex colors are better, but for simplicity in this standalone, we'll use a shader or distinct parts. 
+        // Let's use a custom shader material for the membrane to handle the gradient.
+        
+        const membraneMesh = new THREE.Mesh(membraneShape, new THREE.ShaderMaterial({
+            uniforms: {
+                uLightPos: { value: dirLight.position },
+                uMembraneBase: { value: 0xffaa00 },
+                uMembraneTop: { value: 0xffd700 }
+            },
+            vertexShader: `
+                attribute float size;
+                varying vec3 vColor;
+                void main() {
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+                    // Simple color interpolation based on Y position
+                    vColor = mix(vec3(0xffaa00), vec3(0xffd700), position.y + 0.5);
+                }
+            `,
+            fragmentShader: `
+                uniform vec3 uMembraneBase;
+                uniform vec3 uMembraneTop;
+                varying vec3 vColor;
+                void main() {
+                    gl_FragColor = vec4(vColor, 1.0);
+                }
+            `,
+            side: THREE.DoubleSide
+        }));
+        
+        membraneMesh.position.set(0, 0, 0.2);
+        wingGroup.add(membraneMesh);
+
+        // Spines on wings
+        const spineShape = new THREE.CylinderGeometry(0.03, 0.03, 2.5, 6);
+        spineShape.rotateX(Math.PI / 2);
+        for(let i=0; i<6; i++) {
+            const spine = createMesh(new THREE.Mesh(spineShape), materialRed);
+            spine.position.z = (i-3) * 0.5;
+            spine.position.y = (i < 3) ? -0.2 : 0.2;
+            wingGroup.add(spine);
+            
+            const tip = createMesh(new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.4, 4)), materialGold);
+            tip.position.set(0, 0.2, 0.3);
+            wingGroup.add(tip);
+        }
+
+        wings.push(wingGroup);
+    });
+
+    // --- Animation Logic ---
+    const time = 0;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        time += 0.05;
+
+        // Simple Idle Animation: Wing Flap and Head Bob
+        const flap = Math.sin(time) * 0.15;
+        const bob = Math.sin(time * 0.5) * 0.05;
+
+        wings.forEach((wing, i) => {
+            // Flap wings on the side of their parent rotation
+            // Since right wing is already rotated, we adjust slightly
+            wing.position.y += flap * (i === 0 ? 1 : -1);
+        });
+
+        headGroup.position.y += bob;
+        headGroup.rotation.z = Math.sin(time * 0.3) * 0.05;
+
+        controls.update();
+        renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // --- Export Logic ---
+    const exportBtn = document.getElementById('export-btn');
+    
+    exportBtn.addEventListener('click', () => {
+        const exporter = new GLTFExporter();
+        
+        exporter.parse(
+            scene, 
+            undefined, 
+            function (result) {
+                const url = URL.createObjectURL(new Blob([result], { type: 'application/octet-stream' }));
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'low_poly_dragon.glb';
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+            }, 
+            function (error) {
+                console.error('An error happened:', error);
+                alert('Error exporting GLB. Check console.');
+            }
+        );
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', onWindowResize, false);
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+</script>
+</body>
+</html>

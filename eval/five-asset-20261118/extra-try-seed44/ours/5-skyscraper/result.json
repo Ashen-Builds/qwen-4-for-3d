@@ -1,0 +1,28 @@
+{
+ "schema": 1,
+ "status": "ok",
+ "page_errors": [],
+ "console_errors": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ],
+ "export_buttons": 1,
+ "glb": {
+  "suggested_name": "ornate-tower.glb",
+  "bytes": 275612,
+  "sha256": "c622d77dd011d3520c7268dc2f4b85ab7f6a2ef137e4b1579e5a5beb79bb7888",
+  "validator_errors": 0,
+  "validator_warnings": 0,
+  "meshes": 138,
+  "nodes": 260,
+  "materials": 8,
+  "skins": 0,
+  "textures": 0,
+  "triangles": 2356,
+  "animations": [],
+  "size_xyz": [
+   5.550000190734863,
+   9.270000001192093,
+   6.175000095367432
+  ]
+ }
+}

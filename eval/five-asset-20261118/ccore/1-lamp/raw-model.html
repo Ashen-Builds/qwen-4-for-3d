@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Victorian Lamp — Three.js GLB Creator</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #d8d4ca;
+    }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(340px, calc(100vw - 44px));
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      background: rgba(18, 25, 35, 0.84);
+      color: #f5f0e6;
+      box-shadow: 0 16px 50px rgba(20, 24, 30, 0.28);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .eyebrow {
+      margin-bottom: 7px;
+      color: #d6ae61;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 9px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 28px;
+      font-weight: 500;
+      line-height: 1.1;
+    }
+
+    .description {
+      margin: 0 0 17px;
+      color: rgba(245, 240, 230, 0.72);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    button {
+      appearance: none;
+      border: 0;
+      border-radius: 9px;
+      padding: 11px 16px;
+      background: linear-gradient(135deg, #e2b85b, #b9822d);
+      color: #211709;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.24);
+      transition: transform 150ms ease, filter 150ms ease, opacity 150ms ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+
+    button:disabled {
+      cursor: wait;
+      opacity: 0.6;
+    }
+
+    #status {
+      color: rgba(245, 240, 230, 0.62);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .hint {
+      position: fixed;
+      right: 20px;
+      bottom: 18px;
+      z-index: 10;
+      padding: 9px 13px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      background: rgba(18, 25, 35, 0.68);
+      color: rgba(255, 255, 255, 0.76);
+      font-size: 11px;
+      pointer-events: none;
+      backdrop-filter: blur(10px);
+    }
+
+    #loading {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      background: #d8d4ca;
+      color: #3b3020;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .hint {
+        right: 12px;
+        bottom: 12px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="stage"></div>
+
+  <section class="panel">
+    <div class="eyebrow">Low-poly game asset</div>
+    <h1>Victorian Brass Lamp</h1>
+    <p class="description">
+      A static, game-ready lamp with blue enamel detailing, a sculpted fabric
+      shade, gold cage, and eight hanging crystals.
+    </p>
+
+    <div class="actions">
+      <button id="exportButton" type="button" disabled>Export GLB</button>
+      <span id="status">Preparing asset…</span>
+    </div>
+  </section>
+
+  <div class="hint">Drag to orbit · Scroll to zoom</div>
+  <div id="loading">Building Victorian lamp…</div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    const stage = document.getElementById("stage");
+    const exportButton = document.getElementById("exportButton");
+    const status = document.getElementById("status");
+    const loading = document.getElementById("loading");
+
+    // -------------------------------------------------------------------------
+    // Renderer and scene
+    // -------------------------------------------------------------------------
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xd8d4ca);
+    scene.fog = new THREE.Fog(0xd8d4ca, 9, 18);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.05,
+      100
+    );
+    camera.position.set(4.4, 3.25, 5.8);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: "high-performance"
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 1.32, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 3.4;
+    controls.maxDistance = 10;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.update();
+
+    // -------------------------------------------------------------------------
+    // Materials
+    // -------------------------------------------------------------------------
+
+    const materials = {
+      gold: new THREE.MeshStandardMaterial({
+        color: 0xd0a34a,
+        metalness: 0.9,
+        roughness: 0.23,
+        flatShading: true
+      }),
+      darkGold: new THREE.MeshStandardMaterial({
+        color: 0x76501e,
+        metalness: 0.85,
+        roughness: 0.31,
+        flatShading: true
+      }),
+      enamel: new THREE.MeshStandardMaterial({
+        color: 0x18385f,
+        metalness: 0.28,
+        roughness: 0.3,
+        flatShading: true
+      }),
+      enamelLight: new THREE.MeshStandardMaterial({
+        color: 0x28517b,
+        metalness: 0.25,
+        roughness: 0.34,
+        flatShading: true
+      }),
+      fabric: new THREE.MeshStandardMaterial({
+        color: 0xd7b779,
+        emissive: 0x5b3510,
+        emissiveIntensity: 0.14,
+        roughness: 0.9,
+        metalness: 0,
+        side: THREE.DoubleSide,
+        flatShading: true
+      }),
+      crystal: new THREE.MeshStandardMaterial({
+        color: 0xbfe8ff,
+        emissive: 0x3e9fc8,
+        emissiveIntensity: 0.72,
+        roughness: 0.12,
+        metalness: 0.08,
+        transparent: true,
+        opacity: 0.92,
+        depthWrite: false,
+        flatShading: true
+      }),
+      glow: new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        emissive: 0xc8f4ff,
+        emissiveIntensity: 1.4,
+        roughness: 0.2,
+        transparent: true,
+        opacity: 0.78,
+        depthWrite: false,
+        flatShading: true
+      })
+    };
+
+    // -------------------------------------------------------------------------
+    // Lamp construction
+    // -------------------------------------------------------------------------
+
+    const lamp = new THREE.Group();
+    lamp.name = "Victorian_Lamp";
+    lamp.scale.setScalar(0.94);
+    lamp.rotation.set(0.015, -0.38, 0.012);
+    scene.add(lamp);
+
+    function addMesh(geometry, material, name) {
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = name;
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      lamp.add(mesh);
+      return mesh;
+    }
+
+    function addHorizontalRing(radius, tube, y, material, name) {
+      const ring = addMesh(
+        new THREE.TorusGeometry(radius, tube, 6, 48),
+        material,
+        name
+      );
+      ring.rotation.x = Math.PI / 2;
+      ring.position.y = y;
+      return ring;
+    }
+
+    function addLathe(profile, segments, material, name) {
+      const points = profile.map(([radius, y]) => new THREE.Vector2(radius, y));
+      const mesh = addMesh(
+        new THREE.LatheGeometry(points, segments),
+        material,
+        name
+      );
+      return mesh;
+    }
+
+    // Dark bronze foot and gold toe trim.
+    addMesh(
+      new THREE.CylinderGeometry(0.72, 0.82, 0.16, 12),
+      materials.darkGold,
+      "Bronze_Foot"
+    ).position.y = 0.08;
+
+    addHorizontalRing(
+      0.72,
+      0.045,
+      0.16,
+      materials.gold,
+      "Foot_Gold_Trim"
+    );
+
+    // Main blue enamel base.
+    addLathe(
+      [
+        [0.58, 0.18],
+        [0.69, 0.20],
+        [0.76, 0.26],
+        [0.76, 0.34],
+        [0.68, 0.42],
+        [0.58, 0.51],
+        [0.60, 0.61],
+        [0.69, 0.66],
+        [0.67, 0.73],
+        [0.52, 0.78]
+      ],
+      12,
+      materials.enamel,
+      "Blue_Enamel_Base"
+    );
+
+    addHorizontalRing(
+      0.715,
+      0.042,
+      0.235,
+      materials.gold,
+      "Base_Lower_Gold_Band"
+    );
+
+    addHorizontalRing(
+      0.747,
+      0.032,
+      0.365,
+      materials.gold,
+      "Base_Middle_Gold_Band"
+    );
+
+    addHorizontalRing(
+      0.615,
+      0.028,
+      0.575,
+      materials.gold,
+      "Base_Upper_Gold_Band"
+    );
+
+    // Small decorative studs around the base.
+    const studGeometry = new THREE.SphereGeometry(0.044, 6, 4);
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const stud = addMesh(studGeometry, materials.gold, `Base_Stud_${i + 1}`);
+      stud.position.set(
+        Math.sin(angle) * 0.625,
+        0.485,
+        Math.cos(angle) * 0.625
+      );
+      stud.scale.set(0.75, 1.15, 0.65);
+      stud.rotation.y = -angle;
+    }
+
+    // Front medallion.
+    const medallion = new THREE.Group();
+    medallion.name = "Front_Medallion";
+    medallion.position.set(0, 0.48, 0.665);
+    lamp.add(medallion);
+
+    addMesh(
+      new THREE.TorusGeometry(0.115, 0.024, 6, 18),
+      materials.gold,
+      "Medallion_Ring"
+    ).parent = medallion;
+
+    const medallionGem = addMesh(
+      new THREE.OctahedronGeometry(0.083, 0),
+      materials.crystal,
+      "Medallion_Gem"
+    );
+    medallionGem.position.z = 0.018;
+    medallionGem.scale.z = 0.62;
+    medallion.add(medallionGem);
+
+    const rivetGeometry = new THREE.SphereGeometry(0.021, 6, 4);
+    for (let i = 0; i < 4; i++) {
+      const angle = (i / 4) * Math.PI * 2 + Math.PI / 4;
+      const rivet = addMesh(
+        rivetGeometry,
+        materials.gold,
+        `Medallion_Rivet_${i + 1}`
+      );
+      rivet.position.set(
+        Math.cos(angle) * 0.147,
+        Math.sin(angle) * 0.147,
+        0.012
+      );
+      medallion.add(rivet);
+    }
+
+    // Turned gold stem.
+    addLathe(
+      [
+        [0.37, 0.66],
+        [0.29, 0.72],
+        [0.22, 0.82],
+        [0.20, 1.04],
+        [0.25, 1.17],
+        [0.31, 1.30],
+        [0.34, 1.42],
+        [0.31, 1.51]
+      ],
+      12,
+      materials.gold,
+      "Turned_Gold_Stem"
+    );
+
+    addHorizontalRing(
+      0.235,
+      0.031,
+      0.815,
+      materials.gold,
+      "Stem_Lower_Ring"
+    );
+
+    addHorizontalRing(
+      0.25,
+      0.028,
+      1.165,
+      materials.gold,
+      "Stem_Middle_Ring"
+    );
+
+    addHorizontalRing(
+      0.325,
+      0.035,
+      1.395,
+      materials.gold,
+      "Stem_Upper_Ring"
+    );
+
+    // Connector between the stem and shade.
+    addMesh(
+      new THREE.CylinderGeometry(0.34, 0.39, 0.16, 12),
+      materials.gold,
+      "Shade_Connector_Collar"
+    ).position.y = 1.48;
+
+    // -------------------------------------------------------------------------
+    // Faceted, scalloped fabric shade
+    // -------------------------------------------------------------------------
+
+    function createShadeGeometry() {
+      const segments = 16;
+      const rings = [
+        { y: 1.51, radius: 0.285 },
+        { y: 1.64, radius: 0.475 },
+        { y: 1.91, radius: 0.68 },
+        { y: 2.22, radius: 0.835 },
+        { y: 2.34, radius: 0.915 }
+      ];
+
+      const positions = [];
+      const indices = [];
+
+      for (let ringIndex = 0; ringIndex < rings.length; ringIndex++) {
+        const ring = rings[ringIndex];
+
+        for (let segment = 0; segment < segments; segment++) {
+          const angle = (segment / segments) * Math.PI * 2;
+
+          if (ringIndex === rings.length - 1) {
+            const scallop = 0.085 * Math.cos(angle * 8);
+            positions.push(
+              Math.cos(angle) * ring.radius,
+              2.34 + scallop,
+              Math.sin(angle) * ring.radius
+            );
+          } else {
+            positions.push(
+              Math.cos(angle) * ring.radius,
+              ring.y,
+              Math.sin(angle) * ring.radius
+            );
+          }
+
+          const u = segment / segments;
+          const v = ringIndex / (rings.length - 1);
+          const indices.push(u, v);
+        }
+      }
+
+      for (let ringIndex = 0; ringIndex < rings.length - 1; ringIndex++) {
+        for (let segment = 0; segment < segments; segment++) {
+          const nextSegment = (segment + 1) % segments;
+
+          const a = ringIndex * segments + segment;
+          const b = ringIndex * segments + nextSegment;
+          const c = (ringIndex + 1) * segments + segment;
+          const d = (ringIndex + 1) * segments + nextSegment;
+
+          indices.push(a, c, b, b, c, d);
+        }
+      }
+
+      // Close the top of the shade.
+      const topCenterIndex = positions.length / 3;
+      positions.push(0, 1.515, 0);
+      const topRingStart = 0;
+
+      for (let segment = 0; segment < segments; segment++) {
+        const nextSegment = (segment + 1) % segments;
+        indices.push(
+          topCenterIndex,
+          topRingStart + segment,
+          topRingStart + nextSegment
+        );
+      }
+
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(positions, 3)
+      );
+      geometry.setIndex(indices);
+      geometry.computeVertexNormals();
+      return geometry;
+    }
+
+    const shade = addMesh(
+      createShadeGeometry(),
+      materials.fabric,
+      "Scalloped_Fabric_Shade"
+    );
+    shade.renderOrder = 1;
+
+    // Gold top rim.
+    addHorizontalRing(
+      0.293,
+      0.043,
+      1.515,
+      materials.gold,
+      "Shade_Top_Gold_Rim"
+    );
+
+    // Eight gold ribs follow the scalloped lower edge.
+    const ribBottomPoints = [];
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const bottomY = 2.34 + 0.085 * Math.cos(angle * 8);
+      const bottomPoint = new THREE.Vector3(
+        Math.cos(angle) * 0.915,
+        bottomY,
+        Math.sin(angle) * 0.915
+      );
+
+      ribBottomPoints.push(bottomPoint);
+
+      const ribCurve = new THREE.CatmullRomCurve3(
+        [
+          new THREE.Vector3(
+            Math.cos(angle) * 0.293,
+            1.515,
+            Math.sin(angle) * 0.293
+          ),
+          new THREE.Vector3(
+            Math.cos(angle) * 0.405,
+            1.65,
+            Math.sin(angle) * 0.405
+          ),
+          new THREE.Vector3(
+            Math.cos(angle) * 0.585,
+            1.9,
+            Math.sin(angle) * 0.585
+          ),
+          new THREE.Vector3(
+            Math.cos(angle) * 0.76,
+            2.185,
+            Math.sin(angle) * 0.76
+          ),
+          bottomPoint
+        ],
+        false,
+        "catmullrom",
+        0.25
+      );
+
+      addMesh(
+        new THREE.TubeGeometry(ribCurve, 20, 0.027, 5, false),
+        materials.gold,
+        `Shade_Gold_Rib_${i + 1}`
+      );
+    }
+
+    // Lower gold crimp.
+    addHorizontalRing(
+      0.91,
+      0.047,
+      2.345,
+      materials.gold,
+      "Shade_Lower_Gold_Crimp"
+    );
+
+    // Small gold diamonds printed on the fabric.
+    const fabricDiamondGeometry = new THREE.OctahedronGeometry(0.062, 0);
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const diamond = addMesh(
+        fabricDiamondGeometry,
+        materials.gold,
+        `Shade_Diamond_${i + 1}`
+      );
+      diamond.position.set(
+        Math.cos(angle) * 0.704,
+        1.92,
+        Math.sin(angle) * 0.704
+      );
+      diamond.scale.set(0.27, 1, 0.78);
+      diamond.rotation.y = -angle;
+    }
+
+    // -------------------------------------------------------------------------
+    // Hanging crystals and chains
+    // -------------------------------------------------------------------------
+
+    const crystalGeometry = new THREE.OctahedronGeometry(0.16, 0);
+    const chainLinkGeometry = new THREE.TorusGeometry(0.052, 0.013, 5, 10);
+
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const anchorY = 2.34 + 0.085 * Math.cos(angle * 8);
+
+      const chain = new THREE.Group();
+      chain.name = `Crystal_Chain_${i + 1}`;
+      lamp.add(chain);
+
+      for (let linkIndex = 0; linkIndex < 4; linkIndex++) {
+        const link = addMesh(
+          chainLinkGeometry,
+          materials.gold,
+          `Chain_Link_${i + 1}_${linkIndex + 1}`
+        );
+
+        link.position.set(
+          Math.cos(angle) * 0.915,
+          anchorY - 0.095 - linkIndex * 0.083,
+          Math.sin(angle) * 0.915
+        );
+
+        link.rotation.set(
+          linkIndex % 2 === 0 ? 0 : Math.PI / 2,
+          linkIndex % 2 === 0 ? Math.PI / 2 : 0,
+          0
+        );
+
+        link.scale.set(0.75, 1.25, 0.75);
+        chain.add(link);
+      }
+
+      const crystal = addMesh(
+        crystalGeometry,
+        materials.crystal,
+        `Hanging_Crystal_${i + 1}`
+      );
+
+      crystal.position.set(
+        Math.cos(angle) * 0.915,
+        anchorY - 0.56,
+        Math.sin(angle) * 0.915
+      );
+      crystal.rotation.set(
+        0.08 * (i % 2 === 0 ? 1 : -1),
+        angle,
+        -0.06 * (i % 2 === 0 ? -1 : 1)
+      );
+      crystal.scale.set(0.72, 1.85, 0.72);
+      crystal.renderOrder = 2;
+    }
+
+    // Warm preview light. It is not part of the exported asset.
+    const previewLight = new THREE.PointLight(0xffc96b, 7, 3.2, 2);
+    scene.add(previewLight);
+
+    // -------------------------------------------------------------------------
+    // Studio ground
+    // -------------------------------------------------------------------------
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(30, 30),
+      new THREE.MeshStandardMaterial({
+        color: 0xb9b3a8,
+        roughness: 0.95,
+        metalness: 0
+      })
+    );
+    ground.name = "Studio_Ground";
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.y = -0.025;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // -------------------------------------------------------------------------
+    // Lighting
+    // -------------------------------------------------------------------------
+
+    const hemisphere = new THREE.HemisphereLight(0xfff3d9, 0x303746, 1.8);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xfff0cf, 3.8);
+    keyLight.position.set(4.5, 7, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 20;
+    keyLight.shadow.camera.left = -4;
+    keyLight.shadow.camera.right = 4;
+    keyLight.shadow.camera.top = 5;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.bias = -0.0005;
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xb9d8ff, 1.6);
+    fillLight.position.set(-5, 3.5, -3);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffd28a, 2.1);
+    rimLight.position.set(-2, 5, 5);
+    scene.add(rimLight);
+
+    lamp.updateMatrixWorld(true);
+
+    // -------------------------------------------------------------------------
+    // GLB export
+    // -------------------------------------------------------------------------
+
+    const exporter = new GLTFExporter();
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      status.textContent = "Exporting…";
+
+      exporter.parse(
+        lamp,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "victorian-brass-lamp.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+
+          status.textContent = "GLB downloaded";
+          exportButton.disabled = false;
+        },
+        (error) => {
+          console.error(error);
+          status.textContent = "Export failed";
+          exportButton.disabled = false;
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false
+        }
+      );
+    });
+
+    // -------------------------------------------------------------------------
+    // Animation loop and resize
+    // -------------------------------------------------------------------------
+
+    function resize() {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    }
+
+    window.addEventListener("resize", resize);
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      lamp.updateMatrixWorld(true);
+      previewLight.position.copy(lamp.getWorldPosition(new THREE.Vector3()));
+
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    requestAnimationFrame(() => {
+      loading.style.display = "none";
+      exportButton.disabled = false;
+      status.textContent = "Static asset ready";
+    });
+  </script>
+</body>
+</html>

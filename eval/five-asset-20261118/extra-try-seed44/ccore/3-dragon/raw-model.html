@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low-Poly Dragon Asset</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #d8d1c4;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    #viewport {
+      position: fixed;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .panel {
+      position: fixed;
+      top: 22px;
+      left: 22px;
+      z-index: 10;
+      width: min(360px, calc(100vw - 44px));
+      padding: 20px 22px;
+      color: #fff8eb;
+      background: linear-gradient(145deg, rgba(40, 18, 22, 0.92), rgba(75, 30, 25, 0.82));
+      border: 1px solid rgba(255, 220, 174, 0.24);
+      border-radius: 16px;
+      box-shadow: 0 18px 50px rgba(42, 20, 15, 0.25);
+      backdrop-filter: blur(12px);
+      user-select: none;
+    }
+
+    .eyebrow {
+      margin-bottom: 6px;
+      color: #ef8357;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 26px;
+      line-height: 1.05;
+    }
+
+    .description {
+      margin: 0 0 18px;
+      color: #d6c9bc;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    #export-button {
+      width: 100%;
+      min-height: 46px;
+      border: 0;
+      border-radius: 10px;
+      color: #2a130f;
+      background: linear-gradient(180deg, #f3a263, #d9663d);
+      box-shadow: 0 8px 20px rgba(207, 79, 38, 0.32);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 150ms ease, filter 150ms ease;
+    }
+
+    #export-button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
+    #export-button:active {
+      transform: translateY(1px);
+    }
+
+    #export-button:disabled {
+      cursor: wait;
+      filter: grayscale(0.35);
+      opacity: 0.75;
+    }
+
+    .hint {
+      margin-top: 12px;
+      color: #b9aa9d;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    #status {
+      position: fixed;
+      right: 22px;
+      bottom: 20px;
+      z-index: 10;
+      padding: 9px 13px;
+      color: #fff7eb;
+      background: rgba(40, 18, 22, 0.76);
+      border: 1px solid rgba(255, 220, 174, 0.18);
+      border-radius: 999px;
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity 180ms ease, transform 180ms ease;
+    }
+
+    #status.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 600px) {
+      .panel {
+        top: 12px;
+        left: 12px;
+        width: calc(100vw - 24px);
+        padding: 16px;
+      }
+
+      h1 {
+        font-size: 22px;
+      }
+
+      .description {
+        margin-bottom: 13px;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="viewport"></div>
+
+  <section class="panel">
+    <div class="eyebrow">Low-poly creature asset</div>
+    <h1>Emberwing Dragon</h1>
+    <p class="description">
+      A battle-ready dragon with scaled armor, membranes, curved horns,
+      clawed limbs, and a sweeping tail.
+    </p>
+    <button id="export-button" type="button">Export GLB</button>
+    <div class="hint">Drag to orbit · Scroll to zoom</div>
+  </section>
+
+  <div id="status"></div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { GLTFExporter } from "three/addons/exporters/GLTFExporter.js";
+
+    // ------------------------------------------------------------
+    // Renderer and presentation
+    // ------------------------------------------------------------
+
+    const viewport = document.getElementById("viewport");
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xd8d1c4);
+    scene.fog = new THREE.Fog(0xd8d1c4, 12, 28);
+
+    const camera = new THREE.PerspectiveCamera(
+      38,
+      window.innerWidth / window.innerHeight,
+      0.1,
+      100
+    );
+    camera.position.set(6.4, 4.2, 7.4);
+
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.12;
+    viewport.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0.1, 1.65, 0);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 4;
+    controls.maxDistance = 16;
+    controls.maxPolarAngle = Math.PI * 0.49;
+
+    const hemisphere = new THREE.HemisphereLight(0xfff4df, 0x51352e, 2.2);
+    scene.add(hemisphere);
+
+    const keyLight = new THREE.DirectionalLight(0xffe3bd, 3.8);
+    keyLight.position.set(4.5, 8, 5.5);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(2048, 2048);
+    keyLight.shadow.camera.left = -6;
+    keyLight.shadow.camera.right = 6;
+    keyLight.shadow.camera.top = 7;
+    keyLight.shadow.camera.bottom = -3;
+    keyLight.shadow.camera.near = 0.5;
+    keyLight.shadow.camera.far = 25;
+    keyLight.shadow.bias = -0.0003;
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffa566, 2.4);
+    rimLight.position.set(-5, 4, -6);
+    scene.add(rimLight);
+
+    const fillLight = new THREE.DirectionalLight(0xb9d7ff, 0.8);
+    fillLight.position.set(-4, 2, 5);
+    scene.add(fillLight);
+
+    // Only the dragon is exported. The floor remains presentation-only.
+    const asset = new THREE.Group();
+    asset.name = "EmberwingDragon";
+    scene.add(asset);
+
+    const floor = new THREE.Mesh(
+      new THREE.CircleGeometry(9, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0xc9c1b3,
+        roughness: 1,
+        metalness: 0
+      })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -0.025;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // ------------------------------------------------------------
+    // Materials
+    // ------------------------------------------------------------
+
+    function material(color, options = {}) {
+      return new THREE.MeshStandardMaterial({
+        color,
+        roughness: 0.84,
+        metalness: 0.03,
+        flatShading: true,
+        ...options
+      });
+    }
+
+    const mat = {
+      red: material(0x8f272d),
+      darkRed: material(0x51171e),
+      orange: material(0xc54a2c),
+      paleOrange: material(0xe17439),
+      membrane: material(0xb6322a, {
+        side: THREE.DoubleSide
+      }),
+      membraneLight: material(0xd75b31, {
+        side: THREE.DoubleSide
+      }),
+      bone: material(0x3a2023),
+      horn: material(0xc89a59),
+      hornDark: material(0x705039),
+      cream: material(0xd8b57b),
+      claw: material(0xefd1a0),
+      eye: material(0xffc542, {
+        emissive: 0x7a3b00,
+        emissiveIntensity: 0.65,
+        roughness: 0.35
+      }),
+      black: material(0x171315),
+      scale: material(0xa53a2b),
+      scaleLight: material(0xd25a34)
+    };
+
+    // ------------------------------------------------------------
+    // Geometry helpers
+    // ------------------------------------------------------------
+
+    const UP = new THREE.Vector3(0, 1, 0);
+
+    function addMesh(parent, geometry, meshMaterial, position, scale = null) {
+      const mesh = new THREE.Mesh(geometry, meshMaterial);
+      mesh.position.copy(position);
+
+      if (scale) {
+        mesh.scale.copy(scale);
+      }
+
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    function addIco(parent, position, scale, meshMaterial, detail = 1) {
+      return addMesh(
+        parent,
+        new THREE.IcosahedronGeometry(1, detail),
+        meshMaterial,
+        position,
+        scale
+      );
+    }
+
+    function addCylinderBetween(
+      parent,
+      start,
+      end,
+      radiusTop,
+      radiusBottom,
+      meshMaterial,
+      sides = 6
+    ) {
+      const a = new THREE.Vector3(...start);
+      const b = new THREE.Vector3(...end);
+      const direction = b.clone().sub(a);
+      const length = direction.length();
+
+      const geometry = new THREE.CylinderGeometry(
+        radiusTop,
+        radiusBottom,
+        length,
+        sides,
+        1,
+        false
+      );
+
+      const mesh = new THREE.Mesh(geometry, meshMaterial);
+      mesh.position.copy(a).add(b).multiplyScalar(0.5);
+      mesh.quaternion.setFromUnitVectors(UP, direction.normalize());
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+
+      return mesh;
+    }
+
+    function addSpike(
+      parent,
+      base,
+      direction,
+      length,
+      radius,
+      meshMaterial,
+      sides = 5
+    ) {
+      const baseVector = new THREE.Vector3(...base);
+      const directionVector = new THREE.Vector3(...direction).normalize();
+      const geometry = new THREE.ConeGeometry(radius, length, sides, 1, false);
+
+      const mesh = new THREE.Mesh(geometry, meshMaterial);
+      mesh.position
+        .copy(baseVector)
+        .addScaledVector(directionVector, length * 0.5);
+      mesh.quaternion.setFromUnitVectors(UP, directionVector);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+
+      return mesh;
+    }
+
+    function addTriangle(parent, points, meshMaterial) {
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(points.flat(), 3)
+      );
+      geometry.setIndex([0, 1, 2]);
+      geometry.computeVertexNormals();
+
+      const mesh = new THREE.Mesh(geometry, meshMaterial);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    // ------------------------------------------------------------
+    // Body and chest
+    // ------------------------------------------------------------
+
+    addIco(
+      asset,
+      new THREE.Vector3(0, 1.66, 0),
+      new THREE.Vector3(1.18, 0.86, 0.62),
+      mat.red,
+      1
+    );
+
+    addIco(
+      asset,
+      new THREE.Vector3(0.63, 1.72, 0),
+      new THREE.Vector3(0.72, 0.79, 0.55),
+      mat.darkRed,
+      1
+    );
+
+    addIco(
+      asset,
+      new THREE.Vector3(0.67, 1.27, 0),
+      new THREE.Vector3(0.61, 0.58, 0.47),
+      mat.cream,
+      1
+    );
+
+    // Chest plates.
+    addIco(
+      asset,
+      new THREE.Vector3(0.94, 1.93, 0),
+      new THREE.Vector3(0.36, 0.42, 0.39),
+      mat.scaleLight,
+      0
+    );
+
+    addIco(
+      asset,
+      new THREE.Vector3(0.96, 1.52, 0),
+      new THREE.Vector3(0.38, 0.32, 0.4),
+      mat.scale,
+      0
+    );
+
+    // Back scales.
+    const backScales = [
+      [-0.58, 2.19, -0.36, 0.52],
+      [-0.22, 2.34, -0.28, 0.58],
+      [0.18, 2.35, -0.27, 0.58],
+      [0.53, 2.26, -0.2, 0.48]
+    ];
+
+    for (const [x, y, z, length] of backScales) {
+      addSpike(
+        asset,
+        [x, y, z],
+        [-0.28, 0.9, 0],
+        length,
+        0.19,
+        mat.darkRed
+      );
+    }
+
+    // Shoulder spikes.
+    for (const side of [-1, 1]) {
+      addSpike(
+        asset,
+        [0.58, 2.35, side * 0.36],
+        [0.1, 0.8, side * 0.45],
+        0.54,
+        0.18,
+        mat.darkRed
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Neck and head
+    // ------------------------------------------------------------
+
+    const neckPoints = [
+      [0.64, 2.05, 0],
+      [0.92, 2.3, 0],
+      [1.18, 2.58, 0]
+    ];
+
+    const neckRadii = [0.48, 0.39, 0.31];
+
+    for (let i = 0; i < neckPoints.length - 1; i++) {
+      addCylinderBetween(
+        asset,
+        neckPoints[i],
+        neckPoints[i + 1],
+        neckRadii[i + 1],
+        neckRadii[i],
+        mat.red,
+        7
+      );
+    }
+
+    addIco(
+      asset,
+      neckPoints[0],
+      new THREE.Vector3(0.49, 0.47, 0.46),
+      mat.red,
+      0
+    );
+
+    addIco(
+      asset,
+      neckPoints[1],
+      new THREE.Vector3(0.4, 0.38, 0.39),
+      mat.darkRed,
+      0
+    );
+
+    addIco(
+      asset,
+      neckPoints[2],
+      new THREE.Vector3(0.32, 0.34, 0.34),
+      mat.red,
+      0
+    );
+
+    // Neck frill.
+    for (let i = -2; i <= 2; i++) {
+      addSpike(
+        asset,
+        [0.78, 2.28, i * 0.16],
+        [-0.55, 0.15, i * 0.25],
+        0.52,
+        0.14,
+        mat.darkRed
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Custom faceted head
+    // ------------------------------------------------------------
+
+    const head = new THREE.Group();
+    head.name = "DragonHead";
+    head.position.set(1.22, 2.82, 0);
+    asset.add(head);
+
+    const headVertices = [
+      -0.34, 0.25, -0.29,
+      -0.34, 0.25, 0.29,
+      -0.04, -0.12, -0.33,
+      -0.04, -0.12, 0.33,
+      0.36, -0.18, -0.19,
+      0.36, -0.18, 0.19,
+      0.61, -0.05, 0.00,
+      -0.26, -0.30, 0.00
+    ];
+
+    const headIndices = [
+      0, 2, 1,
+      0, 3, 2,
+      2, 4, 3,
+      3, 4, 5,
+      4, 6, 5,
+      4, 7, 6,
+      3, 7, 2
+    ];
+
+    const headGeometry = new THREE.BufferGeometry();
+    headGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(headVertices, 3)
+    );
+    headGeometry.setIndex(headIndices);
+    headGeometry.computeVertexNormals();
+
+    const headMaterial = mat.red.clone();
+    headMaterial.side = THREE.DoubleSide;
+
+    addMesh(head, headGeometry, headMaterial);
+
+    // Snout.
+    addIco(
+      head,
+      new THREE.Vector3(0.37, -0.09, 0),
+      new THREE.Vector3(0.35, 0.19, 0.25),
+      mat.orange,
+      0
+    );
+
+    // Lower jaw.
+    addIco(
+      head,
+      new THREE.Vector3(0.28, -0.24, 0),
+      new THREE.Vector3(0.42, 0.11, 0.28),
+      mat.darkRed,
+      0
+    );
+
+    // Mouth inset.
+    addMesh(
+      head,
+      new THREE.BoxGeometry(0.52, 0.035, 0.43),
+      mat.black,
+      new THREE.Vector3(0.26, -0.19, 0)
+    );
+
+    // Nose.
+    addIco(
+      head,
+      new THREE.Vector3(0.54, -0.015, 0),
+      new THREE.Vector3(0.13, 0.08, 0.14),
+      mat.black,
+      0
+    );
+
+    // Eyes and vertical pupils.
+    for (const side of [-1, 1]) {
+      addMesh(
+        head,
+        new THREE.SphereGeometry(0.095, 8, 5),
+        mat.eye,
+        new THREE.Vector3(0.19, 0.105, side * 0.305)
+      );
+
+      addMesh(
+        head,
+        new THREE.BoxGeometry(0.105, 0.16, 0.025),
+        mat.black,
+        new THREE.Vector3(0.205, 0.105, side * 0.386)
+      );
+
+      // Brow ridge.
+      addSpike(
+        head,
+        [0.08, 0.27, side * 0.25],
+        [0.35, 0.75, side * 0.3],
+        0.29,
+        0.11,
+        mat.darkRed,
+        4
+      );
+    }
+
+    // Nostrils.
+    for (const side of [-1, 1]) {
+      addIco(
+        head,
+        new THREE.Vector3(0.48, -0.025, side * 0.14),
+        new THREE.Vector3(0.06, 0.035, 0.035),
+        mat.black,
+        0
+      );
+    }
+
+    // Swept-back horns.
+    for (const side of [-1, 1]) {
+      addCylinderBetween(
+        head,
+        [-0.12, 0.42, side * 0.16],
+        [-0.35, 0.7, side * 0.23],
+        0.13,
+        0.09,
+        mat.horn,
+        6
+      );
+
+      addCylinderBetween(
+        head,
+        [-0.35, 0.7, side * 0.23],
+        [-0.64, 0.88, side * 0.17],
+        0.09,
+        0.015,
+        mat.hornDark,
+        6
+      );
+    }
+
+    // ------------------------------------------------------------
+    // Wings
+    // ------------------------------------------------------------
+
+    function buildWing(side) {
+      const wing = new THREE.Group();
+      wing.name = side > 0 ? "RightWing" : "LeftWing";
+      asset.add(wing);
+
+      const S = [0.65, 2.36, side * 0.58];
+      const U = [-0.15, 2.66, side * 1.55];
+      const T = [-0.76, 2.1, side * 2.94];
+      const L = [-1.27, 1.16, side * 2.54];
+      const P = [-0.34, 1.35, side * 1.12];
+      const R = [0.23, 1.27, side * 0.68];
+
+      const membraneTriangles = [
+        [S, U, P],
+        [U, T, P],
+        [T, L, P],
+        [L, R, P],
+        [R, S, P]
+      ];
+
+      membraneTriangles.forEach((triangle, index) => {
+        addTriangle(
+          wing,
+          triangle,
+          index % 2 === 0 ? mat.membrane : mat.membraneLight
+        );
+      });
+
+      // Structural wing bones.
+      const bonePairs = [
+        [S, U],
+        [U, T],
+        [T, L],
+        [L, R],
+        [R, S]
+      ];
+
+      for (const [a, b] of bonePairs) {
+        addCylinderBetween(
+          wing,
+          a,
+          b,
+          0.065,
+          0.052,
+          mat.bone,
+          6
+        );
+      }
+
+      // Extended finger bones.
+      const fingerTips = [
+        [T, [-0.12, -0.1, side * 0.38]],
+        [T, [-0.48, -0.25, side * 0.3]],
+        [L, [-0.5, -0.35, side * 0.24]],
+        [R, [-0.08, -0.28, side * 0.22]]
+      ];
+
+      for (const [a, tip] of fingerTips) {
+        addCylinderBetween(
+          wing,
+          a,
+          tip,
+          0.045,
+          0.012,
+          mat.bone,
+          5
+        );
+      }
+
+      // Wing-root bone.
+      addCylinderBetween(
+        wing,
+        S,
+        R,
+        0.09,
+        0.07,
+        mat.bone,
+        6
+      );
+
+      // Small clawed wing tips.
+      addSpike(
+        wing,
+        T,
+        [-0.25, -0.15, side * 0.4],
+        0.29,
+        0.11,
+        mat.darkRed
+      );
+
+      addSpike(
+        wing,
+        L,
+        [-0.55, -0.2, side * 0.3],
+        0.25,
+        0.09,
+        mat.darkRed
+      );
+
+      addSpike(
+        wing,
+        P,
+        [-0.15, -0.35, side * 0.35],
+        0.22,
+        0.08,
+        mat.darkRed
+      );
+    }
+
+    buildWing(-1);
+    buildWing(1);
+
+    // ------------------------------------------------------------
+    // Legs and claws
+    // ------------------------------------------------------------
+
+    function buildLeg(x, z, isFront, side) {
+      const leg = new THREE.Group();
+      leg.name = `${isFront ? "Front" : "Rear"}Leg_${side > 0 ? "Right" : "Left"}`;
+      asset.add(leg);
+
+      const upperEnd = [
+        x + (isFront ? 0.13 : -0.13),
+        isFront ? 0.73 : 0.82,
+        z + side * 0.08
+      ];
+
+      const lowerEnd = [
+        x + (isFront ? 0.18 : -0.18),
+        isFront ? 0.29 : 0.34,
+        z + side * 0.12
+      ];
+
+      addCylinderBetween(
+        leg,
+        [x, 1.36, z],
+        upperEnd,
+        0.17,
+        0.22,
+        mat.red,
+        7
+      );
+
+      addIco(
+        leg,
+        upperEnd,
+        new THREE.Vector3(0.2, 0.19, 0.19),
+        mat.darkRed,
+        0
+      );
+
+      addCylinderBetween(
+        leg,
+        upperEnd,
+        lowerEnd,
+        0.105,
+        0.15,
+        mat.red,
+        6
+      );
+
+      addIco(
+        leg,
+        lowerEnd,
+        new THREE.Vector3(0.18, 0.16, 0.22),
+        mat.darkRed,
+        0
+      );
+
+      // Three forward-facing claws.
+      const clawDirections = [
+        [0.95, -0.12, -0.28],
+        [1.05, -0.14, 0.02],
+        [0.95, -0.12, 0.28]
+      ];
+
+      for (const direction of clawDirections) {
+        addCylinderBetween(
+          leg,
+          [
+            lowerEnd[0] + direction[0] * 0.12,
+            lowerEnd[1] + direction[1] * 0.12,
+            lowerEnd[2] + direction[2] * 0.12
+          ],
+          [
+            lowerEnd[0] + direction[0] * 0.39,
+            lowerEnd[1] + direction[1] * 0.39,
+            lowerEnd[2] + direction[2] * 0.39
+          ],
+          0.07,
+          0.006,
+          mat.claw,
+          5
+        );
+      }
+    }
+
+    buildLeg(0.62, -0.47, true, -1);
+    buildLeg(0.62, 0.47, true, 1);
+    buildLeg(-0.68, -0.48, false, -1);
+    buildLeg(-0.68, 0.48, false, 1);
+
+    // ------------------------------------------------------------
+    // Tail
+    // ------------------------------------------------------------
+
+    const tailPoints = [
+      [0.55, 1.38, 0],
+      [0.15, 1.19, -0.25],
+      [-0.34, 1.04, -0.55],
+      [-0.89, 1.13, -0.72],
+      [-1.43, 1.48, -0.75],
+      [-1.83, 1.88, -0.55]
+    ];
+
+    const tailRadii = [0.38, 0.31, 0.24, 0.17, 0.1, 0.035];
+
+    for (let i = 0; i < tailPoints.length - 1; i++) {
+      addCylinderBetween(
+        asset,
+        tailPoints[i],
+        tailPoints[i + 1],
+        tailRadii[i + 1],
+        tailRadii[i],
+        mat.red,
+        7
+      );
+    }
+
+    tailPoints.forEach((point, index) => {
+      addIco(
+        asset,
+        point,
+        new THREE.Vector3(
+          tailRadii[index],
+          tailRadii[index] * 0.9,
+          tailRadii[index]
+        ),
+        index % 2 === 0 ? mat.red : mat.darkRed,
+        0
+      );
+    });
+
+    // Tail spikes.
+    addSpike(
+      asset,
+      [0.16, 1.38, -0.24],
+      [-0.6, 0.45, 0.08],
+      0.48,
+      0.16,
+      mat.darkRed
+    );
+
+    addSpike(
+      asset,
+      [-0.33, 1.17, -0.54],
+      [-0.7, 0.48, -0.05],
+      0.45,
+      0.15,
+      mat.darkRed
+    );
+
+    addSpike(
+      asset,
+      [-0.87, 1.15, -0.71],
+      [-0.75, 0.5, -0.08],
+      0.37,
+      0.13,
+      mat.darkRed
+    );
+
+    addSpike(
+      asset,
+      [-1.4, 1.48, -0.74],
+      [-0.78, 0.52, -0.08],
+      0.34,
+      0.12,
+      mat.darkRed
+    );
+
+    // Tail tip.
+    addSpike(
+      asset,
+      [-1.82, 1.87, -0.54],
+      [-0.85, 0.58, -0.08],
+      0.52,
+      0.15,
+      mat.darkRed
+    );
+
+    // ------------------------------------------------------------
+    // Additional armor details
+    // ------------------------------------------------------------
+
+    // Side-body spikes.
+    for (const side of [-1, 1]) {
+      addSpike(
+        asset,
+        [0.05, 1.76, side * 0.54],
+        [0.05, 0.25, side * 0.95],
+        0.39,
+        0.13,
+        mat.darkRed
+      );
+
+      addSpike(
+        asset,
+        [0.42, 1.55, side * 0.52],
+        [0.32, 0.1, side * 0.95],
+        0.31,
+        0.11,
+        mat.scale
+      );
+    }
+
+    // Forehead crest.
+    addSpike(
+      asset,
+      [1.08, 3.13, 0],
+      [0.2, 0.95, 0],
+      0.43,
+      0.16,
+      mat.darkRed
+    );
+
+    // Small chest crest.
+    addSpike(
+      asset,
+      [0.95, 2.05, 0],
+      [0.35, 0.8, 0],
+      0.35,
+      0.14,
+      mat.scaleLight
+    );
+
+    // ------------------------------------------------------------
+    // GLB export
+    // ------------------------------------------------------------
+
+    const exportButton = document.getElementById("export-button");
+    const status = document.getElementById("status");
+
+    function showStatus(message) {
+      status.textContent = message;
+      status.classList.add("visible");
+    }
+
+    exportButton.addEventListener("click", () => {
+      exportButton.disabled = true;
+      exportButton.textContent = "Preparing GLB…";
+      showStatus("Building binary glTF…");
+
+      asset.updateMatrixWorld(true);
+
+      const exporter = new GLTFExporter();
+
+      exporter.parse(
+        asset,
+        (result) => {
+          const blob = new Blob([result], {
+            type: "model/gltf-binary"
+          });
+
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = "emberwing-dragon.glb";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+
+          setTimeout(() => {
+            URL.revokeObjectURL(url);
+          }, 1000);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          showStatus("emberwing-dragon.glb downloaded");
+        },
+        (error) => {
+          console.error(error);
+
+          exportButton.disabled = false;
+          exportButton.textContent = "Export GLB";
+          showStatus("Export failed — see console");
+        },
+        {
+          binary: true,
+          onlyVisible: true,
+          trs: false,
+          maxTextureSize: 4096
+        }
+      );
+    });
+
+    // ------------------------------------------------------------
+    // Resize and render loop
+    // ------------------------------------------------------------
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    });
+
+    renderer.setAnimationLoop(() => {
+      controls.update();
+      renderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>
