@@ -1,0 +1,242 @@
+[
+ {
+  "id": "c01-lamp",
+  "kind": "concept",
+  "category": "prop",
+  "title": "A super high-quality lamp",
+  "source": "Codex image generation, 2026-11-17",
+  "legacy_name": "1-lamp"
+ },
+ {
+  "id": "c02-police-officer",
+  "kind": "concept",
+  "category": "character",
+  "title": "A police officer character",
+  "source": "Codex image generation, 2026-11-17",
+  "legacy_name": "2-police-officer"
+ },
+ {
+  "id": "c03-dragon",
+  "kind": "concept",
+  "category": "character",
+  "title": "A big dragon character",
+  "source": "Codex image generation, 2026-11-17",
+  "legacy_name": "3-dragon"
+ },
+ {
+  "id": "c04-green-van",
+  "kind": "concept",
+  "category": "vehicle",
+  "title": "A green van",
+  "source": "Codex image generation, 2026-11-17",
+  "legacy_name": "4-green-van"
+ },
+ {
+  "id": "c05-skyscraper",
+  "kind": "concept",
+  "category": "building",
+  "title": "A big skyscraper",
+  "source": "Codex image generation, 2026-11-17",
+  "legacy_name": "5-skyscraper"
+ },
+ {
+  "id": "h000001",
+  "kind": "heldout-render",
+  "category": "character",
+  "title": "Merchant",
+  "domain": "characters_and_npcs",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-000001, cropped to subject, 768 px"
+ },
+ {
+  "id": "h000134",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Magical treasure key",
+  "domain": "items_tools_and_pickups",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-000134, cropped to subject, 768 px"
+ },
+ {
+  "id": "h000249",
+  "kind": "heldout-render",
+  "category": "character",
+  "title": "Desert innkeeper",
+  "domain": "characters_and_npcs",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-000249, cropped to subject, 768 px"
+ },
+ {
+  "id": "h000326",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Magical tall grass patch",
+  "domain": "nature_and_environment",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-000326, cropped to subject, 768 px"
+ },
+ {
+  "id": "h000422",
+  "kind": "heldout-render",
+  "category": "character",
+  "title": "Tiny hamster companion",
+  "domain": "companions_and_creatures",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-000422, cropped to subject, 768 px"
+ },
+ {
+  "id": "h000681",
+  "kind": "heldout-render",
+  "category": "character",
+  "title": "Clockwork titan boss",
+  "domain": "bosses",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-000681, cropped to subject, 768 px"
+ },
+ {
+  "id": "h000751",
+  "kind": "heldout-render",
+  "category": "character",
+  "title": "Necromancer boss with crystal spikes",
+  "domain": "bosses",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-000751, cropped to subject, 768 px"
+ },
+ {
+  "id": "h000947",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Mud puddle",
+  "domain": "nature_and_environment",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-000947, cropped to subject, 768 px"
+ },
+ {
+  "id": "h001177",
+  "kind": "heldout-render",
+  "category": "character",
+  "title": "Tiny alien companion",
+  "domain": "companions_and_creatures",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-001177, cropped to subject, 768 px"
+ },
+ {
+  "id": "h001470",
+  "kind": "heldout-render",
+  "category": "character",
+  "title": "Desert archaeologist",
+  "domain": "characters_and_npcs",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-001470, cropped to subject, 768 px"
+ },
+ {
+  "id": "h001608",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Ornate harvest ceremony arch",
+  "domain": "festivals_and_ceremonies",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-001608, cropped to subject, 768 px"
+ },
+ {
+  "id": "h001782",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Modern city service kiosk",
+  "domain": "urban_services",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-001782, cropped to subject, 768 px"
+ },
+ {
+  "id": "h002037",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Suburban service kiosk",
+  "domain": "urban_services",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-002037, cropped to subject, 768 px"
+ },
+ {
+  "id": "h002223",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Research docking ring",
+  "domain": "underwater_structures",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-002223, cropped to subject, 768 px"
+ },
+ {
+  "id": "h002337",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Grain irrigation unit",
+  "domain": "farming_and_homestead",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-002337, cropped to subject, 768 px"
+ },
+ {
+  "id": "h002466",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Compact construction conveyor unit",
+  "domain": "industrial_machinery",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-002466, cropped to subject, 768 px"
+ },
+ {
+  "id": "h002579",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Sunken pressure gate",
+  "domain": "underwater_structures",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-002579, cropped to subject, 768 px"
+ },
+ {
+  "id": "h002804",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Chicken nesting cabinet",
+  "domain": "farming_and_homestead",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-002804, cropped to subject, 768 px"
+ },
+ {
+  "id": "h002918",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Mining drill rig",
+  "domain": "industrial_machinery",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-002918, cropped to subject, 768 px"
+ },
+ {
+  "id": "h003101",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Ceremonial drum",
+  "domain": "festivals_and_ceremonies",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-003101, cropped to subject, 768 px"
+ },
+ {
+  "id": "h003261",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Rowing exercise machine",
+  "domain": "fitness_and_rehabilitation",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-003261, cropped to subject, 768 px"
+ },
+ {
+  "id": "h003380",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Balance puzzle platform",
+  "domain": "puzzle_and_gameplay_markers",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-003380, cropped to subject, 768 px"
+ },
+ {
+  "id": "h003575",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Laboratory microscope",
+  "domain": "laboratory_and_medical",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-003575, cropped to subject, 768 px"
+ },
+ {
+  "id": "h003700",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Mining drill rig",
+  "domain": "industrial_machinery",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-003700, cropped to subject, 768 px"
+ },
+ {
+  "id": "h003845",
+  "kind": "heldout-render",
+  "category": "other",
+  "title": "Wooden storage chest",
+  "domain": "furniture_and_interiors",
+  "source": "ccore/ThreeJS-3D-GLB-Assets validation split, asset-003845, cropped to subject, 768 px"
+ }
+]
