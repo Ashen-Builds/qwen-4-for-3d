@@ -127,8 +127,27 @@ def main():
     # float32 master copy; the model holds the compute-precision copy.
     master = model.trainable_parameters()
     optimizer.init(master)
-    if state["checkpoint"]:
-        optimizer.state = tree_unflatten(list(mx.load(str(ck / "optimizer.safetensors")).items()))
+    if state["checkpoint"] and not os.environ.get("A3D_DEBUG_SKIP_OPT"):
+        # Fill the freshly initialised state in place. Replacing optimizer.state with a new tree
+        # resets the optimizer's initialised flag and roughly doubled peak memory on resume.
+        saved = mx.load(str(ck / "optimizer.safetensors"))
+
+        def fill(node, path):
+            if isinstance(node, dict):
+                for key in list(node):
+                    child = f"{path}.{key}" if path else key
+                    if isinstance(node[key], mx.array):
+                        node[key] = mx.array(saved[child])
+                    else:
+                        fill(node[key], child)
+            elif isinstance(node, list):
+                for i, item in enumerate(node):
+                    fill(item, f"{path}.{i}")
+
+        fill(optimizer.state, "")
+        missing = set(saved) - {k for k, _ in tree_flatten(optimizer.state)}
+        if missing:
+            raise SystemExit(f"optimizer state keys not restored: {sorted(missing)[:5]}")
     low = args.compute == "bfloat16"
 
     def to_compute(tree):

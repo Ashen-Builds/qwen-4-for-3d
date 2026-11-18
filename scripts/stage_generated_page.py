@@ -30,9 +30,11 @@ def main():
     html = re.sub(r"https://cdnjs\.cloudflare\.com/ajax/libs/three\.js/[^/]+/three\.module(?:\.min)?\.js",
                   "/vendor/three/build/three.module.js", html)
     prelude = """<script>
-    (() => { const raf=window.requestAnimationFrame.bind(window); let last=-Infinity;
+    (() => { const raf=window.requestAnimationFrame.bind(window); let last=-Infinity, cur=-1;
+      // Cap at 60 fps per frame, not per callback: every callback queued for an accepted frame runs,
+      // so a render loop cannot starve a second requestAnimationFrame user such as an export handler.
       window.requestAnimationFrame=cb=>raf(function tick(t){
-        if(t-last>=1000/60-0.5){last=t;cb(t)}else raf(tick);
+        if(t===cur||t-last>=1000/60-0.5){if(t!==cur){last=t;cur=t}cb(t)}else raf(tick);
       });
     })();
     </script>"""
